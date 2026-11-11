@@ -1,0 +1,9 @@
+{
+  "objectIdFieldName": "OBJECTID",
+  "features": [
+    { "attributes": { "NatWalkInd": 14.166666666666668, "TotPop": 1534 } },
+    { "attributes": { "NatWalkInd": 11.5, "TotPop": 1200 } },
+    { "attributes": { "NatWalkInd": "9.0", "TotPop": "800" } },
+    { "attributes": { "NatWalkInd": 16.0, "TotPop": 0 } }
+  ]
+}

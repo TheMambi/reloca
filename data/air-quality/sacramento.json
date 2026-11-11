@@ -1,0 +1,26 @@
+{
+  "city": "sacramento",
+  "reportingArea": "Sacramento",
+  "observedAt": "2026-07-12 21:00 PST",
+  "dominantParameter": "O3",
+  "aqi": 37,
+  "category": "Good",
+  "readings": [
+    {
+      "parameter": "O3",
+      "aqi": 37,
+      "category": "Good"
+    },
+    {
+      "parameter": "PM2.5",
+      "aqi": 29,
+      "category": "Good"
+    },
+    {
+      "parameter": "PM10",
+      "aqi": 13,
+      "category": "Good"
+    }
+  ],
+  "source": "air-quality-airnow-2026"
+}

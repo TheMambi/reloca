@@ -1,0 +1,98 @@
+[
+  {
+    "city": "denver",
+    "avgRent": [
+      { "unit": "studio", "median": 1350 },
+      { "unit": "1br", "median": 1650 },
+      { "unit": "2br", "median": 2100 },
+      { "unit": "3br", "median": 2750 }
+    ],
+    "weatherSummary": "300+ sunny days, dry winters with occasional snow, low humidity. Summer highs near 90°F, winter lows around 15°F.",
+    "vibeTags": ["outdoor-lifestyle", "craft-beer-culture", "tech-hub", "mountain-access"],
+    "testimonials": [
+      {
+        "author": "Sarah K.",
+        "role": "Remote worker, 6 years in Denver",
+        "neighborhood": "Capitol Hill",
+        "quote": "The outdoor access is unbeatable — I can be skiing at Loveland in under two hours. The food scene has exploded in the last few years, especially along South Broadway."
+      },
+      {
+        "author": "Marcus T.",
+        "role": "Software engineer, 3 years in Denver",
+        "neighborhood": "RiNo",
+        "quote": "RiNo went from warehouses to one of the most vibrant neighborhoods in the city. Tons of breweries, galleries, and great coffee shops. Only downside is rent keeps climbing."
+      },
+      {
+        "author": "Diana R.",
+        "role": "Teacher, lifelong Denver resident",
+        "neighborhood": "Wash Park",
+        "quote": "Wash Park is family-friendly with beautiful green space and a real neighborhood feel. Summers are gorgeous, but wildfire smoke has gotten worse the last few years."
+      }
+    ],
+    "source": "community-modeled-2025"
+  },
+  {
+    "city": "long-beach",
+    "avgRent": [
+      { "unit": "studio", "median": 1550 },
+      { "unit": "1br", "median": 1900 },
+      { "unit": "2br", "median": 2650 },
+      { "unit": "3br", "median": 3400 }
+    ],
+    "weatherSummary": "340+ sunny days, Mediterranean climate, rarely below 45°F. Summer highs near 85°F with ocean breeze. Minimal rainfall.",
+    "vibeTags": ["beach-lifestyle", "diverse-culture", "port-city", "bike-friendly", "laid-back"],
+    "testimonials": [
+      {
+        "author": "Dana L.",
+        "role": "Graphic designer, 4 years in Long Beach",
+        "neighborhood": "Belmont Shore",
+        "quote": "Belmont Shore feels like a small beach town inside a big city. You can walk to everything — the beach, 2nd Street shops, the canals. It's the reason we moved here."
+      },
+      {
+        "author": "Carlos M.",
+        "role": "Port logistics manager, 8 years in Long Beach",
+        "neighborhood": "Bixby Knolls",
+        "quote": "Bixby Knolls has become the go-to for families. Great restaurants on Atlantic, close to the 405, and way more affordable than the beach neighborhoods."
+      },
+      {
+        "author": "Kim P.",
+        "role": "Nurse, 2 years in Long Beach",
+        "neighborhood": "Downtown",
+        "quote": "Downtown LB has changed so much — the waterfront, the Pike, East Village Arts District. It's walkable and you can take the Blue Line to LA when you need to. Parking is the only real headache."
+      }
+    ],
+    "source": "community-modeled-2025"
+  },
+  {
+    "city": "sacramento",
+    "avgRent": [
+      { "unit": "studio", "median": 1575 },
+      { "unit": "1br", "median": 1750 },
+      { "unit": "2br", "median": 2150 },
+      { "unit": "3br", "median": 2850 }
+    ],
+    "weatherSummary": "Mediterranean climate — hot, dry summers (highs near 74°F, about 66 days a year topping 90°F) cooled by the evening Delta Breeze, and mild, wet winters (~18.5 inches of rain, mostly November–February) with occasional dense Tule fog.",
+    "vibeTags": ["farm-to-fork", "river-confluence", "state-capital", "tree-canopy", "delta-breeze", "affordable-vs-bay-area"],
+    "testimonials": [
+      {
+        "author": "Aisha R.",
+        "role": "Designer, 3 years in Sacramento",
+        "neighborhood": "Midtown",
+        "quote": "Midtown is the walkable heart of the city — grid streets full of restaurants, galleries, and Second Saturday art walks. I bike everywhere, and I'm 90 minutes from both Tahoe and the Bay."
+      },
+      {
+        "author": "Tom H.",
+        "role": "Teacher, lifelong Sacramentan",
+        "neighborhood": "East Sacramento",
+        "quote": "The Fabulous Forties are leafy and quiet, and McKinley Park anchors the whole neighborhood. Summers run hot, but the tree canopy and the evening Delta Breeze make it bearable."
+      },
+      {
+        "author": "Priya N.",
+        "role": "Nurse, 5 years in Sacramento",
+        "neighborhood": "Land Park",
+        "quote": "Land Park is perfect for families — the zoo, Fairytale Town, and big shady yards. It's far more affordable than the Bay Area, which is why so many of us moved here."
+      }
+    ],
+    "source": "community-modeled-2025"
+  }
+]

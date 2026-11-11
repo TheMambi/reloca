@@ -1,0 +1,25 @@
+{
+  "city": "sacramento",
+  "flood": {
+    "femaTier": "AE",
+    "annualChanceFlood": 0.01
+  },
+  "wildfire": {
+    "score": 22,
+    "nearestActiveZoneKm": 45
+  },
+  "seaLevelRise": {
+    "exposure": "none",
+    "projection2050cm": null
+  },
+  "earthquake": {
+    "riskLevel": "low",
+    "lastMajorEvent": "No major earthquake in the city; nearest notable was the 1975 M6.0 Oroville quake ~110 km north"
+  },
+  "heatDaysPerYear": 66,
+  "droughtIndex": -1.5,
+  "annualPrecipitationIn": 18.5,
+  "avgHighF": 74,
+  "avgLowF": 48,
+  "source": "climate-noaa-2026"
+}

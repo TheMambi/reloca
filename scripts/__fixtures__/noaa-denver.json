@@ -1,0 +1,8 @@
+{
+  "results": [
+    { "date": "2010-01-01T00:00:00", "datatype": "ANN-TMAX-NORMAL", "station": "GHCND:USW00023062", "value": 64.1 },
+    { "date": "2010-01-01T00:00:00", "datatype": "ANN-TMIN-NORMAL", "station": "GHCND:USW00023062", "value": 36.4 },
+    { "date": "2010-01-01T00:00:00", "datatype": "ANN-PRCP-NORMAL", "station": "GHCND:USW00023062", "value": 15.58 },
+    { "date": "2010-01-01T00:00:00", "datatype": "ANN-TMAX-AVGNDS-GRTH090", "station": "GHCND:USW00023062", "value": 30.6 }
+  ]
+}

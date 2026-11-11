@@ -1,0 +1,71 @@
+{
+  "city": "denver",
+  "population": 713252,
+  "reportingPeriod": {
+    "start": "2024-04-01",
+    "end": "2025-03-31"
+  },
+  "summary": {
+    "violentPer1k": 7.8,
+    "propertyPer1k": 42.1,
+    "qualityOfLifePer1k": 15.3,
+    "totalPer1k": 65.2
+  },
+  "byCategory": [
+    { "category": "violent", "subcategory": "homicide", "count12mo": 82, "per1k": 0.12, "trend12mo": [8, 6, 7, 5, 9, 7, 8, 6, 5, 7, 8, 6] },
+    { "category": "violent", "subcategory": "aggravated-assault", "count12mo": 3420, "per1k": 4.80, "trend12mo": [310, 275, 290, 285, 305, 280, 270, 260, 295, 285, 280, 285] },
+    { "category": "violent", "subcategory": "robbery", "count12mo": 1580, "per1k": 2.22, "trend12mo": [145, 130, 125, 120, 135, 140, 128, 132, 125, 130, 135, 135] },
+    { "category": "violent", "subcategory": "sexual-assault", "count12mo": 478, "per1k": 0.67, "trend12mo": [42, 38, 40, 35, 45, 38, 40, 42, 36, 44, 39, 39] },
+    { "category": "property", "subcategory": "burglary", "count12mo": 4850, "per1k": 6.80, "trend12mo": [420, 380, 395, 410, 430, 400, 385, 390, 415, 405, 410, 410] },
+    { "category": "property", "subcategory": "larceny-theft", "count12mo": 16200, "per1k": 22.72, "trend12mo": [1400, 1300, 1350, 1320, 1380, 1340, 1280, 1290, 1350, 1400, 1390, 1400] },
+    { "category": "property", "subcategory": "motor-vehicle-theft", "count12mo": 8950, "per1k": 12.55, "trend12mo": [780, 750, 720, 700, 760, 740, 730, 750, 770, 740, 760, 750] },
+    { "category": "qualityOfLife", "subcategory": "vandalism", "count12mo": 5800, "per1k": 8.13, "trend12mo": [500, 470, 480, 490, 510, 475, 460, 470, 495, 490, 480, 480] },
+    { "category": "qualityOfLife", "subcategory": "drug-violation", "count12mo": 3100, "per1k": 4.35, "trend12mo": [280, 250, 260, 255, 270, 260, 250, 245, 265, 255, 260, 250] },
+    { "category": "qualityOfLife", "subcategory": "disorderly-conduct", "count12mo": 2010, "per1k": 2.82, "trend12mo": [180, 165, 170, 160, 175, 170, 155, 165, 170, 175, 160, 165] }
+  ],
+  "byHourOfDay": [
+    { "hour": 0, "count": 2850 },
+    { "hour": 1, "count": 2620 },
+    { "hour": 2, "count": 2180 },
+    { "hour": 3, "count": 1650 },
+    { "hour": 4, "count": 1280 },
+    { "hour": 5, "count": 1150 },
+    { "hour": 6, "count": 1320 },
+    { "hour": 7, "count": 1580 },
+    { "hour": 8, "count": 1890 },
+    { "hour": 9, "count": 2100 },
+    { "hour": 10, "count": 2350 },
+    { "hour": 11, "count": 2580 },
+    { "hour": 12, "count": 2890 },
+    { "hour": 13, "count": 2950 },
+    { "hour": 14, "count": 3100 },
+    { "hour": 15, "count": 3280 },
+    { "hour": 16, "count": 3450 },
+    { "hour": 17, "count": 3680 },
+    { "hour": 18, "count": 3520 },
+    { "hour": 19, "count": 3380 },
+    { "hour": 20, "count": 3250 },
+    { "hour": 21, "count": 3180 },
+    { "hour": 22, "count": 3050 },
+    { "hour": 23, "count": 2900 }
+  ],
+  "byMonth": [
+    { "month": "2024-04", "total": 3820 },
+    { "month": "2024-05", "total": 3650 },
+    { "month": "2024-06", "total": 3780 },
+    { "month": "2024-07", "total": 3890 },
+    { "month": "2024-08", "total": 4020 },
+    { "month": "2024-09", "total": 3750 },
+    { "month": "2024-10", "total": 3680 },
+    { "month": "2024-11", "total": 3560 },
+    { "month": "2024-12", "total": 3700 },
+    { "month": "2025-01", "total": 3780 },
+    { "month": "2025-02", "total": 3640 },
+    { "month": "2025-03", "total": 3710 }
+  ],
+  "benchmarkNational": {
+    "violentPer1k": 3.8,
+    "propertyPer1k": 19.6
+  },
+  "source": "crime-modeled-2025"
+}

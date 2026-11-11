@@ -1,0 +1,484 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./shadcn-tailwind.css";
+
+/*
+  Reloca — Warm Premium Cockpit, dark-mode only (AD-004, 2026-05-02).
+  Heritage: premium consumer relocation cockpits (Linear, Vercel, ChatGPT-dashboard polish),
+  warm dawn / coastal sunset palettes, family-friendly without going generic SaaS.
+
+  Anti-reference: glass / backdrop blur / frosted panels, cyberpunk / Tron / neon-cyan,
+  generic SaaS dashboards, AI-default purple→pink gradient slop, glow shadows,
+  large rounded cards (>0.75rem), hearts / cute mascots.
+
+  Palette: warm violet-leaning dark canvas (hue ~285, chroma ~0.02), violet primary
+  `--brand: oklch(0.68 0.18 295)`, coral secondary `--brand-secondary: oklch(0.72 0.15 30)`,
+  status palette ok-green / warn-amber / danger-red / info-blue. Hairline borders ~12%.
+  Radius 0.5rem default, 0.625rem tiles, 0.75rem cap. 8px spacing base.
+
+  Two controlled radial atmospheres allowed (AD-005): hero + journey-active phase only.
+  No light variant. .dark mirrors :root so any `dark:` utility still resolves correctly.
+*/
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Fonts — Sans is PRIMARY for headlines/prose; Mono retained for numerics/labels */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+
+  /* Type scale — bumped one step up across the board for comfortable reading.
+     Spacing/padding/gap utilities are NOT affected (they read --spacing, not these). */
+  --text-xs: 0.8125rem;     /* 13px (was 12px) */
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.9375rem;     /* 15px (was 14px) */
+  --text-sm--line-height: 1.375rem;
+  --text-base: 1.0625rem;   /* 17px (was 16px) */
+  --text-base--line-height: 1.625rem;
+  --text-lg: 1.1875rem;     /* 19px (was 18px) */
+  --text-lg--line-height: 1.875rem;
+  --text-xl: 1.3125rem;     /* 21px (was 20px) */
+  --text-xl--line-height: 1.875rem;
+  --text-2xl: 1.5625rem;    /* 25px (was 24px) */
+  --text-2xl--line-height: 2.125rem;
+  --text-3xl: 1.9375rem;    /* 31px (was 30px) */
+  --text-3xl--line-height: 2.375rem;
+  --text-4xl: 2.375rem;     /* 38px (was 36px) */
+  --text-4xl--line-height: 2.625rem;
+  --text-5xl: 3.125rem;     /* 50px (was 48px) */
+  --text-5xl--line-height: 1;
+
+  /* Letter-spacing — premium product UI: tighter on display, wider on tiny labels */
+  --tracking-display: -0.025em;
+  --tracking-headline: -0.015em;
+  --tracking-body: -0.005em;
+  --tracking-label: 0.08em;
+
+  /* Surface tokens (shadcn-mapped) */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand accents — violet primary 1× per viewport; coral secondary uncapped, off-chrome only (AD-004) */
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-secondary-foreground: var(--brand-secondary-foreground);
+
+  /* Status tokens — data only, never on chrome */
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  /* Module-icon tints — used as backgrounds for icon medallions on the operations grid.
+     Each is a low-chroma desaturated wash of its semantic hue, ~0.18 lightness. */
+  --color-tint-cost: var(--tint-cost);
+  --color-tint-property: var(--tint-property);
+  --color-tint-community: var(--tint-community);
+  --color-tint-checklist: var(--tint-checklist);
+
+  /* Chart palette — Warm Premium Cockpit set */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar tokens — left-rail nav, warm violet surface */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Radius scale — 0.5rem default, 0.625rem tiles, 0.75rem cap. Large rounds banned. */
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.25);
+  --radius-xl: calc(var(--radius) * 1.5);
+  --radius-2xl: calc(var(--radius) * 1.5);
+  --radius-3xl: calc(var(--radius) * 1.5);
+  --radius-4xl: calc(var(--radius) * 1.5);
+}
+
+/*
+  Dark-mode-only palette. :root holds the active theme (no light fallback).
+  .dark mirrors :root so any `dark:` utility class still resolves correctly.
+*/
+
+:root {
+  /* Surfaces — warm violet-leaning dark, hue 285, low chroma (premium dusk undertone) */
+  --background: oklch(0.14 0.02 285);
+  --foreground: oklch(0.96 0.005 285);
+
+  --card: oklch(0.18 0.025 285);
+  --card-foreground: oklch(0.96 0.005 285);
+
+  --popover: oklch(0.22 0.03 285);
+  --popover-foreground: oklch(0.96 0.005 285);
+
+  /* Primary — violet brand (filled buttons / primary CTA) */
+  --primary: oklch(0.68 0.18 295);
+  --primary-foreground: oklch(0.14 0.02 285);
+
+  /* Secondary / muted / accent — surface elevations for hovers and pills */
+  --secondary: oklch(0.22 0.03 285);
+  --secondary-foreground: oklch(0.96 0.005 285);
+
+  --muted-raw: 0.22 0.03 285;
+  --muted: oklch(var(--muted-raw));
+  --muted-foreground: oklch(0.68 0.025 285);
+
+  --accent: oklch(0.26 0.035 285);
+  --accent-foreground: oklch(0.96 0.005 285);
+
+  /* Brand — violet primary, max 1× per viewport (AD-004) */
+  --brand-raw: 0.68 0.18 295;
+  --brand: oklch(var(--brand-raw));
+  --brand-foreground: oklch(0.14 0.02 285);
+
+  /* Brand secondary — coral, decorative vocabulary (sidebar promo, hero label, journey-active,
+     sparkles, notification dots). Uncapped count, but never on chrome surfaces / fills (AD-004). */
+  --brand-secondary-raw: 0.72 0.15 30;
+  --brand-secondary: oklch(var(--brand-secondary-raw));
+  --brand-secondary-foreground: oklch(0.14 0.02 285);
+
+  /* Destructive — alias for danger, mapped for shadcn primitives */
+  --destructive: oklch(0.66 0.20 25);
+
+  /* Status tokens — data only, hue-spaced from brand (hue 295) */
+  --ok-raw: 0.74 0.15 155;
+  --ok: oklch(var(--ok-raw));         /* fresh green */
+  --warn-raw: 0.78 0.16 70;
+  --warn: oklch(var(--warn-raw));     /* warm amber (formerly the brand) */
+  --danger-raw: 0.66 0.20 25;
+  --danger: oklch(var(--danger-raw)); /* signal red */
+  --info-raw: 0.74 0.12 230;
+  --info: oklch(var(--info-raw));     /* friendly blue */
+
+  /* Module-icon tints — desaturated washes for operations-grid icon medallions */
+  --tint-cost: oklch(0.32 0.06 155);       /* cost & commute → green wash */
+  --tint-property: oklch(0.32 0.06 30);    /* property → coral wash (violet rerouted to chrome-only, 4.4) */
+  --tint-community: oklch(0.32 0.06 230);  /* community → blue wash */
+  --tint-checklist: oklch(0.32 0.06 70);   /* checklist → amber wash */
+
+  /* Borders — hairlines ~12% perceptual contrast */
+  --border: oklch(0.32 0.025 285);
+  --input: oklch(0.36 0.03 285);
+  --ring: oklch(0.68 0.18 295 / 60%);
+
+  /* Chart palette — Warm Premium Cockpit set */
+  --chart-1: oklch(0.68 0.18 295);  /* violet brand */
+  --chart-2: oklch(0.72 0.15 30);   /* coral secondary */
+  --chart-3: oklch(0.74 0.15 155);  /* ok green */
+  --chart-4: oklch(0.78 0.16 70);   /* warn amber */
+  --chart-5: oklch(0.74 0.12 230);  /* info blue */
+
+  /* Radius — 0.5rem default; cap at 0.75rem. Large rounded cards banned. */
+  --radius: 0.5rem;
+
+  /* Sidebar — left-rail nav, slightly elevated warm-violet surface */
+  --sidebar: oklch(0.16 0.022 285);
+  --sidebar-foreground: oklch(0.96 0.005 285);
+  --sidebar-primary: oklch(0.68 0.18 295);
+  --sidebar-primary-foreground: oklch(0.14 0.02 285);
+  --sidebar-accent: oklch(0.24 0.032 285);
+  --sidebar-accent-foreground: oklch(0.96 0.005 285);
+  --sidebar-border: oklch(0.30 0.025 285);
+  --sidebar-ring: oklch(0.68 0.18 295 / 60%);
+}
+
+/* .dark mirrors :root — keeps `dark:` utility classes resolving correctly */
+.dark {
+  --background: oklch(0.14 0.02 285);
+  --foreground: oklch(0.96 0.005 285);
+  --card: oklch(0.18 0.025 285);
+  --card-foreground: oklch(0.96 0.005 285);
+  --popover: oklch(0.22 0.03 285);
+  --popover-foreground: oklch(0.96 0.005 285);
+  --primary: oklch(0.68 0.18 295);
+  --primary-foreground: oklch(0.14 0.02 285);
+  --secondary: oklch(0.22 0.03 285);
+  --secondary-foreground: oklch(0.96 0.005 285);
+  --muted-raw: 0.22 0.03 285;
+  --muted: oklch(var(--muted-raw));
+  --muted-foreground: oklch(0.68 0.025 285);
+  --accent: oklch(0.26 0.035 285);
+  --accent-foreground: oklch(0.96 0.005 285);
+  --brand-raw: 0.68 0.18 295;
+  --brand: oklch(var(--brand-raw));
+  --brand-foreground: oklch(0.14 0.02 285);
+  --brand-secondary-raw: 0.72 0.15 30;
+  --brand-secondary: oklch(var(--brand-secondary-raw));
+  --brand-secondary-foreground: oklch(0.14 0.02 285);
+  --destructive: oklch(0.66 0.20 25);
+  --ok-raw: 0.74 0.15 155;
+  --ok: oklch(var(--ok-raw));
+  --warn-raw: 0.78 0.16 70;
+  --warn: oklch(var(--warn-raw));
+  --danger-raw: 0.66 0.20 25;
+  --danger: oklch(var(--danger-raw));
+  --info-raw: 0.74 0.12 230;
+  --info: oklch(var(--info-raw));
+  --tint-cost: oklch(0.32 0.06 155);
+  --tint-property: oklch(0.32 0.06 30);
+  --tint-community: oklch(0.32 0.06 230);
+  --tint-checklist: oklch(0.32 0.06 70);
+  --border: oklch(0.32 0.025 285);
+  --input: oklch(0.36 0.03 285);
+  --ring: oklch(0.68 0.18 295 / 60%);
+  --chart-1: oklch(0.68 0.18 295);
+  --chart-2: oklch(0.72 0.15 30);
+  --chart-3: oklch(0.74 0.15 155);
+  --chart-4: oklch(0.78 0.16 70);
+  --chart-5: oklch(0.74 0.12 230);
+  --sidebar: oklch(0.16 0.022 285);
+  --sidebar-foreground: oklch(0.96 0.005 285);
+  --sidebar-primary: oklch(0.68 0.18 295);
+  --sidebar-primary-foreground: oklch(0.14 0.02 285);
+  --sidebar-accent: oklch(0.24 0.032 285);
+  --sidebar-accent-foreground: oklch(0.96 0.005 285);
+  --sidebar-border: oklch(0.30 0.025 285);
+  --sidebar-ring: oklch(0.68 0.18 295 / 60%);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    /* Sans is the primary UI face; mono is opt-in for numerics / labels */
+    @apply font-sans antialiased;
+    font-feature-settings: "ss01", "ss03", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    letter-spacing: var(--tracking-body);
+    min-height: 100svh;
+  }
+
+  /* Film-grain noise overlay — subtle analog texture for premium depth (Phase 4.6).
+     SVG data-URI encodes a 200×200 fractalNoise tile; opacity is imperceptible on
+     light text but adds cinematic warmth to dark surfaces. pointer-events: none
+     ensures it never intercepts clicks. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+  }
+
+  /* Headlines — sans, premium product-UI weight, text-balance for even rag (4.3) */
+  h1, h2, h3, h4 {
+    @apply font-heading;
+    letter-spacing: var(--tracking-headline);
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  h1 {
+    letter-spacing: var(--tracking-display);
+    font-weight: 600;
+  }
+
+  /* UPPERCASE label utility — tiny status labels, section headers, key-value keys */
+  .label-cap {
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-label);
+    font-weight: 500;
+    font-family: var(--font-mono);
+    /* Floor: even when paired with text-[10px]/text-xs, never render below
+       11px — uppercase tracked mono is the hardest-to-read text in the UI. */
+    font-size: max(0.6875rem, 1em);
+  }
+
+  /* Mono utility for numerics / route codes / status pills / tabular cells */
+  .mono-num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Tabular numerics opt-out for proportional headlines */
+  .proportional-nums {
+    font-variant-numeric: proportional-nums;
+  }
+
+  /* Selection — violet brand tint, low alpha */
+  ::selection {
+    background: oklch(0.68 0.18 295 / 30%);
+    color: var(--foreground);
+  }
+
+  /* Scrollbar — minimal */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.32 0.025 285) transparent;
+  }
+
+  /* Focus rings — consistent, brand-tinted (Phase 4.5) */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Reduced-motion respect (motion is guarded by these queries) */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* AD-005 atmospheres: single-hue radial gradients allowed only on hero + journey-active.
+     Use as inset overlays behind a foreground layer. */
+  .atmosphere-violet {
+    background: radial-gradient(
+      ellipse at 50% 60%,
+      oklch(0.68 0.18 295 / 0.22) 0%,
+      oklch(0.68 0.18 295 / 0.08) 35%,
+      transparent 70%
+    );
+  }
+  .atmosphere-coral {
+    background: radial-gradient(
+      ellipse at 50% 50%,
+      oklch(0.72 0.15 30 / 0.20) 0%,
+      oklch(0.72 0.15 30 / 0.06) 40%,
+      transparent 75%
+    );
+  }
+  .atmosphere-amber {
+    background: radial-gradient(
+      ellipse at 50% 60%,
+      oklch(0.78 0.16 70 / 0.18) 0%,
+      oklch(0.78 0.16 70 / 0.06) 40%,
+      transparent 75%
+    );
+  }
+
+  /* Sparkle twinkle — subtle blinking star animation for sidebar promo (Phase 4.2, AD-008) */
+  @keyframes sparkle-twinkle {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+  .animate-sparkle {
+    animation: sparkle-twinkle 3s ease-in-out infinite;
+  }
+  .animate-sparkle-delayed {
+    animation: sparkle-twinkle 3s ease-in-out 1.5s infinite;
+  }
+
+  /* Card hover micro-interaction — lift on hover (Phase 4.2) */
+  .card-hover {
+    transition: border-color 200ms ease, background-color 200ms ease;
+  }
+  .card-hover:hover {
+    border-color: oklch(0.40 0.03 285);
+    background-color: oklch(0.20 0.028 285);
+  }
+
+}
+
+/* ─── MapLibre dark-theme overrides ────────────────────────────────────────
+   Lives OUTSIDE @layer utilities. Tailwind's layered rules lose the cascade
+   to MapLibre's own un-layered CSS imported by maplibre-gl/dist/maplibre-
+   gl.css, which otherwise wins and re-paints the popups + attribution
+   chip white on top of the dark canvas. */
+
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib,
+.maplibregl-ctrl-bottom-left  .maplibregl-ctrl-attrib {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin: 4px;
+  padding: 2px 6px;
+}
+/* Force a solid dark chip on BOTH the outer control and its inner text wrapper
+   (MapLibre paints the inner white by default and wins the cascade otherwise),
+   so the attribution contrast is deterministic — translucent/white dropped it
+   below WCAG AA. !important is required to beat the un-layered vendor CSS. */
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl-attrib-inner {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  font-size: 10px;
+}
+.maplibregl-ctrl-attrib a,
+.maplibregl-ctrl-attrib a:hover {
+  color: var(--foreground) !important;
+}
+.maplibregl-ctrl-attrib-button {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+}
+
+/* Popups — pin click reveals a tooltip with neighborhood / price / etc.
+   We use `!important` on the surface fill because MapLibre's source CSS
+   sets `background: white` directly on the element and we have to win
+   that fight regardless of style-import order. */
+.maplibregl-popup-content {
+  background: var(--card) !important;
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  font-size: 12px;
+  padding: 10px 14px;
+}
+.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+  border-bottom-color: var(--card) !important;
+}
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+  border-top-color: var(--card) !important;
+}
+.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: var(--card) !important;
+}
+.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: var(--card) !important;
+}
+.maplibregl-popup-close-button {
+  color: var(--muted-foreground);
+  font-size: 18px;
+  padding: 2px 6px;
+}
+.maplibregl-popup-close-button:hover {
+  color: var(--foreground);
+  background: transparent;
+}

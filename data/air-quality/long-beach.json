@@ -1,0 +1,26 @@
+{
+  "city": "long-beach",
+  "reportingArea": "South Coastal LA",
+  "observedAt": "2026-07-12 21:00 PST",
+  "dominantParameter": "PM2.5",
+  "aqi": 43,
+  "category": "Good",
+  "readings": [
+    {
+      "parameter": "O3",
+      "aqi": 22,
+      "category": "Good"
+    },
+    {
+      "parameter": "PM2.5",
+      "aqi": 43,
+      "category": "Good"
+    },
+    {
+      "parameter": "PM10",
+      "aqi": 14,
+      "category": "Good"
+    }
+  ],
+  "source": "air-quality-airnow-2026"
+}

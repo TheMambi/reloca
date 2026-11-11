@@ -1,0 +1,26 @@
+{
+  "city": "denver",
+  "reportingArea": "Denver-Boulder",
+  "observedAt": "2026-07-12 22:00 MST",
+  "dominantParameter": "O3",
+  "aqi": 84,
+  "category": "Moderate",
+  "readings": [
+    {
+      "parameter": "O3",
+      "aqi": 84,
+      "category": "Moderate"
+    },
+    {
+      "parameter": "PM2.5",
+      "aqi": 23,
+      "category": "Good"
+    },
+    {
+      "parameter": "PM10",
+      "aqi": 19,
+      "category": "Good"
+    }
+  ],
+  "source": "air-quality-airnow-2026"
+}

@@ -1,0 +1,92 @@
+[
+  {
+    "id": "cost-modeled-2025",
+    "label": "Modeled cost of living",
+    "provider": "Reloca estimates",
+    "url": "https://www.census.gov/programs-surveys/acs",
+    "tier": "modeled",
+    "fetchedAt": "2025-04-01",
+    "notes": "Hand-authored monthly estimates for the non-rent categories (utilities, groceries, transport, healthcare, taxes, entertainment), blended from EIA state averages, BLS regional CPI, AAA fuel prices, and KFF. Housing is now a live HUD Fair Market Rent pull (see rent-hud-fmr-2026)."
+  },
+  {
+    "id": "rent-hud-fmr-2026",
+    "label": "HUD Fair Market Rent",
+    "provider": "U.S. Department of Housing and Urban Development",
+    "url": "https://www.huduser.gov/portal/dataset/fmr-api.html",
+    "tier": "live",
+    "fetchedAt": "2026-07-13",
+    "notes": "Two-bedroom Fair Market Rent for the metro area, fiscal year 2026."
+  },
+  {
+    "id": "crime-modeled-2025",
+    "label": "Modeled crime rates",
+    "provider": "Reloca estimates",
+    "url": "https://www.denvergov.org/opendata",
+    "tier": "modeled",
+    "fetchedAt": "2025-03-31",
+    "notes": "Per-1,000-resident rates for Denver and Long Beach modeled from published city figures. No FBI data per project decision; hour-of-day and 12-month trend curves are illustrative."
+  },
+  {
+    "id": "crime-sac-2024",
+    "label": "Sacramento crime (2024)",
+    "provider": "City of Sacramento Open Data",
+    "url": "https://data.cityofsacramento.org/datasets/eddc9729d09e4c7f92794d2ae1d99da4_0/about",
+    "tier": "modeled",
+    "fetchedAt": "2026-05-30",
+    "notes": "Summary and per-subcategory counts are full-year 2024 totals from the City of Sacramento's published police records dataset (not FBI). Bucketing follows UCR-style categories; aggravated-assault uses the city's discrete category (a NIBRS-style figure would be higher). Hour-of-day and 12-month trend curves are illustrative, so the record is tiered modeled."
+  },
+  {
+    "id": "climate-noaa-2026",
+    "label": "NOAA climate normals",
+    "provider": "NOAA National Centers for Environmental Information",
+    "url": "https://www.ncei.noaa.gov/cdo-web/",
+    "tier": "live",
+    "fetchedAt": "2026-07-13",
+    "notes": "Average high/low temperature, annual precipitation, and days at or above 90\u00b0F are pulled live from NOAA's climate normals (CDO NORMAL_ANN product \u2014 the 1981\u20132010 normals vintage; the newer 1991\u20132020 set isn't served by this endpoint). The flood, wildfire, earthquake, and sea-level fields in each climate profile are hand-verified estimates, cross-checked against FEMA NFHL/NRI and USGS (modeled)."
+  },
+  {
+    "id": "climate-modeled-2025",
+    "label": "Modeled climate profile",
+    "provider": "Reloca estimates",
+    "url": "https://www.ncei.noaa.gov",
+    "tier": "modeled",
+    "fetchedAt": "2025-04-01",
+    "notes": "Fallback climate estimates, used only if the live NOAA normals pull is unavailable for a city. Hand-authored from NOAA normals, FEMA flood tiers, and USDA wildfire norms."
+  },
+  {
+    "id": "air-quality-airnow-2026",
+    "label": "EPA AirNow",
+    "provider": "U.S. Environmental Protection Agency \u2014 AirNow",
+    "url": "https://www.airnow.gov/",
+    "tier": "live",
+    "notes": "Current air-quality observation for the city's reporting area \u2014 a point-in-time reading stamped with its local observation time, not a rolling average.",
+    "fetchedAt": "2026-07-13"
+  },
+  {
+    "id": "community-modeled-2025",
+    "label": "Community estimates",
+    "provider": "Reloca estimates",
+    "url": "https://www.census.gov/programs-surveys/acs",
+    "tier": "modeled",
+    "fetchedAt": "2025-04-01",
+    "notes": "Median rent brackets and weather summaries are estimates; testimonials are illustrative composites, not attributed quotes."
+  },
+  {
+    "id": "listings-sample-2025",
+    "label": "Sample listings",
+    "provider": "Reloca sample data",
+    "url": "https://www.census.gov/programs-surveys/acs",
+    "tier": "modeled",
+    "fetchedAt": "2025-04-01",
+    "notes": "Illustrative neighborhood listings used to populate the property grid; not live market inventory."
+  },
+  {
+    "id": "walkability-epa-2026",
+    "label": "EPA National Walkability Index",
+    "provider": "U.S. Environmental Protection Agency \u2014 Smart Location Database",
+    "url": "https://www.epa.gov/smartgrowth/smart-location-mapping",
+    "tier": "live",
+    "fetchedAt": "2026-05-31",
+    "notes": "Population-weighted mean of the EPA National Walkability Index (NatWalkInd, 1\u201320 scale) across Census block groups within ~10 km of the city centroid, served live from EPA's GeoPlatform ArcGIS feature service (public domain / CC0). Mapped to a 0\u2013100 score; the 25/50/75 category cuts are EPA's own walkability tier boundaries. Block-group geography vintage 2018."
+  }
+]

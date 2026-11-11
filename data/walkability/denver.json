@@ -1,0 +1,9 @@
+{
+  "city": "denver",
+  "score": 72,
+  "category": "very-walkable",
+  "natWalkInd": 14.69,
+  "blockGroupCount": 543,
+  "population": 737363,
+  "source": "walkability-epa-2026"
+}

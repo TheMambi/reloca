@@ -1,0 +1,20 @@
+{
+  "features": [
+    {
+      "attributes": {
+        "COUNTY": "Denver",
+        "STATE": "Colorado",
+        "STCOFIPS": "08031",
+        "RISK_SCORE": 95.23,
+        "RISK_RATNG": "Relatively High",
+        "WFIR_RISKS": 60.62,
+        "WFIR_RISKR": "Very Low",
+        "WFIR_ALR_NPCTL": 23.8,
+        "RFLD_RISKS": 30.5,
+        "RFLD_RISKR": "Relatively Low",
+        "ERQK_RISKS": 12.1,
+        "ERQK_RISKR": "Very Low"
+      }
+    }
+  ]
+}

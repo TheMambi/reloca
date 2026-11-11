@@ -1,0 +1,23 @@
+[
+  {
+    "category": "move-week",
+    "title": "Pack + clean Denver apartment",
+    "description": "Pack remaining belongings; deep clean per lease requirements; keep cleaning receipts if hiring a service. Photo/video documentation supports deposit recovery.",
+    "daysOffsetFromMoveDate": -1,
+    "orderIndex": 0
+  },
+  {
+    "category": "move-week",
+    "title": "Move day · drive + inspect Long Beach unit",
+    "description": "Denver → Long Beach: ~1,020 miles, ~15 hours driving (plan overnight stop). On arrival: pick up keys, document move-in condition with photos before unloading.",
+    "daysOffsetFromMoveDate": 0,
+    "orderIndex": 1
+  },
+  {
+    "category": "post-move",
+    "title": "STATUTORY · CA tax residency note",
+    "description": "Note your CA residency establishment date for next April's part-year CO + CA tax returns. The other statutory deadlines (driver's license, vehicle registration, voter re-registration) live as Address Updates so they each get their own deadline pill.",
+    "daysOffsetFromMoveDate": 10,
+    "orderIndex": 0
+  }
+]

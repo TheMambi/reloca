@@ -1,0 +1,14 @@
+{
+  "data": {
+    "year": "2026",
+    "area_name": "Denver-Aurora-Centennial, CO MSA",
+    "basicdata": {
+      "zip_code": null,
+      "Efficiency": "1450",
+      "One-Bedroom": "1754",
+      "Two-Bedroom": "2089",
+      "Three-Bedroom": "2700",
+      "Four-Bedroom": "3100"
+    }
+  }
+}

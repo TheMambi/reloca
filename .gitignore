@@ -1,0 +1,90 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+/dist
+
+# misc
+.DS_Store
+*.pem
+*.log
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files — NEVER commit values. Only the .env.template structure file is allowed.
+.env*
+!.env.template
+
+# vercel — covers .vercel/ and .vercel/output/
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# personal / sensitive — never commit
+docs/*.pdf
+
+# inspiration & local references (third-party screenshots, generated images, scratch)
+Inspiration/
+
+# local agent state — never commit
+.claude/
+.cursor/
+.aider*
+.continue/
+.codeium/
+
+# IDE / editor junk
+.vscode/
+.idea/
+.zed/
+.history/
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+
+# OS metadata (defensive — for cross-platform / shared dirs)
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+._*
+
+# build caches if added later
+.turbo/
+.cache/
+
+# package tarballs
+*.tgz
+
+# supabase CLI local state (migrations folder `supabase/` IS committed)
+.supabase/
+
+# Local verification screenshots (Wave C)
+.tmp-verify/
+
+# MapLibre worker, copied from node_modules on install (scripts/copy-maplibre-worker.mjs)
+/public/maplibre-gl-worker.mjs

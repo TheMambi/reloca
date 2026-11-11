@@ -1,0 +1,25 @@
+{
+  "city": "denver",
+  "flood": {
+    "femaTier": "X",
+    "annualChanceFlood": 0.002
+  },
+  "wildfire": {
+    "score": 45,
+    "nearestActiveZoneKm": 48
+  },
+  "seaLevelRise": {
+    "exposure": "none",
+    "projection2050cm": null
+  },
+  "earthquake": {
+    "riskLevel": "low",
+    "lastMajorEvent": "1882 — M6.6 near Rocky Mountain Arsenal (minor damage)"
+  },
+  "heatDaysPerYear": 31,
+  "droughtIndex": -2.1,
+  "annualPrecipitationIn": 15.6,
+  "avgHighF": 64,
+  "avgLowF": 36,
+  "source": "climate-noaa-2026"
+}

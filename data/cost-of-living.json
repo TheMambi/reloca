@@ -1,0 +1,231 @@
+{
+  "asOf": "2026-07-13",
+  "categories": [
+    {
+      "category": "housing",
+      "values": [
+        {
+          "city": "denver",
+          "monthlyMedian": 2089
+        },
+        {
+          "city": "long-beach",
+          "monthlyMedian": 2903
+        },
+        {
+          "city": "sacramento",
+          "monthlyMedian": 2255
+        }
+      ],
+      "notes": "Two-bedroom HUD Fair Market Rent (FY2026) per metro area \u2014 the federal yardstick for typical metro rent.",
+      "source": "rent-hud-fmr-2026"
+    },
+    {
+      "category": "utilities",
+      "values": [
+        {
+          "city": "denver",
+          "monthlyMedian": 185
+        },
+        {
+          "city": "long-beach",
+          "monthlyMedian": 165
+        },
+        {
+          "city": "sacramento",
+          "monthlyMedian": 185
+        }
+      ],
+      "notes": "Electric, gas, water, trash. LB lower due to mild climate reducing heating/cooling. Source: EIA state averages.",
+      "source": "cost-modeled-2025"
+    },
+    {
+      "category": "groceries",
+      "values": [
+        {
+          "city": "denver",
+          "monthlyMedian": 420
+        },
+        {
+          "city": "long-beach",
+          "monthlyMedian": 455
+        },
+        {
+          "city": "sacramento",
+          "monthlyMedian": 440
+        }
+      ],
+      "notes": "USDA moderate-cost plan for two adults. CA ~8% higher than CO per BLS regional CPI.",
+      "source": "cost-modeled-2025"
+    },
+    {
+      "category": "transport",
+      "values": [
+        {
+          "city": "denver",
+          "monthlyMedian": 580
+        },
+        {
+          "city": "long-beach",
+          "monthlyMedian": 660
+        },
+        {
+          "city": "sacramento",
+          "monthlyMedian": 620
+        }
+      ],
+      "notes": "Car payment + insurance + gas. CA gas avg $4.80/gal vs CO $3.30. LA Metro pass: $100/mo.",
+      "source": "cost-modeled-2025"
+    },
+    {
+      "category": "healthcare",
+      "values": [
+        {
+          "city": "denver",
+          "monthlyMedian": 510
+        },
+        {
+          "city": "long-beach",
+          "monthlyMedian": 540
+        },
+        {
+          "city": "sacramento",
+          "monthlyMedian": 535
+        }
+      ],
+      "notes": "Employer-sponsored plan premiums + out-of-pocket. CA slightly higher per KFF state data.",
+      "source": "cost-modeled-2025"
+    },
+    {
+      "category": "taxes",
+      "values": [
+        {
+          "city": "denver",
+          "monthlyMedian": 680
+        },
+        {
+          "city": "long-beach",
+          "monthlyMedian": 920
+        },
+        {
+          "city": "sacramento",
+          "monthlyMedian": 910
+        }
+      ],
+      "notes": "State income tax: CO flat 4.4% vs CA progressive 1\u201313.3%. CA has no estate tax.",
+      "source": "cost-modeled-2025"
+    },
+    {
+      "category": "childcare",
+      "values": [
+        {
+          "city": "denver",
+          "monthlyMedian": 0
+        },
+        {
+          "city": "long-beach",
+          "monthlyMedian": 0
+        },
+        {
+          "city": "sacramento",
+          "monthlyMedian": 0
+        }
+      ],
+      "notes": "Not modeled.",
+      "source": "cost-modeled-2025"
+    },
+    {
+      "category": "entertainment",
+      "values": [
+        {
+          "city": "denver",
+          "monthlyMedian": 280
+        },
+        {
+          "city": "long-beach",
+          "monthlyMedian": 310
+        },
+        {
+          "city": "sacramento",
+          "monthlyMedian": 285
+        }
+      ],
+      "notes": "Dining, streaming, fitness, recreation. LB slightly higher per Numbeo leisure index.",
+      "source": "cost-modeled-2025"
+    }
+  ],
+  "commute": [
+    {
+      "city": "denver",
+      "mode": "car",
+      "avgMinutesOneWay": 28,
+      "monthlyCost": 380
+    },
+    {
+      "city": "denver",
+      "mode": "transit",
+      "avgMinutesOneWay": 45,
+      "monthlyCost": 114
+    },
+    {
+      "city": "denver",
+      "mode": "bike",
+      "avgMinutesOneWay": 22,
+      "monthlyCost": 15
+    },
+    {
+      "city": "denver",
+      "mode": "walk",
+      "avgMinutesOneWay": 35,
+      "monthlyCost": 0
+    },
+    {
+      "city": "long-beach",
+      "mode": "car",
+      "avgMinutesOneWay": 35,
+      "monthlyCost": 440
+    },
+    {
+      "city": "long-beach",
+      "mode": "transit",
+      "avgMinutesOneWay": 55,
+      "monthlyCost": 100
+    },
+    {
+      "city": "long-beach",
+      "mode": "bike",
+      "avgMinutesOneWay": 18,
+      "monthlyCost": 15
+    },
+    {
+      "city": "long-beach",
+      "mode": "walk",
+      "avgMinutesOneWay": 30,
+      "monthlyCost": 0
+    },
+    {
+      "city": "sacramento",
+      "mode": "car",
+      "avgMinutesOneWay": 26,
+      "monthlyCost": 400
+    },
+    {
+      "city": "sacramento",
+      "mode": "transit",
+      "avgMinutesOneWay": 48,
+      "monthlyCost": 100
+    },
+    {
+      "city": "sacramento",
+      "mode": "bike",
+      "avgMinutesOneWay": 22,
+      "monthlyCost": 15
+    },
+    {
+      "city": "sacramento",
+      "mode": "walk",
+      "avgMinutesOneWay": 34,
+      "monthlyCost": 0
+    }
+  ]
+}

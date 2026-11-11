@@ -1,0 +1,44 @@
+[
+  {
+    "slug": "denver",
+    "displayName": "Denver",
+    "stateCode": "CO",
+    "routeCode": "DEN",
+    "lat": 39.7392,
+    "lng": -104.9903,
+    "population": 713252,
+    "metro": {
+      "hudEntityId": "METRO19740M19740",
+      "censusPlaceFips": "0820000",
+      "noaaStationId": "GHCND:USW00023062"
+    }
+  },
+  {
+    "slug": "long-beach",
+    "displayName": "Long Beach",
+    "stateCode": "CA",
+    "routeCode": "LGB",
+    "lat": 33.7701,
+    "lng": -118.1937,
+    "population": 466742,
+    "metro": {
+      "hudEntityId": "METRO31080MM4480",
+      "censusPlaceFips": "0643000",
+      "noaaStationId": "GHCND:USW00023129"
+    }
+  },
+  {
+    "slug": "sacramento",
+    "displayName": "Sacramento",
+    "stateCode": "CA",
+    "routeCode": "SAC",
+    "lat": 38.5816,
+    "lng": -121.4944,
+    "population": 524943,
+    "metro": {
+      "hudEntityId": "METRO40900M40900",
+      "censusPlaceFips": "0664000",
+      "noaaStationId": "GHCND:USW00023232"
+    }
+  }
+]

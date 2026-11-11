@@ -1,0 +1,25 @@
+{
+  "city": "long-beach",
+  "flood": {
+    "femaTier": "AE",
+    "annualChanceFlood": 0.01
+  },
+  "wildfire": {
+    "score": 12,
+    "nearestActiveZoneKm": null
+  },
+  "seaLevelRise": {
+    "exposure": "moderate",
+    "projection2050cm": 25
+  },
+  "earthquake": {
+    "riskLevel": "significant",
+    "lastMajorEvent": "1933 — M6.4 Long Beach earthquake (115 fatalities, major structural damage)"
+  },
+  "heatDaysPerYear": 18,
+  "droughtIndex": -1.4,
+  "annualPrecipitationIn": 12.3,
+  "avgHighF": 74,
+  "avgLowF": 55,
+  "source": "climate-noaa-2026"
+}

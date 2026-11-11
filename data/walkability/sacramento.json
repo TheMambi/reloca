@@ -1,0 +1,9 @@
+{
+  "city": "sacramento",
+  "score": 68,
+  "category": "very-walkable",
+  "natWalkInd": 13.93,
+  "blockGroupCount": 361,
+  "population": 554584,
+  "source": "walkability-epa-2026"
+}

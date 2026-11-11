@@ -1,0 +1,5 @@
+[
+  { "DateObserved": "2026-05-30 ", "HourObserved": 14, "LocalTimeZone": "MST", "ReportingArea": "Denver-Boulder", "StateCode": "CO", "ParameterName": "O3", "AQI": 97, "Category": { "Number": 2, "Name": "Moderate" } },
+  { "DateObserved": "2026-05-30 ", "HourObserved": 14, "LocalTimeZone": "MST", "ReportingArea": "Denver-Boulder", "StateCode": "CO", "ParameterName": "PM2.5", "AQI": 22, "Category": { "Number": 1, "Name": "Good" } },
+  { "DateObserved": "2026-05-30 ", "HourObserved": 14, "LocalTimeZone": "MST", "ReportingArea": "Denver-Boulder", "StateCode": "CO", "ParameterName": "PM10", "AQI": 39, "Category": { "Number": 1, "Name": "Good" } }
+]
