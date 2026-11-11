@@ -4,6 +4,10 @@ A relocation cockpit for one household moving between cities. I built it to run 
 
 This repo is the public, portfolio version. Every name, address and dollar figure in it is sample data.
 
+**[Try the live demo](https://reloca-demo.vercel.app)**. It runs on sample data in memory, with no sign-up, and your edits reset from time to time.
+
+![Reloca dashboard: countdown to move day, the Denver to Long Beach route, cost, community and air-quality tiles](docs/images/reloca-dashboard.png)
+
 ## What it does
 
 - **Dashboard.** A countdown to move day, the next deadlines, and reference tiles that compare origin and destination on cost, climate and air quality. It switches to post-move states once the date passes.
@@ -13,6 +17,8 @@ This repo is the public, portfolio version. Every name, address and dollar figur
 - **Address changes.** Bank, employer, DMV, voter registration, insurance and subscriptions, each with its own deadline.
 - **Moving cost and cost of living.** Budget for the move itself, plus a category-by-category comparison of the two cities.
 - **Properties.** Neighborhoods and sample listings on a map, with a dialog that reads a listing URL you paste and fills in the details.
+
+  ![Properties page: Long Beach neighborhoods on a dark map with rent ranges per neighborhood](docs/images/reloca-properties.png)
 
 ## Data and where it comes from
 
