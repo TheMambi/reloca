@@ -66,6 +66,6 @@ Reloca is built for a single household. There is no sign-in: the database polici
 
 ## License
 
-MIT. See `LICENSE`.
+Copyright (C) 2026 The Mambí. This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See `LICENSE` for the full text.
 
 Made by The Mambí · [themambi.com](https://themambi.com)
