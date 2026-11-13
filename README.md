@@ -58,7 +58,7 @@ To run it on your own data you need Node 20+, pnpm, and a free Supabase project.
 3. Pick a UUID for `RELOCA_SINGLE_USER_ID`. Run the files in `supabase/migrations/` in order in the Supabase SQL editor, replacing the `<RELOCA_SINGLE_USER_ID>` placeholder with that UUID. Migration 0023 seeds a sample move for the user it finds in `checklist_items`, so on an empty database skip it and add your move from the app instead.
 4. `pnpm dev`
 
-Tests are plain TypeScript scripts: `npx tsx path/to/file.test.ts`.
+Tests are plain TypeScript scripts. `pnpm test` runs them all from the repo root and stops at the first failure. To run one: `npx tsx path/to/file.test.ts`.
 
 ## Limits
 
