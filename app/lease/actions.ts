@@ -14,11 +14,14 @@ import {
   type FetchResult,
 } from "@/lib/lease/destination-fetch";
 import {
-  ResidentSchema,
   LeaseDecisionEnum,
-  FetchStatusEnum,
-  InsuranceScopeEnum,
   NoticeDraftSchema,
+  CreateLeaseTermsInput,
+  UpdateLeaseTermsPatch,
+  InsurancePolicyCreateInput,
+  InsurancePolicyPatchInput,
+  DestinationCreateInput,
+  DestinationPatchInput,
   type NoticeDraft,
 } from "@/schemas/lease";
 
@@ -30,40 +33,6 @@ const ORIGIN_POLICY_CANCEL_OFFSET = 7;    // days after move-out
 const CONDITION_DOC_LEAD = 3;             // days before move-out
 
 // ── lease_terms CRUD ──────────────────────────────────────────────────────
-
-const LeaseTermsBase = z.object({
-  property_name: z.string().min(1),
-  unit_address: z.string().min(1),
-  city: z.string().min(1),
-  landlord_email: z.email(),
-  landlord_display_name: z.string().nullable(),
-  residents: z.array(ResidentSchema).min(1),
-  lease_start_date: z.iso.date(),
-  lease_end_date: z.iso.date(),
-  notice_days_required: z.number().int().min(0).default(60),
-  target_move_out_date: z.iso.date().nullable(),
-  renewal_offer_expires: z.iso.date().nullable(),
-  current_monthly_rent: z.number().nonnegative(),
-  renewal_monthly_rent: z.number().nonnegative().nullable(),
-  m2m_premium: z.number().nonnegative().default(0),
-  security_deposit: z.number().nonnegative().nullable(),
-  pet_rent_monthly: z.number().nonnegative().default(0),
-  parking_monthly: z.number().nonnegative().default(0),
-  included_utilities: z.array(z.string()).default([]),
-  late_fee_rules: z.string().nullable(),
-  decision: LeaseDecisionEnum.default("undecided"),
-});
-
-// Refines apply on create only; partial patches re-load and re-validate via the row's full state when needed.
-const CreateLeaseTermsInput = LeaseTermsBase
-  .refine(
-    (v) => v.lease_end_date > v.lease_start_date,
-    { message: "lease_end_date must be after lease_start_date", path: ["lease_end_date"] },
-  )
-  .refine(
-    (v) => v.target_move_out_date == null || v.target_move_out_date >= v.lease_start_date,
-    { message: "target_move_out_date must be on or after lease_start_date", path: ["target_move_out_date"] },
-  );
 
 export async function createLeaseTerms(
   input: z.input<typeof CreateLeaseTermsInput>,
@@ -86,8 +55,6 @@ export async function createLeaseTerms(
   revalidatePath("/");
   return { id: data.id };
 }
-
-const UpdateLeaseTermsPatch = LeaseTermsBase.partial();
 
 export async function updateLeaseTerms(
   leaseId: string,
@@ -404,27 +371,6 @@ export async function seedLeaseChecklistTasks(leaseId: string): Promise<void> {
 
 // ── insurance_policies CRUD ───────────────────────────────────────────────
 
-const InsurancePolicyBase = z.object({
-  scope: InsuranceScopeEnum,
-  property_label: z.string().min(1),
-  carrier: z.string().nullable(),
-  policy_number: z.string().nullable(),
-  liability_amount: z.number().nonnegative(),
-  personal_property_amount: z.number().nonnegative(),
-  monthly_cost: z.number().nonnegative().nullable(),
-  effective_from: z.iso.date(),
-  effective_to: z.iso.date().nullable(),
-  interested_party_listed: z.boolean().default(false),
-  interested_party_name: z.string().nullable(),
-  document_url: z.url().nullable(),
-});
-
-// Refines apply on create only; partial patches re-load and re-validate via the row's full state when needed.
-const InsurancePolicyCreateInput = InsurancePolicyBase.refine(
-  (v) => v.effective_to == null || v.effective_to > v.effective_from,
-  { message: "effective_to must be after effective_from (or null for open-ended)", path: ["effective_to"] },
-);
-
 export async function addInsurancePolicy(
   input: z.input<typeof InsurancePolicyCreateInput>,
 ): Promise<{ id: string }> {
@@ -441,8 +387,6 @@ export async function addInsurancePolicy(
   revalidatePath("/");
   return { id: data.id };
 }
-
-const InsurancePolicyPatchInput = InsurancePolicyBase.partial();
 
 export async function updateInsurancePolicy(
   id: string,
@@ -465,33 +409,6 @@ export async function deleteInsurancePolicy(id: string): Promise<void> {
 }
 
 // ── destinations CRUD (Wave B uses these heavily) ─────────────────────────
-
-const DestinationCreateInput = z.object({
-  building_name: z.string().min(1),
-  street_address: z.string().min(1),
-  city: z.string().min(1),
-  state_code: z.string().regex(/^[A-Z]{2}$/).nullable(),
-  zip_code: z.string().regex(/^\d{5}(-\d{4})?$/).nullable(),
-  source_url: z.url().nullable(),
-  fetch_status: FetchStatusEnum.default("manual"),
-  monthly_rent_low: z.number().nonnegative().nullable(),
-  monthly_rent_high: z.number().nonnegative().nullable(),
-  application_fee: z.number().nonnegative().nullable(),
-  security_deposit: z.number().nonnegative().nullable(),
-  pet_rent_monthly: z.number().nonnegative().nullable(),
-  parking_monthly: z.number().nonnegative().nullable(),
-  beds: z.number().nonnegative().nullable(),
-  baths: z.number().nonnegative().nullable(),
-  sqft: z.number().int().nullable(),
-  amenities: z.array(z.string()).default([]),
-  pets_allowed: z.boolean().nullable(),
-  furnished: z.boolean().nullable(),
-  insurance_required: z.boolean().default(true),
-  insurance_min_liability: z.number().nonnegative().nullable(),
-  insurance_min_property: z.number().nonnegative().nullable(),
-  is_active_target: z.boolean().default(false),
-  notes: z.string().nullable(),
-});
 
 export async function createDestination(
   input: z.input<typeof DestinationCreateInput>,
@@ -554,8 +471,6 @@ export async function setActiveDestination(destinationId: string): Promise<void>
   revalidatePath("/lease");
   revalidatePath("/");
 }
-
-const DestinationPatchInput = DestinationCreateInput.partial();
 
 export async function updateDestination(
   id: string,

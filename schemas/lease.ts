@@ -144,6 +144,116 @@ export const InsurancePolicySchema = z.object({
 });
 export type InsurancePolicy = z.infer<typeof InsurancePolicySchema>;
 
+// ── Action inputs (app/lease/actions.ts) ──────────────────────────────────
+// The editable fields are picked from the row schemas, which carry no defaults.
+// Zod fills a default for every missing key, even inside .partial(), so a patch
+// schema built from a shape with defaults resets fields the caller never sent.
+// Defaults are added on create only, and the patch schemas reject unknown keys.
+
+const LeaseTermsFields = LeaseTermsSchema.pick({
+  property_name: true,
+  unit_address: true,
+  city: true,
+  landlord_email: true,
+  landlord_display_name: true,
+  residents: true,
+  lease_start_date: true,
+  lease_end_date: true,
+  notice_days_required: true,
+  target_move_out_date: true,
+  renewal_offer_expires: true,
+  current_monthly_rent: true,
+  renewal_monthly_rent: true,
+  m2m_premium: true,
+  security_deposit: true,
+  pet_rent_monthly: true,
+  parking_monthly: true,
+  included_utilities: true,
+  late_fee_rules: true,
+  decision: true,
+});
+
+// Refines apply on create only; partial patches re-load and re-validate via the row's full state when needed.
+export const CreateLeaseTermsInput = LeaseTermsFields.extend({
+  notice_days_required: LeaseTermsFields.shape.notice_days_required.default(60),
+  m2m_premium: LeaseTermsFields.shape.m2m_premium.default(0),
+  pet_rent_monthly: LeaseTermsFields.shape.pet_rent_monthly.default(0),
+  parking_monthly: LeaseTermsFields.shape.parking_monthly.default(0),
+  included_utilities: LeaseTermsFields.shape.included_utilities.default([]),
+  decision: LeaseTermsFields.shape.decision.default("undecided"),
+})
+  .refine(
+    (v) => v.lease_end_date > v.lease_start_date,
+    { message: "lease_end_date must be after lease_start_date", path: ["lease_end_date"] },
+  )
+  .refine(
+    (v) => v.target_move_out_date == null || v.target_move_out_date >= v.lease_start_date,
+    { message: "target_move_out_date must be on or after lease_start_date", path: ["target_move_out_date"] },
+  );
+
+export const UpdateLeaseTermsPatch = LeaseTermsFields.partial().strict();
+
+const InsurancePolicyFields = InsurancePolicySchema.pick({
+  scope: true,
+  property_label: true,
+  carrier: true,
+  policy_number: true,
+  liability_amount: true,
+  personal_property_amount: true,
+  monthly_cost: true,
+  effective_from: true,
+  effective_to: true,
+  interested_party_listed: true,
+  interested_party_name: true,
+  document_url: true,
+});
+
+// Refines apply on create only; partial patches re-load and re-validate via the row's full state when needed.
+export const InsurancePolicyCreateInput = InsurancePolicyFields.extend({
+  interested_party_listed: InsurancePolicyFields.shape.interested_party_listed.default(false),
+}).refine(
+  (v) => v.effective_to == null || v.effective_to > v.effective_from,
+  { message: "effective_to must be after effective_from (or null for open-ended)", path: ["effective_to"] },
+);
+
+export const InsurancePolicyPatchInput = InsurancePolicyFields.partial().strict();
+
+const DestinationFields = DestinationSchema.pick({
+  building_name: true,
+  street_address: true,
+  city: true,
+  state_code: true,
+  zip_code: true,
+  source_url: true,
+  fetch_status: true,
+  monthly_rent_low: true,
+  monthly_rent_high: true,
+  application_fee: true,
+  security_deposit: true,
+  pet_rent_monthly: true,
+  parking_monthly: true,
+  beds: true,
+  baths: true,
+  sqft: true,
+  amenities: true,
+  pets_allowed: true,
+  furnished: true,
+  insurance_required: true,
+  insurance_min_liability: true,
+  insurance_min_property: true,
+  is_active_target: true,
+  notes: true,
+});
+
+export const DestinationCreateInput = DestinationFields.extend({
+  fetch_status: DestinationFields.shape.fetch_status.default("manual"),
+  amenities: DestinationFields.shape.amenities.default([]),
+  insurance_required: DestinationFields.shape.insurance_required.default(true),
+  is_active_target: DestinationFields.shape.is_active_target.default(false),
+});
+
+export const DestinationPatchInput = DestinationFields.partial().strict();
+
 // PostgREST returns numeric() as string. Use this before parsing rows.
 export function coerceNumerics<T extends Record<string, unknown>>(row: T, fields: readonly (keyof T)[]): T {
   const out = { ...row };
