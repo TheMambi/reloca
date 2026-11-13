@@ -2,15 +2,21 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient as createPlainClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
+import { appMode } from "@/lib/mode";
 import type { Database } from "./types";
 import { createDemoClient } from "./demo-client";
 import { DEMO_USER_ID } from "./demo-seed";
 
 type AppClient = ReturnType<typeof createServerClient<Database>>;
 
-/** Public portfolio deploy: no database, sample data held in memory. */
+/**
+ * Public portfolio deploy: no database, sample data held in memory.
+ * Throws while the mode is unset or invalid (lib/mode.ts). Every client and
+ * user-id helper below asks this first, so none of them can reach the
+ * database by accident.
+ */
 export function isDemoMode(): boolean {
-  return process.env.RELOCA_DEMO_MODE === "1";
+  return appMode() === "demo";
 }
 
 /**

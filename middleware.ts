@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { appMode } from "@/lib/mode";
 
 // Demo mode only: give each visitor an anonymous id so the in-memory demo data
 // (lib/supabase/demo-client.ts) is per visitor. The id is set on the incoming
@@ -7,8 +8,11 @@ const DEMO_VISITOR_COOKIE = "reloca_demo_visitor";
 const VISITOR_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function middleware(req: NextRequest) {
+  // Asked first: while the mode is unset or invalid this throws, so no page or
+  // server action is served.
+  const demo = appMode() === "demo";
   const current = req.cookies.get(DEMO_VISITOR_COOKIE)?.value;
-  if (process.env.RELOCA_DEMO_MODE !== "1" || (current && VISITOR_ID.test(current))) {
+  if (!demo || (current && VISITOR_ID.test(current))) {
     return NextResponse.next();
   }
   const id = crypto.randomUUID();
