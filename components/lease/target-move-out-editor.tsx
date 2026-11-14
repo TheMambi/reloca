@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { CalendarIcon } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/components/ui/calendar-lazy";
 import {
   Popover,
   PopoverContent,

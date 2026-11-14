@@ -12,16 +12,11 @@ import type {
   NeighborhoodCompareColumn,
   NeighborhoodCompareView,
 } from "@/lib/data/neighborhood-compare";
+import { usdFormat } from "@/lib/currency";
 
 interface NeighborhoodCompareTableProps {
   view: NeighborhoodCompareView;
 }
-
-const fmtCurrency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
 
 const DASH = "—";
 
@@ -52,7 +47,7 @@ function muted(s: string): React.ReactNode {
 
 function renderRent(n: number | null): React.ReactNode {
   if (n == null) return muted(DASH);
-  return <span className="mono-num">{fmtCurrency.format(n)}/mo</span>;
+  return <span className="mono-num">{usdFormat.format(n)}/mo</span>;
 }
 
 function renderSeaProximity(km: number): React.ReactNode {

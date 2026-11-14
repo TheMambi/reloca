@@ -13,6 +13,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node scripts/run-tests.mjs",
+    "smoke": "node scripts/smoke.mjs",
     "db:check": "bash scripts/db-check.sh",
     "postinstall": "node scripts/copy-maplibre-worker.mjs"
   },

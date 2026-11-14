@@ -44,6 +44,8 @@ jobs:
       - run: pnpm build
         env:
           RELOCA_MODE: demo
+      # Serves that build and asks for every page once.
+      - run: pnpm smoke
 
   database:
     runs-on: ubuntu-latest

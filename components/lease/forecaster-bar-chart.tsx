@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import type { ForecastBar } from "@/lib/lease/forecast";
+import { usdFormat } from "@/lib/currency";
 
 // Token vars hold the full `oklch(...)` value already (see app/globals.css —
 // `--info: oklch(0.74 0.12 230)` etc.), so wrap them with `var(...)` directly.
@@ -27,12 +28,6 @@ interface ForecasterBarChartProps {
   bars: ForecastBar[];
   activeKey: ForecastBar["key"];
 }
-
-const fmtCurrency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
 
 export function ForecasterBarChart({
   bars,
@@ -53,7 +48,7 @@ export function ForecasterBarChart({
       >
         <XAxis
           type="number"
-          tickFormatter={(value: number) => fmtCurrency.format(value)}
+          tickFormatter={(value: number) => usdFormat.format(value)}
           stroke="var(--border)"
           tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
           axisLine={false}
@@ -87,7 +82,7 @@ export function ForecasterBarChart({
             // (string | number | undefined), so coerce defensively. In practice
             // every bar has a numeric `total`.
             formatter={(value) =>
-              typeof value === "number" ? fmtCurrency.format(value) : ""
+              typeof value === "number" ? usdFormat.format(value) : ""
             }
             style={{
               fill: "var(--foreground)",

@@ -142,7 +142,6 @@ async function main() {
   await refuses("updateInsurancePolicy", (x) => l.updateInsurancePolicy(x, { carrier: "Test Mutual" }));
   await refuses("deleteInsurancePolicy", (x) => l.deleteInsurancePolicy(x));
   await refuses("createDestination", (x) => l.createDestination(x));
-  await refuses("setActiveDestination", (x) => l.setActiveDestination(x));
   await refuses("updateDestination", (x) => l.updateDestination(x, { city: "Elsewhere" }));
   await refuses("deleteDestination", (x) => l.deleteDestination(x));
   // Links that are not web links are refused wherever one can be saved.

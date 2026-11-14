@@ -9,9 +9,8 @@ import type {
 } from "@/schemas/transitions";
 
 // Multi-source roll-up of move readiness. Each category contributes a count of
-// total + completed actions; the deposit branch is binary (started / pdf made).
-// Wave B will wire deposit to the live `move_out_walkthroughs` row; for now
-// it ships as { walkthroughStarted: false, pdfGenerated: false }.
+// total + completed actions; the deposit branch is binary (started / pdf made)
+// and is read from the walkthrough row.
 export type MoveReadiness = {
   total: number;
   completed: number;

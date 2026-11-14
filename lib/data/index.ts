@@ -9,7 +9,7 @@ export {
 } from "./relocation-db";
 export { getCostOfLiving, costValueFor } from "./cost";
 export { getProperties } from "./properties";
-export { getCrimeRecord, getAllCrimeRecords } from "./crime";
-export { getClimateProfile, getAllClimateProfiles } from "./climate";
+export { getCrimeRecord } from "./crime";
+export { getClimateProfile } from "./climate";
 export { getCommunityInsights } from "./community";
 export { getChecklistSeed } from "./checklist";

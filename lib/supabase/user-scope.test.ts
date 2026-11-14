@@ -358,7 +358,6 @@ async function main() {
       notes: null,
     }),
   );
-  await run("lease:setActiveDestination", () => lease.setActiveDestination(seedDestination));
   await run("lease:updateDestination", () => lease.updateDestination(made(destination)?.id, { is_active_target: true, city: "Elsewhere" }));
   await run("lease:deleteDestination", () => lease.deleteDestination(made(destination)?.id));
 

@@ -2,14 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import type { NeighborhoodSummary } from "@/lib/data/neighborhoods";
 import { SaveNeighborhoodButton } from "./save-neighborhood-button";
-
-function usd(n: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
+import { usd } from "@/lib/currency";
 
 function bedLabel(min: number, max: number): string {
   if (min === 0 && max === 0) return "Studio";

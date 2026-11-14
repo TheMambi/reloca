@@ -134,6 +134,14 @@ async function main() {
   assert.equal((await leaseTasks())[7].title, "Ask about the bike room");
   assert.equal((await leaseTasks())[7].due_date, null);
 
+  // ---- a patch is checked against the dates already stored ----
+  // The lease now runs to 2027-11-30. A patch carries one field, so the rule
+  // "ends after it starts" can only be tested against the saved row.
+  await refused(lease.updateLeaseTerms(id, { lease_start_date: "2027-12-15" }), /end after it starts/);
+  await refused(lease.updateLeaseTerms(id, { lease_end_date: "2020-01-01" }), /end after it starts/);
+  await refused(lease.updateLeaseTerms(id, { target_move_out_date: "2020-01-01" }), /before the lease starts/);
+  assert.equal((await events(id)).lease_end, "2027-11-30", "a refused patch changes nothing");
+
   // ---- a failed write between two steps is repaired by calling again ----
   const { row: draft } = ok(await lease.createNoticeDraft(id, {
     body_markdown: "Notice",

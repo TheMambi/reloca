@@ -7,6 +7,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Donut } from "@/components/shared/mini-charts";
+import { TileBoundary } from "./tile-boundary";
 import { LeaseCard } from "./lease-card";
 import { UtilitiesCard } from "./utilities-card";
 import { AddressUpdatesCard } from "./address-updates-card";
@@ -15,6 +16,7 @@ import { MoveOutCard } from "./move-out-card";
 import { AirQualityCard, type CityAir } from "./air-quality-card";
 import { ClimateRiskCard, type CityClimate } from "./climate-risk-card";
 import { SourceTag, SourceTagList } from "@/components/shared/source-tag";
+import { usdFormat } from "@/lib/currency";
 
 /* ── Props from the dashboard RSC ── */
 
@@ -83,11 +85,21 @@ export function OperationsGrid({
       <AirQualityCard origin={air.origin} destination={air.destination} />
       <ClimateRiskCard origin={climate.origin} destination={climate.destination} />
       <ChecklistCard checklist={checklist} />
-      <LeaseCard />
-      <UtilitiesCard />
-      <AddressUpdatesCard />
-      <MovingCostCard />
-      <MoveOutCard />
+      <TileBoundary title="Lease">
+        <LeaseCard />
+      </TileBoundary>
+      <TileBoundary title="Utilities">
+        <UtilitiesCard />
+      </TileBoundary>
+      <TileBoundary title="Address updates">
+        <AddressUpdatesCard />
+      </TileBoundary>
+      <TileBoundary title="Moving cost">
+        <MovingCostCard />
+      </TileBoundary>
+      <TileBoundary title="Move-out walkthrough">
+        <MoveOutCard />
+      </TileBoundary>
     </div>
   );
 }
@@ -193,12 +205,6 @@ export function MetaCell({
 /* Cost & Commute — data-driven                                        */
 /* ------------------------------------------------------------------ */
 
-const fmt = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
-
 function CostCommuteCard({ cost }: { cost: OperationsGridProps["cost"] }) {
   const deltaSign = cost.deltaPct > 0 ? "+" : "";
   const deltaTone: "ok" | "warn" | "danger" =
@@ -215,7 +221,7 @@ function CostCommuteCard({ cost }: { cost: OperationsGridProps["cost"] }) {
       description="Spend & savings."
       metaRow={
         <div className="grid flex-1 grid-cols-3 gap-3">
-          <MetaCell value={fmt.format(cost.destTotal)} label={`${cost.destName} monthly`} />
+          <MetaCell value={usdFormat.format(cost.destTotal)} label={`${cost.destName} monthly`} />
           <MetaCell
             value={`${deltaSign}${cost.deltaPct.toFixed(1)}%`}
             label={`vs. ${cost.originName}`}

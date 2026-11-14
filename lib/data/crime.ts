@@ -22,11 +22,3 @@ export function getCrimeRecord(slug: string): CrimeRecord {
   cache.set(slug, parsed);
   return parsed;
 }
-
-/** Load both crime records for side-by-side comparison. */
-export function getAllCrimeRecords(): { denver: CrimeRecord; longBeach: CrimeRecord } {
-  return {
-    denver: getCrimeRecord("denver"),
-    longBeach: getCrimeRecord("long-beach"),
-  };
-}

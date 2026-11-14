@@ -74,7 +74,7 @@ To run it on your own data you need Node 20+, pnpm, and a free Supabase project.
 3. Pick a UUID for `RELOCA_SINGLE_USER_ID`. Build the tables with the Supabase CLI: `supabase link`, then `supabase db push`. That applies every file in `supabase/migrations/` in order, exactly as written, and records which ones ran. No file needs editing. The database starts empty: add your move from the app, which also adds the starter checklist. `docs/database.md` covers the details, including how to bring a database that was set up by hand under the CLI.
 4. `pnpm dev`
 
-Tests are plain TypeScript scripts. `pnpm test` runs them all from the repo root, once in UTC and once in Pacific time, and stops at the first failure. To run one: `npx tsx --conditions=react-server path/to/file.test.ts`. After changing a migration, `pnpm db:check` builds the schema in a throwaway database on a local PostgreSQL server and checks it against the code. CI (`.github/workflows/ci.yml`) runs the audit, lint, the type checker, the tests, a demo build and `pnpm db:check` on every push and pull request.
+Tests are plain TypeScript scripts. `pnpm test` runs them all from the repo root, once in UTC and once in Pacific time, and stops at the first failure. To run one: `npx tsx --conditions=react-server path/to/file.test.ts`. After changing a migration, `pnpm db:check` builds the schema in a throwaway database on a local PostgreSQL server and checks it against the code. CI (`.github/workflows/ci.yml`) runs the audit, lint, the type checker, the tests, a demo build and `pnpm db:check` on every push and pull request. After a build, `pnpm smoke` serves it in demo mode and asks for every page once.
 
 ## Modes and deploying
 

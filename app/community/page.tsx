@@ -15,20 +15,13 @@ import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UrlTabs } from "@/components/shared/url-tabs";
 import { Badge } from "@/components/ui/badge";
 import { SourceTag } from "@/components/shared/source-tag";
+import { usd } from "@/lib/currency";
 
 export const metadata: Metadata = {
   title: "Community",
   description:
     "Community insights, neighborhood vibes, testimonials, and local rent data for your move.",
 };
-
-function usd(n: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
 
 const UNIT_LABELS: Record<string, string> = {
   studio: "Studio",

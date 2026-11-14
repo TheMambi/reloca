@@ -78,11 +78,31 @@ export async function updateLeaseTerms(
     z.uuid().parse(leaseId);
     const parsed = UpdateLeaseTermsPatch.parse(patch);
     const sb = await createClient();
+    const userId = requireUserId();
+    // A patch carries only the fields that changed, so the date rules the
+    // create schema applies are tested here against the stored row.
+    if (LEASE_DATE_FIELDS.some((field) => field in parsed)) {
+      const { data: stored, error: readErr } = await sb
+        .from("lease_terms")
+        .select("lease_start_date, lease_end_date, target_move_out_date")
+        .eq("id", leaseId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (readErr) throw dbFailure("updateLeaseTerms.load", readErr);
+      if (!stored) throw new ActionFailure(LEASE_GONE);
+      const next = { ...stored, ...parsed };
+      if (next.lease_end_date <= next.lease_start_date) {
+        throw new ActionFailure("A lease has to end after it starts. Check the two dates and try again.");
+      }
+      if (next.target_move_out_date && next.target_move_out_date < next.lease_start_date) {
+        throw new ActionFailure("The move-out date can't be before the lease starts.");
+      }
+    }
     const { error } = await sb
       .from("lease_terms")
       .update(parsed)
       .eq("id", leaseId)
-      .eq("user_id", requireUserId());
+      .eq("user_id", userId);
     if (error) throw dbFailure("updateLeaseTerms", error);
     await rebuildLeaseEvents(leaseId);
     if (LEASE_TASK_FIELDS.some((field) => field in parsed)) {
@@ -99,6 +119,8 @@ export async function updateLeaseDecision(
 ): Promise<ActionResult> {
   return updateLeaseTerms(leaseId, { decision });
 }
+
+const LEASE_DATE_FIELDS = ["lease_start_date", "lease_end_date", "target_move_out_date"] as const;
 
 // Lease fields the checklist tasks are computed from.
 const LEASE_TASK_FIELDS = [
@@ -467,11 +489,27 @@ export async function updateInsurancePolicy(
     z.uuid().parse(id);
     const parsed = InsurancePolicyPatchInput.parse(patch);
     const sb = await createClient();
+    const userId = requireUserId();
+    // Same reason as updateLeaseTerms: the patch may carry one date of two.
+    if ("effective_from" in parsed || "effective_to" in parsed) {
+      const { data: stored, error: readErr } = await sb
+        .from("insurance_policies")
+        .select("effective_from, effective_to")
+        .eq("id", id)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (readErr) throw dbFailure("updateInsurancePolicy.load", readErr);
+      if (!stored) throw new ActionFailure("That policy no longer exists.");
+      const next = { ...stored, ...parsed };
+      if (next.effective_to && next.effective_to <= next.effective_from) {
+        throw new ActionFailure("A policy has to end after it starts. Check the two dates and try again.");
+      }
+    }
     const { error } = await sb
       .from("insurance_policies")
       .update(parsed)
       .eq("id", id)
-      .eq("user_id", requireUserId());
+      .eq("user_id", userId);
     if (error) throw dbFailure("updateInsurancePolicy", error);
     revalidatePath("/lease");
     revalidatePath("/");
@@ -533,33 +571,6 @@ export async function createDestination(
     revalidatePath("/lease");
     revalidatePath("/");
     return { id: data.id };
-  });
-}
-
-export async function setActiveDestination(destinationId: string): Promise<ActionResult> {
-  return runAction("setActiveDestination", async () => {
-    z.uuid().parse(destinationId);
-    const userId = requireUserId();
-    const sb = await createClient();
-
-    // 1. Flip all active off for this user
-    const { error: flipErr } = await sb
-      .from("destinations")
-      .update({ is_active_target: false })
-      .eq("user_id", userId)
-      .eq("is_active_target", true);
-    if (flipErr) throw dbFailure("setActiveDestination.flip", flipErr);
-
-    // 2. Set the chosen one active
-    const { error: setErr } = await sb
-      .from("destinations")
-      .update({ is_active_target: true })
-      .eq("id", destinationId)
-      .eq("user_id", userId);
-    if (setErr) throw dbFailure("setActiveDestination.set", setErr);
-
-    revalidatePath("/lease");
-    revalidatePath("/");
   });
 }
 

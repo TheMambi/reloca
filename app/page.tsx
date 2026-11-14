@@ -7,6 +7,7 @@ import { DataSourcesPanel } from "@/components/dashboard/data-sources-panel";
 import { AllSystemsGo } from "@/components/dashboard/system-status-row";
 import { RelocationMapTileServer } from "@/components/dashboard/relocation-map-tile-server";
 import { MoveTimelineTile } from "@/components/dashboard/move-timeline-tile";
+import { TileBoundary } from "@/components/dashboard/tile-boundary";
 /* ── Data loaders (Phase 3 — real data wiring) ── */
 import {
   getCostOfLiving,
@@ -31,6 +32,7 @@ import {
   moveContextFor,
   type MoveContext,
 } from "@/lib/data/relocation-db";
+import { usdFormat } from "@/lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -142,13 +144,8 @@ async function computeDashboardData(ctx: MoveContext) {
       : undefined;
     const cheapest = [...estimate.scenarios].sort((a, b) => a.total - b.total)[0];
     const pick = chosen ?? cheapest;
-    const usd = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    });
     budget = {
-      value: usd.format(pick.total),
+      value: usdFormat.format(pick.total),
       sub: chosen ? "Chosen plan" : "Lowest plan",
     };
   }
@@ -299,7 +296,6 @@ export default async function Home({
   });
   const activeDays = daysUntilIso(activeCtx.moveDate);
   const arrived = activeDays !== null && activeDays < 0;
-  const alerts = await getStatusAlerts();
 
   const rawAt = params.at;
   const atCandidate = Array.isArray(rawAt) ? rawAt[0] : rawAt;
@@ -332,25 +328,37 @@ export default async function Home({
 
         <aside className="flex flex-col gap-4">
           <JourneyPanel activePhase={journeyPhase} />
-          <AtAGlance
-            readiness={data.readiness}
-            risk={data.glance}
-            lease={data.leaseGlance}
-            budget={data.budget}
-          />
+          <TileBoundary title="At a glance">
+            <AtAGlance
+              readiness={data.readiness}
+              risk={data.glance}
+              lease={data.leaseGlance}
+              budget={data.budget}
+            />
+          </TileBoundary>
         </aside>
       </div>
 
       <RelocationMapTileServer context={viewCtx} />
-      <MoveTimelineTile at={at} />
+      <TileBoundary title="Move timeline">
+        <MoveTimelineTile at={at} />
+      </TileBoundary>
       <QuickInsights data={data.insights} />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
         <DataSourcesPanel />
-        <AllSystemsGo alertCount={alerts.length} arrived={arrived} />
+        <TileBoundary title="Status">
+          <SystemStatus arrived={arrived} />
+        </TileBoundary>
       </div>
     </div>
   );
+}
+
+/* Reads the alerts on its own so the tiles above do not wait for them. */
+async function SystemStatus({ arrived }: { arrived: boolean }) {
+  const alerts = await getStatusAlerts();
+  return <AllSystemsGo alertCount={alerts.length} arrived={arrived} />;
 }
 
 /* Shown when the viewed relocation isn't the active move: the reference tiles

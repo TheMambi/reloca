@@ -4,7 +4,7 @@ import { useState, useTransition, useRef } from "react";
 import { CalendarIcon, Plus, Trash2, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/components/ui/calendar-lazy";
 import {
   Popover,
   PopoverContent,

@@ -21,8 +21,9 @@ import {
 } from "@/schemas";
 import { getCostOfLiving, costValueFor } from "./cost";
 import { getCommunityInsights } from "./community";
-import { getAllCrimeRecords } from "./crime";
-import { getAllClimateProfiles } from "./climate";
+import { getCrimeRecord } from "./crime";
+import { getClimateProfile } from "./climate";
+import { getCities } from "./cities";
 import { getProperties } from "./properties";
 import { getDataSources, getDataSource } from "./data-sources";
 import { getAirQualityProfile } from "./air-quality";
@@ -73,8 +74,8 @@ CommunityInsightFileSchema.parse([
 
 // ── crime / climate / property accept a slug city (no longer an enum) ──
 
-CrimeRecordSchema.parse({ ...getAllCrimeRecords().denver, city: "sacramento" });
-ClimateProfileSchema.parse({ ...getAllClimateProfiles().denver, city: "sacramento" });
+CrimeRecordSchema.parse({ ...getCrimeRecord("denver"), city: "sacramento" });
+ClimateProfileSchema.parse({ ...getClimateProfile("denver"), city: "sacramento" });
 PropertySchema.parse({
   id: "sac-midtown-1br",
   city: "sacramento",
@@ -137,15 +138,14 @@ for (const c of getCommunityInsights()) {
   assert.ok(c.source, `community ${c.city} has a source`);
   usedSources.add(c.source);
 }
-const crimes = getAllCrimeRecords();
-for (const r of [crimes.denver, crimes.longBeach]) {
-  assert.ok(r.source, `crime ${r.city} has a source`);
-  usedSources.add(r.source);
-}
-const climates = getAllClimateProfiles();
-for (const r of [climates.denver, climates.longBeach]) {
-  assert.ok(r.source, `climate ${r.city} has a source`);
-  usedSources.add(r.source);
+// Every city in the pool, not one fixed pair.
+for (const { slug } of getCities()) {
+  const crime = getCrimeRecord(slug);
+  assert.ok(crime.source, `crime ${crime.city} has a source`);
+  usedSources.add(crime.source);
+  const climate = getClimateProfile(slug);
+  assert.ok(climate.source, `climate ${climate.city} has a source`);
+  usedSources.add(climate.source);
 }
 for (const p of getProperties()) {
   assert.ok(p.source, `property ${p.id} has a source`);

@@ -7,12 +7,7 @@
 // walkability / community) per design §4.3.
 
 import type { RelocationCompareColumn } from "@/lib/data/relocation-compare";
-
-const fmtCurrency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
+import { usdFormat } from "@/lib/currency";
 
 const DASH = "—";
 
@@ -58,7 +53,7 @@ function money(n: number | null): React.ReactNode {
   return n == null ? (
     muted(DASH)
   ) : (
-    <span className="mono-num">{fmtCurrency.format(n)}</span>
+    <span className="mono-num">{usdFormat.format(n)}</span>
   );
 }
 

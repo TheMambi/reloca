@@ -1,5 +1,6 @@
 import { Database } from "lucide-react";
 import { getDataSources } from "@/lib/data/data-sources";
+import { formatMonthYear } from "@/lib/dates";
 import { isStale, sourceStaleThreshold } from "@/lib/data/staleness";
 import type { DataSource } from "@/schemas";
 
@@ -35,17 +36,6 @@ const TIER_TEXT: Record<DataSource["tier"], string> = {
   modeled: "text-muted-foreground",
   community: "text-[var(--info)]",
 };
-
-const MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
-
-function formatFetched(iso: string): string {
-  const [y, m] = iso.split("-");
-  const month = MONTHS[Number(m) - 1];
-  return month ? `${month} ${y}` : y;
-}
 
 export function DataSourcesPanel() {
   const sources = [...getDataSources()].sort(
@@ -121,7 +111,7 @@ export function DataSourcesPanel() {
                   {stale ? "Needs refresh" : TIER_LABEL[src.tier]}
                 </p>
                 <p className="mono-num text-[11px] text-muted-foreground">
-                  {formatFetched(src.fetchedAt)}
+                  {formatMonthYear(src.fetchedAt)}
                 </p>
               </div>
             </li>

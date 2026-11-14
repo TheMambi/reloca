@@ -16,6 +16,7 @@
 import type { Destination } from "@/schemas/lease";
 import { safeHref } from "@/schemas/web-link";
 import { DestinationColumnControls } from "./destination-column-controls";
+import { usdFormat } from "@/lib/currency";
 
 interface DestinationsCompareTableProps {
   destinations: Destination[];
@@ -28,12 +29,6 @@ function formatLocation(d: Destination): string {
   if (d.city && tail) return `${d.city}, ${tail}`;
   return d.city;
 }
-
-const fmtCurrency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
 
 const DASH = "—";
 
@@ -69,7 +64,7 @@ const GROUP_LABELS: Record<GroupKey, string> = {
 function money(n: number | null | undefined): React.ReactNode {
   return n == null
     ? muted(DASH)
-    : <span className="mono-num">{fmtCurrency.format(n)}</span>;
+    : <span className="mono-num">{usdFormat.format(n)}</span>;
 }
 
 function num(n: number | null | undefined, suffix = ""): React.ReactNode {
@@ -102,7 +97,7 @@ function deltaVsBenchmark(
   return (
     <span
       className={`mono-num ${cls}`}
-      title={`Local 2-bed benchmark${yearLabel}: ${fmtCurrency.format(benchmark)}. Source: HUD Fair Market Rent for this metro.`}
+      title={`Local 2-bed benchmark${yearLabel}: ${usdFormat.format(benchmark)}. Source: HUD Fair Market Rent for this metro.`}
     >
       {sign}{pct.toFixed(1)}%
     </span>

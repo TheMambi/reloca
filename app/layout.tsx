@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 // Fonts ship in the geist package and load through next/font/local, so the build never calls Google Fonts.
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
@@ -41,7 +42,15 @@ export default function RootLayout({
             Skip to content
           </a>
           <DemoBanner />
-          <StatusRow />
+          {/* The bar reads the database. Streaming it keeps the page shell
+              and the navigation from waiting on those reads. */}
+          <Suspense
+            fallback={
+              <div aria-busy="true" className="h-12 border-b border-border bg-background/95" />
+            }
+          >
+            <StatusRow />
+          </Suspense>
           <div className="flex">
             <Sidebar />
             <main

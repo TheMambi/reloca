@@ -10,12 +10,7 @@ import { safeHref } from "@/schemas/web-link";
 import { formatDate } from "@/lib/dates";
 import { InsuranceCoverageTimeline } from "./insurance-coverage-timeline";
 import { InsurancePolicyDialogTrigger } from "./insurance-policy-form";
-
-const fmtCurrency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
+import { usdFormat } from "@/lib/currency";
 
 const MIN_LIABILITY = 100_000;
 const MIN_PROPERTY = 5_000;
@@ -431,7 +426,7 @@ function LiabilityCell({ amount }: { amount: number }) {
   const meets = amount >= MIN_LIABILITY;
   return (
     <span className="mono-num inline-flex items-center gap-1 text-xs text-foreground">
-      {fmtCurrency.format(amount)}
+      {usdFormat.format(amount)}
       {meets ? (
         <Check
           className="size-3 text-[var(--ok)]"
@@ -446,7 +441,7 @@ function LiabilityCell({ amount }: { amount: number }) {
             aria-label="Below minimum"
           />
           <span className="label-cap text-[11px] text-[var(--danger)]">
-            MIN {fmtCurrency.format(MIN_LIABILITY)}
+            MIN {usdFormat.format(MIN_LIABILITY)}
           </span>
         </span>
       )}
@@ -458,7 +453,7 @@ function PropertyCell({ amount }: { amount: number }) {
   const meets = amount >= MIN_PROPERTY;
   return (
     <span className="mono-num inline-flex items-center gap-1 text-xs text-foreground">
-      {fmtCurrency.format(amount)}
+      {usdFormat.format(amount)}
       {meets ? (
         <Check
           className="size-3 text-[var(--ok)]"
@@ -473,7 +468,7 @@ function PropertyCell({ amount }: { amount: number }) {
             aria-label="Below minimum"
           />
           <span className="label-cap text-[11px] text-[var(--danger)]">
-            MIN {fmtCurrency.format(MIN_PROPERTY)}
+            MIN {usdFormat.format(MIN_PROPERTY)}
           </span>
         </span>
       )}

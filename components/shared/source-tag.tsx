@@ -5,23 +5,13 @@
 // (graceful degradation — a missing source never crashes a surface).
 
 import { getDataSource } from "@/lib/data/data-sources";
+import { formatMonthYear } from "@/lib/dates";
 
 const TIER_LABELS: Record<string, string> = {
   live: "Live",
   modeled: "Modeled",
   community: "Community",
 };
-
-const MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
-
-function formatFetched(iso: string): string {
-  const [y, m] = iso.split("-");
-  const month = MONTHS[Number(m) - 1];
-  return month ? `${month} ${y}` : y;
-}
 
 /** A single provenance line for one source id. */
 export function SourceTag({
@@ -40,7 +30,7 @@ export function SourceTag({
       className={`text-[11px] leading-snug text-muted-foreground ${className}`}
       title={src.notes ? `${src.provider} — ${src.notes}` : src.provider}
     >
-      Source: {src.label} · {tier} · fetched {formatFetched(src.fetchedAt)}
+      Source: {src.label} · {tier} · fetched {formatMonthYear(src.fetchedAt)}
     </p>
   );
 }

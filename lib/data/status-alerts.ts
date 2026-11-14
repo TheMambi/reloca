@@ -60,7 +60,7 @@ export async function getStatusAlerts(): Promise<StatusAlert[]> {
   );
 
   // Severity-ordered so the loudest signal renders first if we ever exceed
-  // MAX_ALERTS (today we only generate 2 max, but the cap is design-correct).
+  // MAX_ALERTS (four can be generated, so the cap does cut the list).
   const severityRank: Record<PillTone, number> = {
     danger: 0,
     coral: 1,

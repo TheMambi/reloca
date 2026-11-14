@@ -14,21 +14,13 @@ import {
 } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SourceTagList } from "@/components/shared/source-tag";
+import { usd } from "@/lib/currency";
 
 export const metadata: Metadata = {
   title: "Cost & Commute",
   description:
     "Side-by-side cost-of-living comparison across 8 spending categories for your move.",
 };
-
-/** Format a dollar amount using Intl (OD-1 resolved: no library). */
-function usd(n: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
 
 function pctDelta(denver: number, lb: number): { text: string; tone: "ok" | "danger" | "muted" } {
   if (denver === 0 && lb === 0) return { text: "—", tone: "muted" };

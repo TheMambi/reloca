@@ -1,19 +1,9 @@
 import type { LeaseTerms } from "@/schemas/lease";
 import { computeForecast, type ForecastBar } from "@/lib/lease/forecast";
 import { todayInZoneIso } from "@/lib/dates";
-import { ForecasterBarChart } from "./forecaster-bar-chart";
+import { ForecasterBarChartLoader } from "./forecaster-bar-chart-loader";
 import { TargetMoveOutEditor } from "./target-move-out-editor";
-// NOTE (AD-044): a next/dynamic split of this chart bought nothing — the RSC
-// renders every TabsContent server-side, so recharts lands in the route's
-// First Load either way. The real fix is URL-driven single-tab rendering;
-// deferred (it changes tab-switching from instant client toggles to
-// navigations). react-pdf on this route IS lazy (see move-out-actions).
-
-const fmtCurrency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
+import { usdFormat } from "@/lib/currency";
 
 interface PenaltyForecasterProps {
   lease: LeaseTerms;
@@ -30,7 +20,7 @@ interface PenaltyForecasterProps {
  * Penalty & Budget Forecaster (design §4.1).
  *
  * RSC: math runs server-side via `computeForecast`, then a small client
- * subcomponent (`<ForecasterBarChart>`) renders the Recharts chart and another
+ * subcomponent (`<ForecasterBarChartLoader>`) fetches and renders the Recharts chart and another
  * (`<TargetMoveOutEditor>`) handles the calendar popover. The scenario table
  * and honesty gloss line stay in the RSC.
  */
@@ -100,7 +90,7 @@ export function PenaltyForecaster({
 
       {/* ── Top region: Recharts horizontal bar chart ───────────────────── */}
       <div className="border-b border-border px-6 py-6">
-        <ForecasterBarChart bars={sortedBars} activeKey={activeKey} />
+        <ForecasterBarChartLoader bars={sortedBars} activeKey={activeKey} />
       </div>
 
       {/* ── Bottom region: editable target + scenario table + nudge ─────── */}
@@ -123,7 +113,7 @@ export function PenaltyForecaster({
           <p className="mt-4 text-xs italic leading-relaxed text-muted-foreground">
             Renewing is{" "}
             <span className="mono-num not-italic text-foreground">
-              {fmtCurrency.format(Math.abs(stayBar.deltaVsCurrentPath))}
+              {usdFormat.format(Math.abs(stayBar.deltaVsCurrentPath))}
             </span>{" "}
             cheaper over that period. The case for moving is non-financial — flag
             this trade-off before sending notice.
@@ -321,12 +311,12 @@ function ScenarioTable({ bars, activeKey }: ScenarioTableProps) {
 
 function formatMonthly(bar: ForecastBar): string {
   // Indefinite M2M: show "/mo" for clarity that the monthly burn keeps going.
-  if (bar.ongoing) return `${fmtCurrency.format(bar.monthly)}/mo`;
-  return fmtCurrency.format(bar.monthly);
+  if (bar.ongoing) return `${usdFormat.format(bar.monthly)}/mo`;
+  return usdFormat.format(bar.monthly);
 }
 
 function formatTotal(bar: ForecastBar): string {
-  return fmtCurrency.format(bar.total);
+  return usdFormat.format(bar.total);
 }
 
 function formatDelta(bar: ForecastBar, isReference: boolean): React.ReactNode {
@@ -349,7 +339,7 @@ function formatDelta(bar: ForecastBar, isReference: boolean): React.ReactNode {
   return (
     <span className={tone}>
       {sign}
-      {fmtCurrency.format(Math.abs(delta))}
+      {usdFormat.format(Math.abs(delta))}
     </span>
   );
 }

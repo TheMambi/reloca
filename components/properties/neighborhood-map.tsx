@@ -8,12 +8,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { NeighborhoodSummary } from "@/lib/data/neighborhoods";
 import { pluralize } from "@/lib/utils";
 import { SaveNeighborhoodButton } from "./save-neighborhood-button";
-
-const fmt = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
+import { usdFormat } from "@/lib/currency";
 
 function bedLabel(min: number, max: number): string {
   if (min === 0 && max === 0) return "Studio";
@@ -24,8 +19,8 @@ function bedLabel(min: number, max: number): string {
 
 function rentLabel(s: NeighborhoodSummary): string {
   if (s.priceLow === 0) return "—";
-  if (s.priceLow === s.priceHigh) return `${fmt.format(s.priceLow)}/mo`;
-  return `${fmt.format(s.priceLow)}–${fmt.format(s.priceHigh)}/mo`;
+  if (s.priceLow === s.priceHigh) return `${usdFormat.format(s.priceLow)}/mo`;
+  return `${usdFormat.format(s.priceLow)}–${usdFormat.format(s.priceHigh)}/mo`;
 }
 
 function seaLabel(km: number): string {

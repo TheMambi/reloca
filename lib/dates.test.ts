@@ -8,6 +8,7 @@ import {
   dayCount,
   formatDate,
   formatMonth,
+  formatMonthYear,
   countdownPhrase,
   countdownTone,
   daysBetweenIso,
@@ -92,6 +93,8 @@ assert.equal(formatDate("2026-12-31T23:30:00.000Z"), "Dec 31, 2026");
 assert.equal(formatDate("soon"), "soon");
 assert.equal(formatMonth("2026-04"), "Apr");
 assert.equal(formatMonth("2026-12"), "Dec");
+assert.equal(formatMonthYear("2026-07-13"), "Jul 2026");
+assert.equal(formatMonthYear("2025-01-01"), "Jan 2025");
 
 // ---- the date picker bridge ----------------------------------------------------
 // react-day-picker highlights and returns local-midnight dates. Whatever zone

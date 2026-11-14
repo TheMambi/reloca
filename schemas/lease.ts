@@ -174,7 +174,8 @@ const LeaseTermsFields = LeaseTermsSchema.pick({
   decision: true,
 });
 
-// Refines apply on create only; partial patches re-load and re-validate via the row's full state when needed.
+// These refinements run on create. A patch holds only the changed fields, so
+// updateLeaseTerms applies the same date rules to the stored row plus the patch.
 export const CreateLeaseTermsInput = LeaseTermsFields.extend({
   notice_days_required: LeaseTermsFields.shape.notice_days_required.default(60),
   m2m_premium: LeaseTermsFields.shape.m2m_premium.default(0),
@@ -217,7 +218,7 @@ const InsurancePolicyFields = InsurancePolicySchema.pick({
   document_url: WebLinkSchema.nullable(),
 });
 
-// Refines apply on create only; partial patches re-load and re-validate via the row's full state when needed.
+// Runs on create. updateInsurancePolicy applies the same rule to the stored row plus the patch.
 export const InsurancePolicyCreateInput = InsurancePolicyFields.extend({
   interested_party_listed: InsurancePolicyFields.shape.interested_party_listed.default(false),
 }).refine(

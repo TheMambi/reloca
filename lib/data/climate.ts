@@ -22,11 +22,3 @@ export function getClimateProfile(slug: string): ClimateProfile {
   cache.set(slug, parsed);
   return parsed;
 }
-
-/** Load both climate profiles for side-by-side comparison. */
-export function getAllClimateProfiles(): { denver: ClimateProfile; longBeach: ClimateProfile } {
-  return {
-    denver: getClimateProfile("denver"),
-    longBeach: getClimateProfile("long-beach"),
-  };
-}

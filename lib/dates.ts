@@ -176,3 +176,15 @@ export function formatMonth(yearMonth: string): string {
   if (!isValidIsoDate(iso)) return yearMonth;
   return SCREEN_MONTH.format(new Date(`${iso}T00:00:00.000Z`));
 }
+
+const SCREEN_MONTH_YEAR = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+/** "Jul 2026" for a date-only string: how recent a data source is. */
+export function formatMonthYear(iso: string): string {
+  if (!isValidIsoDate(iso)) return iso;
+  return SCREEN_MONTH_YEAR.format(new Date(`${iso}T00:00:00.000Z`));
+}
