@@ -73,6 +73,8 @@ Both modes read `NEXT_PUBLIC_RELOCA_TIME_ZONE`, the household's time zone (for e
 
 On Vercel, add these as environment variables for every environment the project deploys (Production and Preview), then redeploy. The build reads them too, so a project without them fails at build time and keeps serving its previous deployment.
 
+Every response carries the same security headers as a static site would set in `vercel.json`: no framing, no content-type guessing, a short referrer, and a Content-Security-Policy that lets scripts run only from the app itself (`lib/security-headers.ts`, set in `next.config.ts` and `middleware.ts`). A private copy also asks search engines to stay out, in a header, in the page and in `/robots.txt`. The demo is sample data and may be indexed.
+
 ## Limits
 
 Reloca is built for a single household, and it has no sign-in. The public demo runs in demo mode, so it has no database at all.

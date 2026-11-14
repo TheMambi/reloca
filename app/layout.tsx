@@ -6,16 +6,22 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Sidebar } from "@/components/shared/sidebar";
 import { StatusRow } from "@/components/shared/status-row";
 import { DemoBanner } from "@/components/shared/demo-banner";
+import { appMode } from "@/lib/mode";
+import { allowsIndexing } from "@/lib/security-headers";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: {
-    default: "Reloca — your relocation cockpit",
-    template: "%s · Reloca",
-  },
-  description:
-    "A personal relocation dashboard: cost of living, properties, community, checklist, lease — everything for the move in one place.",
-};
+export function generateMetadata(): Metadata {
+  return {
+    title: {
+      default: "Reloca — your relocation cockpit",
+      template: "%s · Reloca",
+    },
+    description:
+      "A personal relocation dashboard: cost of living, properties, community, checklist, lease — everything for the move in one place.",
+    // A private copy shows a real address and lease. Only the demo may be indexed.
+    ...(allowsIndexing(appMode()) ? {} : { robots: { index: false, follow: false } }),
+  };
+}
 
 export default function RootLayout({
   children,

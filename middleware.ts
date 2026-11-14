@@ -3,6 +3,7 @@ import { appMode } from "@/lib/mode";
 import properties from "@/data/properties.json";
 import { toSlug } from "@/lib/data/neighborhood-slug";
 import { clientKey, createRateLimiter } from "@/lib/rate-limit";
+import { contentSecurityPolicy } from "@/lib/security-headers";
 
 // Demo mode only: give each visitor an anonymous id so the in-memory demo data
 // (lib/supabase/demo-client.ts) is per visitor. The id is set on the incoming
@@ -32,18 +33,29 @@ export function middleware(req: NextRequest) {
       headers: { "Retry-After": "60" },
     });
   }
+  // Next reads the nonce from this header on the request and puts it on the
+  // scripts it writes into the page. The browser gets the same policy back.
+  const nonce = btoa(crypto.randomUUID());
+  const csp = contentSecurityPolicy(nonce, process.env.NODE_ENV !== "production");
+  req.headers.set("x-nonce", nonce);
+  req.headers.set("content-security-policy", csp);
+
   const segment = NEIGHBORHOOD_PATH.exec(req.nextUrl.pathname)?.[1];
   if (segment !== undefined && !NEIGHBORHOOD_SLUGS.has(segment)) {
     // No route matches this address, so Next answers with the 404 page.
-    return NextResponse.rewrite(new URL("/_unknown-neighborhood", req.url), { status: 404 });
+    const notFound = NextResponse.rewrite(new URL("/_unknown-neighborhood", req.url), {
+      status: 404,
+      request: { headers: req.headers },
+    });
+    notFound.headers.set("Content-Security-Policy", csp);
+    return notFound;
   }
   const current = req.cookies.get(DEMO_VISITOR_COOKIE)?.value;
-  if (!demo || (current && VISITOR_ID.test(current))) {
-    return NextResponse.next();
-  }
-  const id = crypto.randomUUID();
-  req.cookies.set(DEMO_VISITOR_COOKIE, id);
+  const id = !demo || (current && VISITOR_ID.test(current)) ? null : crypto.randomUUID();
+  if (id) req.cookies.set(DEMO_VISITOR_COOKIE, id);
   const res = NextResponse.next({ request: { headers: req.headers } });
+  res.headers.set("Content-Security-Policy", csp);
+  if (!id) return res;
   res.cookies.set(DEMO_VISITOR_COOKIE, id, {
     httpOnly: true,
     sameSite: "lax",
