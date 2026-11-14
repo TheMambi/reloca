@@ -1,5 +1,6 @@
+import "server-only";
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireUserId } from "@/lib/supabase/server";
 import {
   MoveEstimateSchema,
   MOVE_COST_NUMERIC_FIELDS,
@@ -11,6 +12,7 @@ export const getMoveEstimate = cache(async (): Promise<MoveEstimate | null> => {
   const sb = await createClient();
   const { data, error } = await sb
     .from("move_estimates").select("*")
+    .eq("user_id", requireUserId())
     .limit(1).maybeSingle();
   if (error) throw new Error(`getMoveEstimate: ${error.message}`);
   if (!data) return null;

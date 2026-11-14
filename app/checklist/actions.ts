@@ -28,9 +28,6 @@ export async function toggleChecklistItem(input: { id: string; completed: boolea
 
 /**
  * Idempotent seed: if the user has zero rows, insert the seed template.
- * Uses the admin client because the seed runs before any user session
- * exists; RLS would also permit it (policy matches the env UUID), but
- * service-role makes intent explicit and survives any future RLS tightening.
  *
  * Belt-and-suspenders idempotency: the read-then-write guard catches the
  * common case, and the upsert with ignoreDuplicates=true makes a concurrent
@@ -134,6 +131,7 @@ export async function updateChecklistItem(
 ): Promise<void> {
   const parsed = ChecklistUpdatePatch.parse(patch);
   const sb = await createClient();
+  const userId = requireUserId();
 
   // When the patch moves the row to a new category, recompute order_index in
   // the destination so the UNIQUE(user_id, category, order_index) index doesn't
@@ -143,8 +141,9 @@ export async function updateChecklistItem(
   if (parsed.category !== undefined) {
     const { data: current, error: readErr } = await sb
       .from("checklist_items")
-      .select("user_id, category")
+      .select("category")
       .eq("id", id)
+      .eq("user_id", userId)
       .maybeSingle();
     if (readErr)
       throw new Error(`updateChecklistItem.read: ${readErr.message}`);
@@ -155,7 +154,7 @@ export async function updateChecklistItem(
       const { data: maxRow, error: maxErr } = await sb
         .from("checklist_items")
         .select("order_index")
-        .eq("user_id", current.user_id)
+        .eq("user_id", userId)
         .eq("category", parsed.category)
         .order("order_index", { ascending: false })
         .limit(1)
@@ -169,7 +168,8 @@ export async function updateChecklistItem(
   const { error } = await sb
     .from("checklist_items")
     .update(updateBody)
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user_id", userId);
   if (error) throw new Error(`updateChecklistItem: ${error.message}`);
   revalidatePath("/checklist");
   revalidatePath("/");
@@ -177,7 +177,11 @@ export async function updateChecklistItem(
 
 export async function deleteChecklistItem(id: string): Promise<void> {
   const sb = await createClient();
-  const { error } = await sb.from("checklist_items").delete().eq("id", id);
+  const { error } = await sb
+    .from("checklist_items")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", requireUserId());
   if (error) throw new Error(`deleteChecklistItem: ${error.message}`);
   revalidatePath("/checklist");
   revalidatePath("/");
@@ -199,6 +203,16 @@ export async function reorderChecklistItem(
 ): Promise<void> {
   const parsed = ReorderInput.parse(input);
   const sb = await createClient();
+  // The function finds the row by id alone, and the service-role key skips row
+  // level security, so ownership is checked here before calling it.
+  const { data: owned, error: readErr } = await sb
+    .from("checklist_items")
+    .select("id")
+    .eq("id", parsed.id)
+    .eq("user_id", requireUserId())
+    .maybeSingle();
+  if (readErr) throw new Error(`reorderChecklistItem.read: ${readErr.message}`);
+  if (!owned) throw new Error(`reorderChecklistItem: row ${parsed.id} not found`);
   const { error } = await sb.rpc("reorder_checklist_item", {
     p_id: parsed.id,
     p_target_category: parsed.targetCategory,

@@ -1,4 +1,4 @@
-// Run: npx tsx lib/supabase/server.test.ts
+// Run: npx tsx --conditions=react-server lib/supabase/server.test.ts
 import assert from "node:assert/strict";
 import { DEMO_USER_ID } from "./demo-seed";
 import { createAdminClient, createClient, isDemoMode, requireUserId } from "./server";
@@ -7,6 +7,7 @@ const MODE_VARS = [
   "RELOCA_MODE",
   "RELOCA_DEMO_MODE",
   "RELOCA_ACCESS_GATE",
+  "SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
@@ -21,8 +22,7 @@ function setEnv(values: Record<string, string>) {
 // Stand-in values built at run time. The address is local and nothing connects to it.
 const filler = (label: string) => `${label}-${"x".repeat(12)}`;
 const database = {
-  NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: filler("anon"),
+  SUPABASE_URL: "http://127.0.0.1:54321",
   SUPABASE_SERVICE_ROLE_KEY: filler("service"),
   RELOCA_SINGLE_USER_ID: filler("user"),
 };

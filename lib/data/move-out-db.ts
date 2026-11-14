@@ -1,5 +1,6 @@
+import "server-only";
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireUserId } from "@/lib/supabase/server";
 import {
   MoveOutWalkthroughSchema,
   MoveOutRoomRecordSchema,
@@ -18,6 +19,7 @@ export const getActiveWalkthrough = cache(
     const { data, error } = await sb
       .from("move_out_walkthroughs")
       .select("*")
+      .eq("user_id", requireUserId())
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -33,6 +35,7 @@ export const getRoomRecords = cache(
     const { data, error } = await sb
       .from("move_out_room_records")
       .select("*")
+      .eq("user_id", requireUserId())
       .eq("walkthrough_id", walkthroughId)
       .order("order_index", { ascending: true });
     if (error) throw new Error(`getRoomRecords: ${error.message}`);

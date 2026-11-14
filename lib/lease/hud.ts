@@ -11,9 +11,10 @@
 // resolve to `{ value: null, year: null }` and get cached so we don't retry
 // in a loop. The compare table renders a `—` and the "Δ vs HUD" cell hides.
 //
-// Server-only by convention — only imported from RSC loaders, server actions,
-// and the overlays orchestrator. The HUD_FMR_API_KEY has no NEXT_PUBLIC_
-// prefix so even an accidental client import would resolve to undefined.
+// Server-only: imported from RSC loaders, server actions and the overlays
+// orchestrator. The import below turns a client import into a build error.
+
+import "server-only";
 
 export type FmrEntry = { value: number | null; year: number | null };
 

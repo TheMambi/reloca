@@ -1,5 +1,6 @@
+import "server-only";
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireUserId } from "@/lib/supabase/server";
 import {
   LeaseTermsSchema,
   LeaseEventSchema,
@@ -55,6 +56,7 @@ export const getActiveLease = cache(async (): Promise<LeaseTerms | null> => {
   const { data, error } = await sb
     .from("lease_terms")
     .select("*")
+    .eq("user_id", requireUserId())
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -68,6 +70,7 @@ export const getLeaseEvents = cache(async (leaseId: string): Promise<LeaseEvent[
   const { data, error } = await sb
     .from("lease_events")
     .select("*")
+    .eq("user_id", requireUserId())
     .eq("lease_id", leaseId)
     .order("occurs_on", { ascending: true });
   if (error) throw new Error(`getLeaseEvents: ${error.message}`);
@@ -79,6 +82,7 @@ export const getLatestNoticeDraft = cache(async (leaseId: string): Promise<Notic
   const { data, error } = await sb
     .from("notice_drafts")
     .select("*")
+    .eq("user_id", requireUserId())
     .eq("lease_id", leaseId)
     .order("created_at", { ascending: false })
     .limit(1)
@@ -93,6 +97,7 @@ export const getDestinations = cache(async (): Promise<Destination[]> => {
   const { data, error } = await sb
     .from("destinations")
     .select("*")
+    .eq("user_id", requireUserId())
     .order("created_at", { ascending: false });
   if (error) throw new Error(`getDestinations: ${error.message}`);
   const rows = (data ?? []).map((row) => coerceNumerics(row, DESTINATION_NUMERIC_FIELDS));
@@ -104,6 +109,7 @@ export const getActiveDestination = cache(async (): Promise<Destination | null> 
   const { data, error } = await sb
     .from("destinations")
     .select("*")
+    .eq("user_id", requireUserId())
     .eq("is_active_target", true)
     .maybeSingle();
   if (error) throw new Error(`getActiveDestination: ${error.message}`);
@@ -116,6 +122,7 @@ export const getInsurancePolicies = cache(async (): Promise<InsurancePolicy[]> =
   const { data, error } = await sb
     .from("insurance_policies")
     .select("*")
+    .eq("user_id", requireUserId())
     .order("scope", { ascending: true })
     .order("effective_from", { ascending: true });
   if (error) throw new Error(`getInsurancePolicies: ${error.message}`);

@@ -3,9 +3,13 @@
 #
 # Usage:  ./scripts/keepalive.sh
 #
-# Reads NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY from
-# .env.local and pings the relocations table to keep the free-tier project
-# from being paused.
+# Reads SUPABASE_URL (or the older NEXT_PUBLIC_SUPABASE_URL) and
+# SUPABASE_SERVICE_ROLE_KEY from .env.local and reads one row id from the
+# relocations table to keep the free-tier project from being paused.
+#
+# The anon key cannot read tables since migration 0025, so this uses the
+# server key. curl gets it on stdin, never as an argument or in the URL, so it
+# does not show in the process list.
 
 set -euo pipefail
 
@@ -18,24 +22,28 @@ if [ ! -f "$ENV_FILE" ]; then
   exit 1
 fi
 
-# shellcheck disable=SC1090
-SUPABASE_URL=$(grep -E '^NEXT_PUBLIC_SUPABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2-)
-ANON_KEY=$(grep -E '^NEXT_PUBLIC_SUPABASE_ANON_KEY=' "$ENV_FILE" | head -1 | cut -d= -f2-)
+# `|| true`: a name that is absent must reach the message below, not end the script.
+read_env() { grep -E "^$1=" "$ENV_FILE" | head -1 | cut -d= -f2- || true; }
 
-if [ -z "$SUPABASE_URL" ] || [ -z "$ANON_KEY" ]; then
-  echo "❌ Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local"
+SUPABASE_URL=$(read_env SUPABASE_URL)
+[ -n "$SUPABASE_URL" ] || SUPABASE_URL=$(read_env NEXT_PUBLIC_SUPABASE_URL)
+SERVICE_KEY=$(read_env SUPABASE_SERVICE_ROLE_KEY)
+
+if [ -z "$SUPABASE_URL" ] || [ -z "$SERVICE_KEY" ]; then
+  echo "❌ Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local"
   exit 1
 fi
 
 # Strip trailing slash
 SUPABASE_URL="${SUPABASE_URL%/}"
 
-echo "🏓 Pinging $SUPABASE_URL ..."
+echo "🏓 Pinging Supabase ..."
 
-RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
-  "$SUPABASE_URL/rest/v1/relocations?select=id&limit=1" \
-  -H "apikey: $ANON_KEY" \
-  -H "Authorization: Bearer $ANON_KEY")
+# printf is a shell builtin, so the key goes straight down the pipe. `|| true`
+# keeps a failed connection from ending the script before it can explain.
+RESPONSE=$(printf 'url = "%s"\nheader = "apikey: %s"\nheader = "Authorization: Bearer %s"\n' \
+  "$SUPABASE_URL/rest/v1/relocations?select=id&limit=1" "$SERVICE_KEY" "$SERVICE_KEY" \
+  | curl -s -o /dev/null -w "%{http_code}" --max-time 30 --config - || true)
 
 if [ "$RESPONSE" -eq 200 ]; then
   echo "✅ Supabase responded with HTTP $RESPONSE — project is alive!"

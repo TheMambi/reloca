@@ -1,3 +1,4 @@
+import "server-only";
 import { createClient, requireUserId } from "@/lib/supabase/server";
 import { ChecklistItemSchema, type ChecklistItem } from "@/schemas";
 import { seedChecklistIfEmpty } from "@/app/checklist/actions";

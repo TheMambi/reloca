@@ -31,7 +31,9 @@ if (files.length === 0) {
 for (const file of files) {
   const name = relative(root, file);
   // Some tests read data/ through process.cwd(), so each one starts in the repo root.
-  const result = spawnSync(process.execPath, [tsx, name], { cwd: root, stdio: "inherit" });
+  // react-server is the condition Next runs server code under. Without it,
+  // modules that import "server-only" refuse to load.
+  const result = spawnSync(process.execPath, [tsx, "--conditions=react-server", name], { cwd: root, stdio: "inherit" });
   if (result.status !== 0) {
     console.error(`FAILED ${name}`);
     process.exit(result.status ?? 1);

@@ -140,6 +140,7 @@ export async function updateUtilityTransition(
   if (!parsedPatch.success) return { ok: false, error: INVALID_INPUT };
   const patch = parsedPatch.data;
 
+  const userId = requireUserId();
   const sb = await createClient();
 
   // SELECT-then-UPDATE so we can decide whether to auto-set confirmed_at.
@@ -147,6 +148,7 @@ export async function updateUtilityTransition(
     .from("utility_transitions")
     .select("status, confirmed_at")
     .eq("id", id)
+    .eq("user_id", userId)
     .maybeSingle();
   if (getErr) return { ok: false, error: friendlyDbError("updateUtilityTransition.read", getErr) };
   if (!existing) return { ok: false, error: "That row no longer exists." };
@@ -160,6 +162,7 @@ export async function updateUtilityTransition(
     .from("utility_transitions")
     .update(update)
     .eq("id", id)
+    .eq("user_id", userId)
     .select("*")
     .single();
   if (error) return { ok: false, error: friendlyDbError("updateUtilityTransition.update", error) };
@@ -176,7 +179,11 @@ export async function deleteUtilityTransition(
   if (!z.uuid().safeParse(id).success) return { ok: false, error: INVALID_INPUT };
 
   const sb = await createClient();
-  const { error } = await sb.from("utility_transitions").delete().eq("id", id);
+  const { error } = await sb
+    .from("utility_transitions")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", requireUserId());
   if (error) return { ok: false, error: friendlyDbError("deleteUtilityTransition", error) };
   revalidatePath("/transitions");
   revalidatePath("/");
@@ -250,6 +257,7 @@ export async function updateAddressTarget(
   if (!parsedPatch.success) return { ok: false, error: INVALID_INPUT };
   const patch = parsedPatch.data;
 
+  const userId = requireUserId();
   const sb = await createClient();
 
   // SELECT-then-UPDATE so we can decide whether to auto-set submitted_at /
@@ -258,6 +266,7 @@ export async function updateAddressTarget(
     .from("address_change_targets")
     .select("status, submitted_at, confirmed_at")
     .eq("id", id)
+    .eq("user_id", userId)
     .maybeSingle();
   if (getErr) return { ok: false, error: friendlyDbError("updateAddressTarget.read", getErr) };
   if (!existing) return { ok: false, error: "That row no longer exists." };
@@ -277,6 +286,7 @@ export async function updateAddressTarget(
     .from("address_change_targets")
     .update(update)
     .eq("id", id)
+    .eq("user_id", userId)
     .select("*")
     .single();
   if (error) return { ok: false, error: friendlyDbError("updateAddressTarget.update", error) };
@@ -293,7 +303,11 @@ export async function deleteAddressTarget(
   if (!z.uuid().safeParse(id).success) return { ok: false, error: INVALID_INPUT };
 
   const sb = await createClient();
-  const { error } = await sb.from("address_change_targets").delete().eq("id", id);
+  const { error } = await sb
+    .from("address_change_targets")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", requireUserId());
   if (error) return { ok: false, error: friendlyDbError("deleteAddressTarget", error) };
   revalidatePath("/transitions");
   revalidatePath("/");

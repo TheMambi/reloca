@@ -62,7 +62,11 @@ export async function unsaveNeighborhood(
   }
 
   const sb = await createClient();
-  const { error } = await sb.from("saved_neighborhoods").delete().eq("id", id);
+  const { error } = await sb
+    .from("saved_neighborhoods")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", requireUserId());
   if (error) return { ok: false, error: friendlyDbError("unsaveNeighborhood", error) };
 
   revalidatePath("/properties");

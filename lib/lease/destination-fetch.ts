@@ -11,6 +11,7 @@
 // private IP / link-local address. We pre-resolve DNS and reject private
 // ranges before fetching, and we re-validate every redirect hop.
 
+import "server-only";
 import * as cheerio from "cheerio";
 import { lookup as dnsLookup } from "node:dns/promises";
 import { isIP } from "node:net";

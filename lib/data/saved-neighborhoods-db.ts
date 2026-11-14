@@ -1,5 +1,6 @@
+import "server-only";
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireUserId } from "@/lib/supabase/server";
 import {
   SavedNeighborhoodSchema,
   type SavedNeighborhood,
@@ -11,6 +12,7 @@ export const getSavedNeighborhoods = cache(
     const { data, error } = await sb
       .from("saved_neighborhoods")
       .select("*")
+      .eq("user_id", requireUserId())
       .order("created_at", { ascending: false });
     if (error) throw new Error(`getSavedNeighborhoods: ${error.message}`);
     return (data ?? []).map((row) => SavedNeighborhoodSchema.parse(row));

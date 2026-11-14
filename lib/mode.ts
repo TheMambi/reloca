@@ -13,15 +13,23 @@ const ModeEnv = z.object({
 
 // Private mode cannot run without these. The app has no sign-in of its own, so
 // RELOCA_ACCESS_GATE makes whoever deploys it name what keeps strangers out.
+// The anon key is not on the list: nothing reads it any more.
 const PrivateEnv = z.object({
   RELOCA_ACCESS_GATE: z.string().trim().min(1),
-  NEXT_PUBLIC_SUPABASE_URL: z.string().min(1),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+  SUPABASE_URL: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   RELOCA_SINGLE_USER_ID: z.string().min(1),
 });
 
 type Env = Record<string, string | undefined>;
+
+/**
+ * The project URL. Deployments set up before the rename still carry it as
+ * NEXT_PUBLIC_SUPABASE_URL, so that name keeps working. A URL is not a secret.
+ */
+export function supabaseUrl(env: Env): string | undefined {
+  return env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || undefined;
+}
 
 const REFUSED = "Reloca refuses to serve:";
 
@@ -46,7 +54,7 @@ export function resolveMode(env: Env): AppMode {
   if (legacyDemo) {
     throw new Error(`${REFUSED} RELOCA_MODE=private and RELOCA_DEMO_MODE=1 disagree. Remove one of them.`);
   }
-  const required = PrivateEnv.safeParse(env);
+  const required = PrivateEnv.safeParse({ ...env, SUPABASE_URL: supabaseUrl(env) });
   if (!required.success) {
     const names = [...new Set(required.error.issues.map((issue) => String(issue.path[0])))];
     throw new Error(
@@ -68,8 +76,8 @@ export function appMode(): AppMode {
     RELOCA_MODE: process.env.RELOCA_MODE,
     RELOCA_DEMO_MODE: process.env.RELOCA_DEMO_MODE,
     RELOCA_ACCESS_GATE: process.env.RELOCA_ACCESS_GATE,
+    SUPABASE_URL: process.env.SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     RELOCA_SINGLE_USER_ID: process.env.RELOCA_SINGLE_USER_ID,
   }));

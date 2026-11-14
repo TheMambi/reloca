@@ -11,6 +11,8 @@
 // alongside successes so repeated lookups for an unparseable address don't
 // each spend a request.
 
+import "server-only";
+
 const NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
 
 type GeocodeResult = { lat: number; lng: number };

@@ -1,13 +1,12 @@
-import { createServerClient } from "@supabase/ssr";
+import "server-only";
 import { createClient as createPlainClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
 import { connection } from "next/server";
-import { appMode } from "@/lib/mode";
+import { appMode, supabaseUrl } from "@/lib/mode";
 import type { Database } from "./types";
 import { createDemoClient } from "./demo-client";
 import { DEMO_USER_ID } from "./demo-seed";
 
-type AppClient = ReturnType<typeof createServerClient<Database>>;
+type AppClient = ReturnType<typeof createPlainClient<Database>>;
 
 /**
  * Public portfolio deploy: no database, sample data held in memory.
@@ -20,40 +19,20 @@ export function isDemoMode(): boolean {
 }
 
 /**
- * Server-side Supabase client for Server Components, route handlers,
- * and server actions. Cookie wiring is in place for v2 auth migration —
- * v1 has no auth, so the cookie store is effectively unused.
+ * Database client for Server Components, route handlers and server actions.
+ *
+ * In private mode it carries the service-role key, which skips row level
+ * security, so the database filters nothing for us. Every query on a table
+ * must carry `.eq("user_id", requireUserId())`, and every insert must set
+ * `user_id`. lib/supabase/user-scope.test.ts fails any query that does not.
  */
 export async function createClient(): Promise<AppClient> {
-  if (isDemoMode()) {
-    // The real client reads cookies, which keeps every page request-time
-    // rendered. The demo must stay that way too, or the build tries to
-    // prerender pages whose layout reads search params.
-    await connection();
-    return createDemoClient() as unknown as AppClient;
-  }
-  const cookieStore = await cookies();
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            for (const { name, value, options } of cookiesToSet) {
-              cookieStore.set(name, value, options);
-            }
-          } catch {
-            // Server Component context — cookie writes are no-ops here.
-            // Auth refresh would be handled by middleware once v2 adds Supabase Auth.
-          }
-        },
-      },
-    },
-  );
+  // Built first: it throws while the mode is unset or invalid.
+  const client = createAdminClient();
+  // Keeps every page request-time rendered. Without it the build would
+  // prerender pages, and in private mode bake database rows into static files.
+  await connection();
+  return client;
 }
 
 /**
@@ -85,16 +64,20 @@ export function friendlyDbError(
 }
 
 /**
- * Admin client — uses the service-role key and bypasses RLS.
- * SERVER ONLY. Used for the first-run seeder that must insert under the
- * single-user UUID before any policy-authorized session exists.
+ * The same client without the request-time marker, for helpers that run
+ * inside a request another call has already marked. The service-role key is a
+ * server secret: this module is server-only, and the key must never sit
+ * behind a NEXT_PUBLIC_ name. The same user_id rule applies to every query.
  */
-export function createAdminClient() {
+export function createAdminClient(): AppClient {
   if (isDemoMode()) {
-    return createDemoClient() as unknown as ReturnType<typeof createPlainClient<Database>>;
+    return createDemoClient() as unknown as AppClient;
   }
   return createPlainClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    supabaseUrl({
+      SUPABASE_URL: process.env.SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    })!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
       auth: {

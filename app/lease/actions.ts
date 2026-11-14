@@ -62,7 +62,11 @@ export async function updateLeaseTerms(
 ): Promise<void> {
   const parsed = UpdateLeaseTermsPatch.parse(patch);
   const sb = await createClient();
-  const { error } = await sb.from("lease_terms").update(parsed).eq("id", leaseId);
+  const { error } = await sb
+    .from("lease_terms")
+    .update(parsed)
+    .eq("id", leaseId)
+    .eq("user_id", requireUserId());
   if (error) throw new Error(`updateLeaseTerms: ${error.message}`);
   await recomputeLeaseEvents(leaseId);
   revalidatePath("/lease");
@@ -97,6 +101,7 @@ export async function recomputeLeaseEvents(leaseId: string): Promise<void> {
     .from("lease_terms")
     .select("*")
     .eq("id", leaseId)
+    .eq("user_id", userId)
     .maybeSingle();
   if (leaseErr) throw new Error(`recomputeLeaseEvents.load: ${leaseErr.message}`);
   if (!lease) throw new Error(`recomputeLeaseEvents: lease ${leaseId} not found`);
@@ -106,6 +111,7 @@ export async function recomputeLeaseEvents(leaseId: string): Promise<void> {
     .from("lease_events")
     .delete()
     .eq("lease_id", leaseId)
+    .eq("user_id", userId)
     .in("kind", [...DERIVED_EVENT_KINDS]);
   if (delErr) throw new Error(`recomputeLeaseEvents.delete: ${delErr.message}`);
 
@@ -216,18 +222,24 @@ export async function updateNoticeDraft(
   patch: z.input<typeof NoticeDraftPatchInput>,
 ): Promise<{ ok: true } | { ok: false; reason: "locked" }> {
   const parsed = NoticeDraftPatchInput.parse(patch);
+  const userId = requireUserId();
   const sb = await createClient();
-  // Read first to check lock state. RLS-gated, so this is safe to do anon-side.
+  // Read first to check lock state.
   const { data: existing, error: getErr } = await sb
     .from("notice_drafts")
     .select("sent_at")
     .eq("id", draftId)
+    .eq("user_id", userId)
     .maybeSingle();
   if (getErr) throw new Error(`updateNoticeDraft.read: ${getErr.message}`);
   if (!existing) throw new Error(`updateNoticeDraft: draft ${draftId} not found`);
   if (existing.sent_at) return { ok: false, reason: "locked" };
 
-  const { error: updErr } = await sb.from("notice_drafts").update(parsed).eq("id", draftId);
+  const { error: updErr } = await sb
+    .from("notice_drafts")
+    .update(parsed)
+    .eq("id", draftId)
+    .eq("user_id", userId);
   if (updErr) throw new Error(`updateNoticeDraft.update: ${updErr.message}`);
   revalidatePath("/lease");
   return { ok: true };
@@ -242,6 +254,7 @@ export async function markNoticeSent(draftId: string): Promise<void> {
     .from("notice_drafts")
     .select("lease_id, sent_at")
     .eq("id", draftId)
+    .eq("user_id", userId)
     .maybeSingle();
   if (getErr) throw new Error(`markNoticeSent.read: ${getErr.message}`);
   if (!draft) throw new Error(`markNoticeSent: draft ${draftId} not found`);
@@ -253,7 +266,8 @@ export async function markNoticeSent(draftId: string): Promise<void> {
   const { error: updErr } = await sb
     .from("notice_drafts")
     .update({ sent_at: nowIso })
-    .eq("id", draftId);
+    .eq("id", draftId)
+    .eq("user_id", userId);
   if (updErr) throw new Error(`markNoticeSent.update: ${updErr.message}`);
 
   const { error: evErr } = await sb.from("lease_events").insert({
@@ -290,6 +304,7 @@ export async function seedLeaseChecklistTasks(leaseId: string): Promise<void> {
     .from("lease_terms")
     .select("*")
     .eq("id", leaseId)
+    .eq("user_id", userId)
     .maybeSingle();
   if (leaseErr) throw new Error(`seedLeaseChecklistTasks.lease: ${leaseErr.message}`);
   if (!lease) throw new Error(`seedLeaseChecklistTasks: lease ${leaseId} not found`);
@@ -394,7 +409,11 @@ export async function updateInsurancePolicy(
 ): Promise<void> {
   const parsed = InsurancePolicyPatchInput.parse(patch);
   const sb = await createClient();
-  const { error } = await sb.from("insurance_policies").update(parsed).eq("id", id);
+  const { error } = await sb
+    .from("insurance_policies")
+    .update(parsed)
+    .eq("id", id)
+    .eq("user_id", requireUserId());
   if (error) throw new Error(`updateInsurancePolicy: ${error.message}`);
   revalidatePath("/lease");
   revalidatePath("/");
@@ -402,7 +421,11 @@ export async function updateInsurancePolicy(
 
 export async function deleteInsurancePolicy(id: string): Promise<void> {
   const sb = await createClient();
-  const { error } = await sb.from("insurance_policies").delete().eq("id", id);
+  const { error } = await sb
+    .from("insurance_policies")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", requireUserId());
   if (error) throw new Error(`deleteInsurancePolicy: ${error.message}`);
   revalidatePath("/lease");
   revalidatePath("/");
@@ -465,7 +488,8 @@ export async function setActiveDestination(destinationId: string): Promise<void>
   const { error: setErr } = await sb
     .from("destinations")
     .update({ is_active_target: true })
-    .eq("id", destinationId);
+    .eq("id", destinationId)
+    .eq("user_id", userId);
   if (setErr) throw new Error(`setActiveDestination.set: ${setErr.message}`);
 
   revalidatePath("/lease");
@@ -491,7 +515,11 @@ export async function updateDestination(
     if (flipErr) throw new Error(`updateDestination.flip: ${flipErr.message}`);
   }
 
-  const { error } = await sb.from("destinations").update(parsed).eq("id", id);
+  const { error } = await sb
+    .from("destinations")
+    .update(parsed)
+    .eq("id", id)
+    .eq("user_id", requireUserId());
   if (error) throw new Error(`updateDestination: ${error.message}`);
 
   // Re-run overlays whenever the address could have changed (street / city /
@@ -517,7 +545,11 @@ export async function updateDestination(
 
 export async function deleteDestination(id: string): Promise<void> {
   const sb = await createClient();
-  const { error } = await sb.from("destinations").delete().eq("id", id);
+  const { error } = await sb
+    .from("destinations")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", requireUserId());
   if (error) throw new Error(`deleteDestination: ${error.message}`);
   revalidatePath("/lease");
   revalidatePath("/");

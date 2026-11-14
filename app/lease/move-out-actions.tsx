@@ -32,11 +32,13 @@ export async function createWalkthrough(): Promise<{
   rooms: MoveOutRoomRecord[];
 }> {
   const sb = await createClient();
+  const userId = requireUserId();
 
   // Fast path: already started.
   const { data: existing, error: readErr } = await sb
     .from("move_out_walkthroughs")
     .select("*")
+    .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -47,6 +49,7 @@ export async function createWalkthrough(): Promise<{
     const { data: rooms, error: roomsErr } = await sb
       .from("move_out_room_records")
       .select("*")
+      .eq("user_id", userId)
       .eq("walkthrough_id", walkthrough.id)
       .order("order_index", { ascending: true });
     if (roomsErr)
@@ -61,7 +64,7 @@ export async function createWalkthrough(): Promise<{
   const { data: created, error: createErr } = await sb
     .from("move_out_walkthroughs")
     .insert({
-      user_id: requireUserId(),
+      user_id: userId,
       walkthrough_date: new Date().toISOString().slice(0, 10),
     })
     .select("*")
@@ -73,7 +76,7 @@ export async function createWalkthrough(): Promise<{
 
   const seedRows = DEFAULT_ROOMS.map((name, idx) => ({
     walkthrough_id: walkthrough.id,
-    user_id: requireUserId(),
+    user_id: userId,
     room_name: name,
     order_index: idx,
   }));
@@ -102,11 +105,13 @@ export async function addRoom(
   if (trimmed.length === 0) throw new Error("Room name required");
 
   const sb = await createClient();
+  const userId = requireUserId();
 
   // Compute order_index = max(existing) + 1 within this walkthrough.
   const { data: maxRow, error: maxErr } = await sb
     .from("move_out_room_records")
     .select("order_index")
+    .eq("user_id", userId)
     .eq("walkthrough_id", walkthroughId)
     .order("order_index", { ascending: false })
     .limit(1)
@@ -118,7 +123,7 @@ export async function addRoom(
     .from("move_out_room_records")
     .insert({
       walkthrough_id: walkthroughId,
-      user_id: requireUserId(),
+      user_id: userId,
       room_name: trimmed,
       order_index: nextOrder,
     })
@@ -151,7 +156,8 @@ export async function updateRoomRecord(
   const { error } = await sb
     .from("move_out_room_records")
     .update(parsed)
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user_id", requireUserId());
   if (error) throw new Error(`updateRoomRecord: ${error.message}`);
   revalidatePath("/lease");
   revalidatePath("/");
@@ -159,7 +165,11 @@ export async function updateRoomRecord(
 
 export async function deleteRoom(id: string): Promise<void> {
   const sb = await createClient();
-  const { error } = await sb.from("move_out_room_records").delete().eq("id", id);
+  const { error } = await sb
+    .from("move_out_room_records")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", requireUserId());
   if (error) throw new Error(`deleteRoom: ${error.message}`);
   revalidatePath("/lease");
   revalidatePath("/");
@@ -179,7 +189,8 @@ export async function updateWalkthrough(
   const { error } = await sb
     .from("move_out_walkthroughs")
     .update(parsed)
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user_id", requireUserId());
   if (error) throw new Error(`updateWalkthrough: ${error.message}`);
   revalidatePath("/lease");
   revalidatePath("/");
@@ -193,7 +204,8 @@ export async function markPdfGenerated(walkthroughId: string): Promise<void> {
   const { error } = await sb
     .from("move_out_walkthroughs")
     .update({ pdf_generated_at: new Date().toISOString() })
-    .eq("id", walkthroughId);
+    .eq("id", walkthroughId)
+    .eq("user_id", requireUserId());
   if (error) throw new Error(`markPdfGenerated: ${error.message}`);
   revalidatePath("/lease");
   revalidatePath("/");
@@ -219,11 +231,13 @@ export async function generateWalkthroughReport(
   error: string;
 }> {
   const sb = await createClient();
+  const userId = requireUserId();
 
   const { data: walkRow, error: walkErr } = await sb
     .from("move_out_walkthroughs")
     .select("*")
     .eq("id", walkthroughId)
+    .eq("user_id", userId)
     .maybeSingle();
   if (walkErr)
     return { ok: false, error: `report.read: ${walkErr.message}` };
@@ -234,6 +248,7 @@ export async function generateWalkthroughReport(
   const { data: roomRows, error: roomsErr } = await sb
     .from("move_out_room_records")
     .select("*")
+    .eq("user_id", userId)
     .eq("walkthrough_id", walkthroughId)
     .order("order_index", { ascending: true });
   if (roomsErr)

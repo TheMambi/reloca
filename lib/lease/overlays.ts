@@ -11,12 +11,11 @@
 // can drop in `getWalkScore()` and start populating walk/transit/bike
 // without changing this orchestrator's contract.
 //
-// Server-only by file convention. Uses the admin client so it can write
-// regardless of which RLS-scoped client the calling server action uses.
-// (createDestination uses the regular client, but the admin client lets
-// us run this from edge cases like seed scripts too.)
+// Server-only. The client carries the service-role key, so both queries here
+// are scoped to the single user in code (see lib/supabase/server.ts).
 
-import { createAdminClient, isDemoMode } from "@/lib/supabase/server";
+import "server-only";
+import { createAdminClient, isDemoMode, requireUserId } from "@/lib/supabase/server";
 import { getFmr } from "@/lib/lease/hud";
 import { geocodeAddress } from "@/lib/lease/geocode";
 
@@ -56,11 +55,13 @@ export async function recomputeDestinationOverlays(
   destinationId: string,
 ): Promise<OverlayResult> {
   const sb = createAdminClient();
+  const userId = requireUserId();
 
   const { data: row, error: readErr } = await sb
     .from("destinations")
     .select("id, street_address, city, state_code, zip_code")
     .eq("id", destinationId)
+    .eq("user_id", userId)
     .maybeSingle();
   if (readErr) {
     throw new Error(`recomputeDestinationOverlays.read: ${readErr.message}`);
@@ -131,7 +132,8 @@ export async function recomputeDestinationOverlays(
       lat: overlay.lat,
       lng: overlay.lng,
     })
-    .eq("id", destinationId);
+    .eq("id", destinationId)
+    .eq("user_id", userId);
   if (writeErr) {
     throw new Error(`recomputeDestinationOverlays.write: ${writeErr.message}`);
   }

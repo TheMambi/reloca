@@ -1,14 +1,13 @@
 // Run: npx tsx lib/mode.test.ts
 import assert from "node:assert/strict";
-import { resolveMode } from "./mode";
+import { resolveMode, supabaseUrl } from "./mode";
 
 // Stand-in values built at run time, so nothing here looks like a real key.
 const filler = (label: string) => `${label}-${"x".repeat(12)}`;
 const privateEnv = {
   RELOCA_MODE: "private",
   RELOCA_ACCESS_GATE: "vercel-authentication",
-  NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: filler("anon"),
+  SUPABASE_URL: "http://127.0.0.1:54321",
   SUPABASE_SERVICE_ROLE_KEY: filler("service"),
   RELOCA_SINGLE_USER_ID: filler("user"),
 };
@@ -63,8 +62,7 @@ assert.match(refusal({ ...privateEnv, RELOCA_ACCESS_GATE: "   " }), /private mod
 
 // Each required variable is named when it is missing or blank.
 for (const name of [
-  "NEXT_PUBLIC_SUPABASE_URL",
-  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "SUPABASE_URL",
   "SUPABASE_SERVICE_ROLE_KEY",
   "RELOCA_SINGLE_USER_ID",
 ] as const) {
@@ -75,12 +73,21 @@ for (const name of [
 // Everything missing is listed in one message.
 assert.match(
   refusal({ RELOCA_MODE: "private" }),
-  /private mode is missing RELOCA_ACCESS_GATE, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, RELOCA_SINGLE_USER_ID\./,
+  /private mode is missing RELOCA_ACCESS_GATE, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RELOCA_SINGLE_USER_ID\./,
 );
+
+// The anon key is not needed and not read: private mode runs without it.
+assert.ok(!("NEXT_PUBLIC_SUPABASE_ANON_KEY" in privateEnv));
+// A deployment set up before the rename still has the URL under its old name.
+const { SUPABASE_URL: url, ...withoutUrl } = privateEnv;
+assert.equal(resolveMode({ ...withoutUrl, NEXT_PUBLIC_SUPABASE_URL: url }), "private");
+assert.equal(supabaseUrl({ NEXT_PUBLIC_SUPABASE_URL: "old" }), "old");
+assert.equal(supabaseUrl({ SUPABASE_URL: "new", NEXT_PUBLIC_SUPABASE_URL: "old" }), "new");
+assert.equal(supabaseUrl({}), undefined);
 
 // Messages name variables and never repeat a value.
 const partial = refusal({ ...privateEnv, SUPABASE_SERVICE_ROLE_KEY: undefined });
-for (const value of [privateEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY, privateEnv.RELOCA_SINGLE_USER_ID, privateEnv.NEXT_PUBLIC_SUPABASE_URL, privateEnv.RELOCA_ACCESS_GATE]) {
+for (const value of [privateEnv.RELOCA_SINGLE_USER_ID, privateEnv.SUPABASE_URL, privateEnv.RELOCA_ACCESS_GATE]) {
   assert.ok(!partial.includes(value), "a refusal must not contain a value");
 }
 assert.ok(!refusal({ RELOCA_MODE: "liveish" }).includes("liveish"), "a refusal must not echo the mistyped mode");

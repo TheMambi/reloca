@@ -3,6 +3,7 @@
 // component, and the resulting Buffer is sent back to the client which
 // turns it into a blob URL and triggers a download.
 
+import "server-only";
 import {
   Document,
   Page,
