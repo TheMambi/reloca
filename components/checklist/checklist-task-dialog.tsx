@@ -22,7 +22,7 @@ import {
   createChecklistItem,
   updateChecklistItem,
 } from "@/app/checklist/actions";
-import type { ChecklistCategory, ChecklistItem } from "@/schemas";
+import type { ChecklistCategory, ChecklistItem, ChecklistPhase } from "@/schemas";
 import { cn } from "@/lib/utils";
 import { isoToPickerDate, pickerDateToIso } from "@/lib/dates";
 
@@ -44,7 +44,7 @@ const CATEGORY_LABELS: Record<ChecklistCategory, string> = {
 
 // Categories the user can pick from in the edit dialog. Lease is intentionally
 // excluded — those rows are managed by seedLeaseChecklistTasks, not user-driven.
-const SELECTABLE_CATEGORIES: ChecklistCategory[] = [
+const SELECTABLE_CATEGORIES: ChecklistPhase[] = [
   "pre-move",
   "move-week",
   "post-move",
@@ -54,7 +54,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "create" | "edit";
-  category: ChecklistCategory;
+  category: ChecklistPhase;
   initial?: Partial<ChecklistItem>;
   itemId?: string;
 }
@@ -72,7 +72,7 @@ export function ChecklistTaskDialog({
   const [dueDate, setDueDate] = useState<string | null>(initial?.due_date ?? null);
   // Editable in edit mode; in create mode it stays at the prop value (the user
   // already picked the phase by clicking that group's "+ ADD TASK").
-  const [categoryDraft, setCategoryDraft] = useState<ChecklistCategory>(category);
+  const [categoryDraft, setCategoryDraft] = useState<ChecklistPhase>(category);
   const [calOpen, setCalOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -166,7 +166,7 @@ export function ChecklistTaskDialog({
                 id="checklist-task-category"
                 value={categoryDraft}
                 onChange={(e) =>
-                  setCategoryDraft(e.target.value as ChecklistCategory)
+                  setCategoryDraft(e.target.value as ChecklistPhase)
                 }
                 className="h-8 w-fit min-w-40 rounded-[var(--radius-sm)] border border-border bg-background/40 px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
               >

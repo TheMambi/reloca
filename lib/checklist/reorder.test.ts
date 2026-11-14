@@ -6,7 +6,7 @@
 // no-op when nothing changes, and the lease-row guard.
 
 import assert from "node:assert/strict";
-import { reorderItems, containerId } from "./reorder";
+import { applyMove, reorderItems, containerId } from "./reorder";
 import type { ChecklistItem, ChecklistCategory } from "@/schemas";
 
 function row(
@@ -123,5 +123,58 @@ assert.equal(
   null,
   "can't drop into the lease container",
 );
+
+// ── Stored indexes with a hole (the row at 1 was deleted) ───────────────
+{
+  const gapped = () => [row("a", "pre-move", 0), row("c", "pre-move", 2), row("d", "pre-move", 3)];
+  const down = reorderItems(gapped(), "c", "d");
+  assert.ok(down, "dragging c below d must not be dropped");
+  assert.deepEqual(orderOf(down.items, "pre-move"), ["a", "d", "c"]);
+  assert.deepEqual(down.moved, { id: "c", category: "pre-move", order_index: 2 });
+
+  // Every drag that changes the order is kept, wherever the hole is.
+  for (const indexes of [[0, 2, 3], [1, 2, 3], [0, 1, 3], [5, 9, 20]]) {
+    const ids = ["a", "c", "d"];
+    for (const active of ids) {
+      for (const over of ids) {
+        if (active === over) continue;
+        const list = ids.map((id, i) => row(id, "pre-move", indexes[i]));
+        const result = reorderItems(list, active, over);
+        assert.ok(result, `${active} onto ${over} with indexes ${indexes} was dropped`);
+        assert.notDeepEqual(orderOf(result.items, "pre-move"), ids);
+      }
+    }
+  }
+}
+
+// ── applyMove: replaying a move gives what the drag showed ──────────────
+{
+  const drags: [string, string][] = [
+    ["a", "c"], ["d", "a"], ["b", "x"], ["x", "a"], ["a", containerId("move-week")], ["y", containerId("post-move")],
+  ];
+  for (const [active, over] of drags) {
+    const result = reorderItems(fixture(), active, over);
+    assert.ok(result);
+    const replayed = applyMove(fixture(), result.moved);
+    assert.deepEqual(replayed, result.items, `${active} onto ${over}`);
+    // Rows that already contain the move are left as they are.
+    assert.deepEqual(applyMove(replayed, result.moved), replayed);
+  }
+
+  // Two quick drags: the server's answer to the first arrives before the
+  // second is saved. Replaying the second on top keeps its row in place.
+  const first = reorderItems(fixture(), "a", "c")!;
+  const second = reorderItems(first.items, "d", "b")!;
+  const serverAfterFirst = first.items;
+  assert.deepEqual(applyMove(serverAfterFirst, second.moved), second.items);
+
+  // If the first save fails, the server still has the old order. The second
+  // move alone is replayed on it, and the first is gone.
+  const afterFailure = applyMove(fixture(), second.moved);
+  assert.deepEqual(orderOf(afterFailure, "pre-move"), ["d", "a", "b", "c"]);
+
+  assert.deepEqual(applyMove(fixture(), { id: "L0", category: "pre-move", order_index: 0 }), fixture());
+  assert.deepEqual(applyMove(fixture(), { id: "gone", category: "pre-move", order_index: 0 }), fixture());
+}
 
 console.log("✅ reorder.test.ts passed");

@@ -264,7 +264,6 @@ async function main() {
 
   // ---- checklist ----
   await run("checklist:toggleChecklistItem", () => checklist.toggleChecklistItem({ id: seedTask, completed: true }));
-  await run("checklist:seedChecklistIfEmpty", () => checklist.seedChecklistIfEmpty());
   const task = await run("checklist:createChecklistItem", () =>
     checklist.createChecklistItem({ category: "post-move", title: "Scope test", description: null, due_date: null }),
   );
@@ -273,10 +272,9 @@ async function main() {
     checklist.reorderChecklistItem({ id: task?.id, targetCategory: "pre-move", targetIndex: 0 }),
   );
   await run("checklist:deleteChecklistItem", () => checklist.deleteChecklistItem(task?.id));
-  // With no tasks left, the loader seeds and reads again, and both seeders go
-  // all the way to their inserts.
+  // With no tasks left, both seeders go all the way to their inserts.
   await db.from("checklist_items").delete().eq("user_id", USER);
-  await run("checklist-db:getChecklistItems", () => checklistDb.getChecklistItems());
+  await run("checklist-db:seedChecklistIfEmpty", () => checklistDb.seedChecklistIfEmpty(relocationDb.moveContextFor(null)));
 
   // ---- lease ----
   const newLease = await run("lease:createLeaseTerms", () =>

@@ -7,6 +7,10 @@ export const ChecklistCategorySchema = z.enum([
   "lease",
 ]);
 
+// Where a person may put a task. Lease tasks are written from the lease and
+// are not created, moved or re-filed by hand.
+export const ChecklistPhaseSchema = ChecklistCategorySchema.exclude(["lease"]);
+
 /**
  * Seed item — the template inserted into Supabase on first run.
  * Uses an offset relative to the move date, and {origin} / {destination}
@@ -43,5 +47,6 @@ export const ChecklistItemSchema = z.object({
 });
 
 export type ChecklistCategory = z.infer<typeof ChecklistCategorySchema>;
+export type ChecklistPhase = z.infer<typeof ChecklistPhaseSchema>;
 export type ChecklistSeedItem = z.infer<typeof ChecklistSeedItemSchema>;
 export type ChecklistItem = z.infer<typeof ChecklistItemSchema>;

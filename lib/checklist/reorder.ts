@@ -2,7 +2,7 @@
 // client component so handleDragEnd stays thin AND the index arithmetic is
 // unit-testable under tsx without pulling in React / dnd-kit / server actions.
 
-import type { ChecklistItem, ChecklistCategory } from "@/schemas";
+import type { ChecklistItem, ChecklistCategory, ChecklistPhase } from "@/schemas";
 
 // dnd-kit droppable id for an (empty-or-not) phase container, so a drop on a
 // phase with no item still resolves to that category.
@@ -24,11 +24,40 @@ export const SORTABLE_PHASES = new Set<ChecklistCategory>([
   "post-move",
 ]);
 
+export type Move = { id: string; category: ChecklistPhase; order_index: number };
+
+/**
+ * Put one row at a position within a phase and renumber both phases densely.
+ * This is what the reorder function does in the database, so the client can
+ * replay a move that is still being saved on top of rows the server sent
+ * before it finished. Replaying a move the rows already contain changes nothing.
+ */
+export function applyMove(items: ChecklistItem[], move: Move): ChecklistItem[] {
+  const row = items.find((i) => i.id === move.id);
+  if (!row || row.category === "lease") return items;
+  const without = items.filter((i) => i.id !== move.id);
+  const phaseRows = without.filter((i) => i.category === move.category);
+  const before = phaseRows[move.order_index];
+  const insertAt = before
+    ? without.indexOf(before)
+    : phaseRows.length > 0
+      ? without.indexOf(phaseRows[phaseRows.length - 1]) + 1
+      : 0;
+  const next = [...without];
+  next.splice(insertAt, 0, { ...row, category: move.category });
+  const counter: Partial<Record<ChecklistCategory, number>> = {};
+  return next.map((item) => {
+    const idx = counter[item.category] ?? 0;
+    counter[item.category] = idx + 1;
+    return { ...item, order_index: idx };
+  });
+}
+
 export type ReorderResult = {
   /** The full item list with order_index renumbered densely per category. */
   items: ChecklistItem[];
   /** The moved row's new home — what the reorder RPC needs. */
-  moved: { id: string; category: ChecklistCategory; order_index: number };
+  moved: Move;
 };
 
 /**
@@ -50,13 +79,13 @@ export function reorderItems(
   if (!activeItem || activeItem.category === "lease") return null;
 
   const overItem = items.find((i) => i.id === overId);
-  let targetCategory: ChecklistCategory;
+  let targetCategory: ChecklistPhase;
   if (overItem) {
     if (overItem.category === "lease") return null;
     targetCategory = overItem.category;
   } else {
     const fromContainer = categoryFromContainer(overId);
-    if (!fromContainer || !SORTABLE_PHASES.has(fromContainer)) return null;
+    if (!fromContainer || fromContainer === "lease" || !SORTABLE_PHASES.has(fromContainer)) return null;
     targetCategory = fromContainer;
   }
 
@@ -95,9 +124,16 @@ export function reorderItems(
 
   const movedRow = renumbered.find((i) => i.id === activeId);
   if (!movedRow) return null;
+  // Stored indexes can have holes (a deleted row leaves one), so "same spot"
+  // is judged by the row's position among its category, not by the stored
+  // number: with 0, 2, 3 stored, dropping the middle row last gives index 2
+  // again and is still a real move.
+  const rankBefore = items
+    .slice(0, items.indexOf(activeItem))
+    .filter((i) => i.category === activeItem.category).length;
   if (
     movedRow.category === activeItem.category &&
-    movedRow.order_index === activeItem.order_index
+    movedRow.order_index === rankBefore
   ) {
     return null; // landed in the same spot — no-op
   }
@@ -106,7 +142,7 @@ export function reorderItems(
     items: renumbered,
     moved: {
       id: activeId,
-      category: movedRow.category,
+      category: targetCategory,
       order_index: movedRow.order_index,
     },
   };

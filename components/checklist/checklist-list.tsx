@@ -7,7 +7,9 @@ import {
   useTransition,
   useEffect,
   useMemo,
+  useRef,
 } from "react";
+import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
   Circle,
@@ -48,7 +50,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { ChecklistItem, ChecklistCategory } from "@/schemas";
+import type { ChecklistItem, ChecklistCategory, ChecklistPhase } from "@/schemas";
 import {
   toggleChecklistItem,
   deleteChecklistItem,
@@ -56,6 +58,8 @@ import {
 } from "@/app/checklist/actions";
 import {
   reorderItems,
+  applyMove,
+  type Move,
   containerId,
   SORTABLE_PHASES,
 } from "@/lib/checklist/reorder";
@@ -118,7 +122,17 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
   // the visible order. When the prop changes after a server action's
   // revalidatePath fires, sync back to truth.
   const [localItems, setLocalItems] = useState(items);
-  useEffect(() => setLocalItems(items), [items]);
+  // Moves sent but not yet answered. Rows from the server can arrive while a
+  // later move is still being saved; replaying the unanswered moves on top
+  // keeps that row from jumping back and forth.
+  const pendingMoves = useRef<Move[]>([]);
+  const serverItems = useRef(items);
+  useEffect(() => {
+    serverItems.current = items;
+    setLocalItems(pendingMoves.current.reduce(applyMove, items));
+  }, [items]);
+  const [reorderError, setReorderError] = useState<string | null>(null);
+  const router = useRouter();
 
   const [optimisticItems, applyOptimistic] = useOptimistic(
     localItems,
@@ -139,7 +153,7 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
     | {
         open: true;
         mode: "create" | "edit";
-        category: ChecklistCategory;
+        category: ChecklistPhase;
         initial?: Partial<ChecklistItem>;
         itemId?: string;
       }
@@ -170,6 +184,7 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
   };
 
   const handleEdit = (item: ChecklistItem) => {
+    if (item.category === "lease") return;
     setDialogState({
       open: true,
       mode: "edit",
@@ -183,7 +198,7 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
     });
   };
 
-  const handleAdd = (category: ChecklistCategory) => {
+  const handleAdd = (category: ChecklistPhase) => {
     setDialogState({ open: true, mode: "create", category });
   };
 
@@ -217,16 +232,24 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
     const result = reorderItems(localItems, String(active.id), String(over.id));
     if (!result) return;
 
-    const previous = localItems;
+    const move = result.moved;
+    pendingMoves.current = [...pendingMoves.current, move];
     setLocalItems(result.items);
-    void reorderChecklistItem({
-      id: result.moved.id,
-      targetCategory: result.moved.category,
-      targetIndex: result.moved.order_index,
-    }).catch(() => {
-      // On failure, roll back optimistically; the next revalidatePath will
-      // also resync to server truth.
-      setLocalItems(previous);
+    setReorderError(null);
+    const settle = () => {
+      pendingMoves.current = pendingMoves.current.filter((m) => m !== move);
+    };
+    reorderChecklistItem({
+      id: move.id,
+      targetCategory: move.category,
+      targetIndex: move.order_index,
+    }).then(settle, () => {
+      // Show what the server has, plus any later move still being saved, and
+      // ask for fresh rows. An older snapshot would undo those later moves.
+      settle();
+      setLocalItems(pendingMoves.current.reduce(applyMove, serverItems.current));
+      setReorderError("That move wasn't saved. The list is back in its saved order. Try again.");
+      router.refresh();
     });
   }
 
@@ -268,6 +291,15 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
           {overallPct}% complete · saved automatically
         </p>
       </div>
+
+      {reorderError && (
+        <p
+          role="alert"
+          className="rounded-[var(--radius-sm)] border border-[oklch(var(--danger-raw)/0.3)] bg-[oklch(var(--danger-raw)/0.1)] px-3 py-2 text-xs text-[var(--danger)]"
+        >
+          {reorderError}
+        </p>
+      )}
 
       <DndContext
         sensors={sensors}

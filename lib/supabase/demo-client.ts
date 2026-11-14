@@ -297,6 +297,9 @@ function reorderChecklistItem(all: Store, args: { p_id: string; p_target_categor
   const rows = table(all, "checklist_items");
   const item = rows.find((r) => r.id === args.p_id);
   if (!item) return { data: null, error: { message: "Checklist item not found" }, count: null };
+  if (item.category === "lease" || args.p_target_category === "lease") {
+    return { data: null, error: { message: "Lease tasks cannot be reordered" }, count: null };
+  }
   const byIndex = (a: Row, b: Row) => compare(a.order_index, b.order_index);
   const source = rows.filter((r) => r.category === item.category && r !== item).sort(byIndex);
   source.forEach((r, i) => (r.order_index = i));

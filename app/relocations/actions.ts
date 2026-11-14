@@ -8,7 +8,8 @@ import {
   requireUserId,
 } from "@/lib/supabase/server";
 import { getCity } from "@/lib/data/cities";
-import { VIEWING_COOKIE } from "@/lib/data/relocation-db";
+import { VIEWING_COOKIE, moveContextFor } from "@/lib/data/relocation-db";
+import { seedChecklistIfEmpty } from "@/lib/data/checklist-db";
 import { getChecklistSeed } from "@/lib/data/checklist";
 import { ADDRESS_LEAD_DAYS, shiftedDueDates } from "@/lib/data/move-seeds";
 import type { AddressChangeTarget } from "@/schemas/transitions";
@@ -147,6 +148,12 @@ export async function createRelocation(
   if (invalid) return { ok: false, error: invalid };
 
   const sb = await createClient();
+  const { data: earlier, error: countErr } = await sb
+    .from("relocations")
+    .select("id")
+    .eq("user_id", requireUserId())
+    .limit(1);
+  if (countErr) return { ok: false, error: friendlyDbError("createRelocation.read", countErr) };
   const { data, error } = await sb
     .from("relocations")
     .insert({
@@ -160,9 +167,20 @@ export async function createRelocation(
     .select("*")
     .single();
   if (error) return { ok: false, error: friendlyDbError("createRelocation", error) };
+  const row = RelocationSchema.parse(data);
+
+  // The first move brings the template tasks with it. Later moves do not, and
+  // reading an empty checklist never does, so a cleared list stays cleared.
+  if ((earlier?.length ?? 0) === 0) {
+    try {
+      await seedChecklistIfEmpty(moveContextFor(row));
+    } catch (err) {
+      console.error("[action] createRelocation.seedChecklist:", err);
+    }
+  }
 
   revalidatePath("/", "layout");
-  return { ok: true, row: RelocationSchema.parse(data) };
+  return { ok: true, row };
 }
 
 /** Edit a relocation's label, endpoints, or move date. */

@@ -1,44 +1,67 @@
 import "server-only";
-import { createClient, requireUserId } from "@/lib/supabase/server";
+import { createAdminClient, createClient, requireUserId } from "@/lib/supabase/server";
 import { ChecklistItemSchema, type ChecklistItem } from "@/schemas";
-import { seedChecklistIfEmpty } from "@/app/checklist/actions";
-
+import { getChecklistSeed } from "@/lib/data/checklist";
+import { fillSeedText, seededDueDate } from "@/lib/data/move-seeds";
+import type { MoveContext } from "@/lib/data/relocation-db";
 
 /**
- * Live checklist items for the single-user UID. Lazily seeds the table
- * from `data/checklist-seed.json` on first read so any RSC that needs
- * checklist data triggers the seed without a separate ceremony.
+ * Inserts the template tasks for a move, unless the user already has tasks.
+ * Called once, when the user's first move is created. An empty list on a later
+ * read is left empty: the person may have cleared it on purpose.
+ *
+ * Belt-and-suspenders idempotency: the read-then-write guard catches the
+ * common case, and the upsert with ignoreDuplicates=true makes a concurrent
+ * race against the UNIQUE(user_id, category, order_index) index harmless
+ * (Phase 6 follow-up after a refresh-storm produced 40+ rows in production).
  */
+export async function seedChecklistIfEmpty(move: MoveContext): Promise<void> {
+  const admin = createAdminClient();
+  // Lease-category rows are owned by seedLeaseChecklistTasks, not this seeder.
+  // The empty-check must exclude them or this guard fires after lease seeding
+  // and the non-lease seed rows never get inserted.
+  const { data: existing, error: countError } = await admin
+    .from("checklist_items")
+    .select("id")
+    .eq("user_id", requireUserId())
+    .neq("category", "lease")
+    .limit(1);
+  if (countError) {
+    throw new Error(
+      `seedChecklistIfEmpty count: ${countError.message}${countError.code ? ` (${countError.code})` : ""}`,
+    );
+  }
+  if ((existing?.length ?? 0) > 0) return;
+
+  const seed = getChecklistSeed();
+
+  const rows = seed.map((item) => ({
+    user_id: requireUserId(),
+    category: item.category,
+    title: fillSeedText(item.title, move),
+    description: item.description && fillSeedText(item.description, move),
+    due_date: seededDueDate(move.moveDate, item.daysOffsetFromMoveDate),
+    order_index: item.orderIndex,
+  }));
+
+  const { error } = await admin
+    .from("checklist_items")
+    .upsert(rows, { onConflict: "user_id,category,order_index", ignoreDuplicates: true });
+  if (error) throw new Error(`seedChecklistIfEmpty insert: ${error.message}`);
+}
+
+/** Live checklist items for the single-user UID. */
 export async function getChecklistItems(): Promise<ChecklistItem[]> {
   const supabase = await createClient();
 
-  const initial = await supabase
+  const { data, error } = await supabase
     .from("checklist_items")
     .select("*")
     .eq("user_id", requireUserId())
     .order("category", { ascending: true })
     .order("order_index", { ascending: true });
 
-  if (initial.error) throw new Error(`getChecklistItems: ${initial.error.message}`);
+  if (error) throw new Error(`getChecklistItems: ${error.message}`);
 
-  let rows = initial.data ?? [];
-  // Trigger the non-lease seed when no non-lease rows exist. Lease rows are
-  // owned by seedLeaseChecklistTasks; their presence shouldn't suppress the
-  // seed of the other 4 categories. The seedChecklistIfEmpty function is
-  // race-safe (upsert on the unique index) so calling it on a "lease-only"
-  // state is the right move — it will insert the missing non-lease seed rows.
-  const hasNonLeaseRows = rows.some((r) => r.category !== "lease");
-  if (!hasNonLeaseRows) {
-    await seedChecklistIfEmpty();
-    const reread = await supabase
-      .from("checklist_items")
-      .select("*")
-      .eq("user_id", requireUserId())
-      .order("category", { ascending: true })
-      .order("order_index", { ascending: true });
-    if (reread.error) throw new Error(`getChecklistItems re-read: ${reread.error.message}`);
-    rows = reread.data ?? [];
-  }
-
-  return ChecklistItemSchema.array().parse(rows);
+  return ChecklistItemSchema.array().parse(data ?? []);
 }

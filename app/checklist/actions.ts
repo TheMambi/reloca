@@ -2,11 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createClient, createAdminClient, requireUserId } from "@/lib/supabase/server";
-import { getActiveMoveContext } from "@/lib/data/relocation-db";
-import { getChecklistSeed } from "@/lib/data/checklist";
-import { fillSeedText, seededDueDate } from "@/lib/data/move-seeds";
-import { ChecklistCategorySchema } from "@/schemas";
+import { createClient, requireUserId } from "@/lib/supabase/server";
+import { ChecklistPhaseSchema, type ChecklistPhase } from "@/schemas";
 
 
 const ToggleInput = z.object({
@@ -27,52 +24,32 @@ export async function toggleChecklistItem(input: { id: string; completed: boolea
   revalidatePath("/");
 }
 
-/**
- * Idempotent seed: if the user has zero rows, insert the seed template.
- *
- * Belt-and-suspenders idempotency: the read-then-write guard catches the
- * common case, and the upsert with ignoreDuplicates=true makes a concurrent
- * race against the UNIQUE(user_id, category, order_index) index harmless
- * (Phase 6 follow-up after a refresh-storm produced 40+ rows in production).
- */
-export async function seedChecklistIfEmpty(): Promise<void> {
-  const admin = createAdminClient();
-  // Lease-category rows are owned by seedLeaseChecklistTasks, not this seeder.
-  // The empty-check must exclude them or this guard fires after lease seeding
-  // and the non-lease seed rows never get inserted.
-  const { data: existing, error: countError } = await admin
+type AppClient = Awaited<ReturnType<typeof createClient>>;
+
+// Deleting a row or moving it to another phase leaves a hole in its old
+// phase's numbering. Going upward, each row's new number is one no row holds,
+// so the unique (user, category, order) index is never tripped on the way.
+async function closeOrderGaps(sb: AppClient, userId: string, category: ChecklistPhase): Promise<void> {
+  const { data, error } = await sb
     .from("checklist_items")
-    .select("id")
-    .eq("user_id", requireUserId())
-    .neq("category", "lease")
-    .limit(1);
-  if (countError) {
-    throw new Error(
-      `seedChecklistIfEmpty count: ${countError.message}${countError.code ? ` (${countError.code})` : ""}`,
-    );
+    .select("id, order_index")
+    .eq("user_id", userId)
+    .eq("category", category)
+    .order("order_index", { ascending: true });
+  if (error) throw new Error(`closeOrderGaps.read: ${error.message}`);
+  for (const [rank, row] of (data ?? []).entries()) {
+    if (row.order_index === rank) continue;
+    const { error: writeErr } = await sb
+      .from("checklist_items")
+      .update({ order_index: rank })
+      .eq("id", row.id)
+      .eq("user_id", userId);
+    if (writeErr) throw new Error(`closeOrderGaps.write: ${writeErr.message}`);
   }
-  if ((existing?.length ?? 0) > 0) return;
-
-  const seed = getChecklistSeed();
-  const move = await getActiveMoveContext();
-
-  const rows = seed.map((item) => ({
-    user_id: requireUserId(),
-    category: item.category,
-    title: fillSeedText(item.title, move),
-    description: item.description && fillSeedText(item.description, move),
-    due_date: seededDueDate(move.moveDate, item.daysOffsetFromMoveDate),
-    order_index: item.orderIndex,
-  }));
-
-  const { error } = await admin
-    .from("checklist_items")
-    .upsert(rows, { onConflict: "user_id,category,order_index", ignoreDuplicates: true });
-  if (error) throw new Error(`seedChecklistIfEmpty insert: ${error.message}`);
 }
 
 const ChecklistCreateInput = z.object({
-  category: ChecklistCategorySchema,
+  category: ChecklistPhaseSchema,
   title: z.string().min(1),
   description: z.string().nullable(),
   due_date: z.iso.date().nullable(),
@@ -133,6 +110,7 @@ export async function updateChecklistItem(
   // trip on a collision with an existing row at the same index in that
   // category.
   const updateBody: typeof parsed & { order_index?: number } = { ...parsed };
+  let movedFrom: ChecklistPhase | null = null;
   if (parsed.category !== undefined) {
     const { data: current, error: readErr } = await sb
       .from("checklist_items")
@@ -144,6 +122,9 @@ export async function updateChecklistItem(
       throw new Error(`updateChecklistItem.read: ${readErr.message}`);
     if (!current)
       throw new Error(`updateChecklistItem: row ${id} not found`);
+    if (current.category === "lease")
+      throw new Error("updateChecklistItem: a lease task cannot change phase");
+    if (current.category !== parsed.category) movedFrom = current.category;
 
     if (current.category !== parsed.category) {
       const { data: maxRow, error: maxErr } = await sb
@@ -166,25 +147,36 @@ export async function updateChecklistItem(
     .eq("id", id)
     .eq("user_id", userId);
   if (error) throw new Error(`updateChecklistItem: ${error.message}`);
+  if (movedFrom) await closeOrderGaps(sb, userId, movedFrom);
   revalidatePath("/checklist");
   revalidatePath("/");
 }
 
 export async function deleteChecklistItem(id: string): Promise<void> {
   const sb = await createClient();
+  const userId = requireUserId();
+  const { data: row, error: readErr } = await sb
+    .from("checklist_items")
+    .select("category")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (readErr) throw new Error(`deleteChecklistItem.read: ${readErr.message}`);
   const { error } = await sb
     .from("checklist_items")
     .delete()
     .eq("id", id)
-    .eq("user_id", requireUserId());
+    .eq("user_id", userId);
   if (error) throw new Error(`deleteChecklistItem: ${error.message}`);
+  // Lease tasks keep the numbers the lease code gave them.
+  if (row && row.category !== "lease") await closeOrderGaps(sb, userId, row.category);
   revalidatePath("/checklist");
   revalidatePath("/");
 }
 
 const ReorderInput = z.object({
   id: z.uuid(),
-  targetCategory: ChecklistCategorySchema,
+  targetCategory: ChecklistPhaseSchema,
   targetIndex: z.number().int().nonnegative(),
 });
 
@@ -202,12 +194,13 @@ export async function reorderChecklistItem(
   // level security, so ownership is checked here before calling it.
   const { data: owned, error: readErr } = await sb
     .from("checklist_items")
-    .select("id")
+    .select("id, category")
     .eq("id", parsed.id)
     .eq("user_id", requireUserId())
     .maybeSingle();
   if (readErr) throw new Error(`reorderChecklistItem.read: ${readErr.message}`);
   if (!owned) throw new Error(`reorderChecklistItem: row ${parsed.id} not found`);
+  if (owned.category === "lease") throw new Error("reorderChecklistItem: lease tasks do not reorder");
   const { error } = await sb.rpc("reorder_checklist_item", {
     p_id: parsed.id,
     p_target_category: parsed.targetCategory,
