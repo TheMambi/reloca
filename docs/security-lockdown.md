@@ -9,7 +9,7 @@ After it, only the server reaches the data:
 - The anon key is not read anywhere and opens nothing.
 - `RELOCA_SINGLE_USER_ID` is an identifier the server adds to every query. It is not a secret.
 
-This is containment, not a login. Whoever can open a private deployment can still use the app. Real sign-in is the next step.
+This is containment, not a login. Whoever can open a private deployment can still use the app. Real sign-in is the next step. `docs/auth-design.md` has the plan for it. It is a draft: none of it is built or applied.
 
 ## Rollout order
 
