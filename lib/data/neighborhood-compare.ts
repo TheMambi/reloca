@@ -10,6 +10,7 @@ import type { SavedNeighborhood } from "@/schemas/saved-neighborhood";
 import { cityName, cityCode, citySlugFromName } from "./cities";
 import { getCrimeRecord } from "./crime";
 import { getClimateProfile } from "./climate";
+import { toSlug } from "./neighborhoods";
 
 export type ClimateConcern =
   | { kind: "flood"; label: string }
@@ -35,12 +36,6 @@ export interface NeighborhoodCompareColumn {
 
 export interface NeighborhoodCompareView {
   columns: NeighborhoodCompareColumn[];
-}
-
-// Mirrors the slug rule in `lib/data/neighborhoods.ts` so links round-trip
-// against `/properties/[neighborhood]`.
-function toSlug(name: string): string {
-  return name.toLowerCase().replace(/\s+/g, "-");
 }
 
 function bedRangeLabel(min: number, max: number): string {

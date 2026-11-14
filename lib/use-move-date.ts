@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { daysUntilIso, isValidIsoDate, todayLocalIso } from "@/lib/dates";
+import { daysUntilIso, isValidIsoDate } from "@/lib/dates";
 
 const STORAGE_KEY = "reloca:move-date";
 
@@ -17,9 +17,9 @@ function read(serverDefault: string | null): string | null {
   return serverDefault;
 }
 
-/** Days until `iso` measured from the user's local today (client surface). */
+/** Days until `iso`, counted from the same household today the server uses. */
 export function daysUntil(iso: string | null): number | null {
-  return daysUntilIso(iso, todayLocalIso());
+  return daysUntilIso(iso);
 }
 
 /**

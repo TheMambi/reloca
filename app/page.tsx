@@ -25,7 +25,7 @@ import { getMoveEstimate } from "@/lib/data/move-cost-db";
 import { getSavedNeighborhoods } from "@/lib/data/saved-neighborhoods-db";
 import { getStatusAlerts } from "@/lib/data/status-alerts";
 import { deriveJourneyPhase } from "@/lib/journey";
-import { daysUntilIso, todayUtcIso } from "@/lib/dates";
+import { daysUntilIso, todayInZoneIso } from "@/lib/dates";
 import {
   getViewingRelocation,
   moveContextFor,
@@ -154,7 +154,7 @@ async function computeDashboardData(ctx: MoveContext) {
   // Before target_move_out → LEASE NOTICE row (T-N or SENT).
   // After target_move_out → DEPOSIT WINDOW row (T-N to deposit_claim_window_end).
   // No lease → null; AtAGlance keeps showing the Risks row.
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = todayInZoneIso();
   let leaseGlance: LeaseGlance | null = null;
   if (lease) {
     const moveOutIso = lease.target_move_out_date ?? lease.lease_end_date;
@@ -163,9 +163,7 @@ async function computeDashboardData(ctx: MoveContext) {
     if (todayIso > moveOutIso) {
       const depositEvent = events.find((e) => e.kind === "deposit_claim_window_end");
       const depositIso = depositEvent?.occurs_on ?? null;
-      const daysUntil = depositIso
-        ? Math.ceil((new Date(depositIso + "T00:00:00.000Z").getTime() - Date.now()) / 86_400_000)
-        : null;
+      const daysUntil = daysUntilIso(depositIso, todayIso);
       leaseGlance = {
         exists: true,
         mode: "deposit-window",
@@ -178,9 +176,7 @@ async function computeDashboardData(ctx: MoveContext) {
     } else {
       const sendByEvent = events.find((e) => e.kind === "notice_send_by");
       const sendByIso = sendByEvent?.occurs_on ?? null;
-      const daysUntil = sendByIso
-        ? Math.ceil((new Date(sendByIso + "T00:00:00.000Z").getTime() - Date.now()) / 86_400_000)
-        : null;
+      const daysUntil = daysUntilIso(sendByIso, todayIso);
       // When notice has been sent, the trailing date should be the send-by date
       // (per design — keeps the row anchored to the same calendar event).
       leaseGlance = {
@@ -293,12 +289,12 @@ export default async function Home({
   // Journey phase is execution state — always derived from the ACTIVE move,
   // even while a comparison relocation is being viewed (AD-039).
   const journeyPhase = deriveJourneyPhase({
-    today: todayUtcIso(),
+    today: todayInZoneIso(),
     moveDate: activeCtx.moveDate,
     noticeSent: data.noticeSent,
     decision: data.leaseDecision,
   });
-  const activeDays = daysUntilIso(activeCtx.moveDate, todayUtcIso());
+  const activeDays = daysUntilIso(activeCtx.moveDate);
   const arrived = activeDays !== null && activeDays < 0;
   const alerts = await getStatusAlerts();
 

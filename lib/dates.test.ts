@@ -10,6 +10,9 @@ import {
   daysBetweenIso,
   daysUntilIso,
   isValidIsoDate,
+  isoDateInZone,
+  isoToPickerDate,
+  pickerDateToIso,
 } from "./dates";
 
 // ---- isValidIsoDate ---------------------------------------------------------
@@ -66,5 +69,33 @@ assert.equal(countdownCell(12), "T-12");
 assert.equal(countdownCell(0), "Today");
 assert.equal(countdownCell(-3), "3d ago");
 assert.equal(countdownCell(null), "—");
+
+// ---- the date picker bridge ----------------------------------------------------
+// react-day-picker highlights and returns local-midnight dates. Whatever zone
+// this runs in (`pnpm test` uses UTC and America/Los_Angeles), the day shown
+// must be the day saved.
+{
+  const shown = isoToPickerDate("2026-10-01");
+  assert.deepEqual(
+    [shown.getFullYear(), shown.getMonth() + 1, shown.getDate(), shown.getHours()],
+    [2026, 10, 1, 0],
+    "an ISO date opens the calendar on that local day, at local midnight",
+  );
+  // What the picker hands back for a click on Sep 30: local midnight.
+  assert.equal(pickerDateToIso(new Date(2026, 8, 30)), "2026-09-30", "a clicked day is saved as that day");
+  assert.equal(pickerDateToIso(new Date(2026, 8, 30, 23, 59)), "2026-09-30", "late in the local day too");
+  for (const iso of ["2026-01-01", "2026-03-08", "2026-11-01", "2028-02-29", "2026-12-31"]) {
+    assert.equal(pickerDateToIso(isoToPickerDate(iso)), iso, `round trip ${iso}`);
+  }
+}
+
+// ---- isoDateInZone ----------------------------------------------------------
+{
+  const evening = new Date("2027-10-25T01:00:00Z");
+  assert.equal(isoDateInZone(evening, "America/Los_Angeles"), "2027-10-24");
+  assert.equal(isoDateInZone(evening, "America/Denver"), "2027-10-24");
+  assert.equal(isoDateInZone(evening, "UTC"), "2027-10-25");
+  assert.equal(isoDateInZone(evening, "Europe/Madrid"), "2027-10-25");
+}
 
 console.log("lib/dates.test.ts — all assertions passed");

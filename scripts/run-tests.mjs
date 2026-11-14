@@ -1,4 +1,4 @@
-// Runs every *.test.ts as a plain tsx script from the repo root and stops at the first failure.
+// Runs every *.test.ts as a plain tsx script from the repo root, once per time zone, and stops at the first failure.
 import { spawnSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -28,15 +28,25 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-for (const file of files) {
-  const name = relative(root, file);
-  // Some tests read data/ through process.cwd(), so each one starts in the repo root.
-  // react-server is the condition Next runs server code under. Without it,
-  // modules that import "server-only" refuse to load.
-  const result = spawnSync(process.execPath, [tsx, "--conditions=react-server", name], { cwd: root, stdio: "inherit" });
-  if (result.status !== 0) {
-    console.error(`FAILED ${name}`);
-    process.exit(result.status ?? 1);
+// Date code that is right in one zone can be a day off in another. The host
+// runs in UTC and the household does not, so every test runs in both.
+const zones = ["UTC", "America/Los_Angeles"];
+
+for (const zone of zones) {
+  for (const file of files) {
+    const name = relative(root, file);
+    // Some tests read data/ through process.cwd(), so each one starts in the repo root.
+    // react-server is the condition Next runs server code under. Without it,
+    // modules that import "server-only" refuse to load.
+    const result = spawnSync(process.execPath, [tsx, "--conditions=react-server", name], {
+      cwd: root,
+      stdio: "inherit",
+      env: { ...process.env, TZ: zone },
+    });
+    if (result.status !== 0) {
+      console.error(`FAILED ${name} (TZ=${zone})`);
+      process.exit(result.status ?? 1);
+    }
   }
 }
-console.log(`${files.length} test files passed.`);
+console.log(`${files.length} test files passed in ${zones.join(" and ")}.`);

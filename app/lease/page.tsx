@@ -13,6 +13,7 @@ import {
   getActiveDestination,
 } from "@/lib/data/lease-db";
 import { getChecklistItems } from "@/lib/data/checklist-db";
+import { daysUntilIso, todayInZoneIso } from "@/lib/dates";
 import { LeaseFirstRunForm } from "@/components/lease/lease-first-run-form";
 import { DecisionDeadlineTracker } from "@/components/lease/decision-deadline-tracker";
 import { NoticeComposer } from "@/components/lease/notice-composer";
@@ -53,7 +54,7 @@ export default async function LeasePage({
 
   // Post-move the notice question is history — land on the walkthrough/deposit
   // surface instead (AD-039). An explicit ?tab= still wins for deep links.
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = todayInZoneIso();
   const moveOutIso = lease.target_move_out_date ?? lease.lease_end_date;
   const pastMoveOut = todayIso > moveOutIso;
   const initialTab = normalizeTab(tab, pastMoveOut ? "walkthrough" : "notice");
@@ -72,11 +73,7 @@ export default async function LeasePage({
   // Shared compute (mirrors the old <LeaseDecisionBlock>'s pre-render logic).
   // Kept inline so each tab's <TabsContent> stays a thin wrapper.
   const sendByEvent = events.find((e) => e.kind === "notice_send_by");
-  const daysUntilSendBy = sendByEvent
-    ? Math.ceil(
-        (new Date(sendByEvent.occurs_on).getTime() - Date.now()) / 86_400_000,
-      )
-    : null;
+  const daysUntilSendBy = daysUntilIso(sendByEvent?.occurs_on, todayIso);
   const noticeSent = events.some((e) => e.kind === "notice_sent");
 
   return (

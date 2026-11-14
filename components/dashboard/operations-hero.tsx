@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Calendar, Circle, Clock } from "lucide-react";
 import type { MoveContext } from "@/lib/data/relocation-db";
-import { daysUntilIso, todayUtcIso } from "@/lib/dates";
+import { daysUntilIso } from "@/lib/dates";
 import { journeyPhaseName, type JourneyPhaseId } from "@/lib/journey";
 
 /*
@@ -26,7 +26,7 @@ export function OperationsHero({
   // Reference-driven: origin/destination + countdown for the viewing relocation.
   const { moveDate: moveDateIso, originName, destinationName, originCode, destinationCode } =
     context;
-  const days = daysUntilIso(moveDateIso, todayUtcIso());
+  const days = daysUntilIso(moveDateIso);
   const arrived = days !== null && days < 0;
 
   // Single countdown vocabulary (lib/dates) — the pill flips from a countdown

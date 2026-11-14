@@ -11,6 +11,7 @@ import {
   type MoveOutRoomRecord,
 } from "@/schemas/move-out";
 import { getActiveLease } from "@/lib/data/lease-db";
+import { todayInZoneIso } from "@/lib/dates";
 // NOTE: @react-pdf/renderer + the report template are imported dynamically
 // inside generateWalkthroughReport (Wave 6, AD-044) — react-pdf is by far the
 // heaviest dependency on this route and is only needed for the one-shot
@@ -65,7 +66,7 @@ export async function createWalkthrough(): Promise<{
     .from("move_out_walkthroughs")
     .insert({
       user_id: userId,
-      walkthrough_date: new Date().toISOString().slice(0, 10),
+      walkthrough_date: todayInZoneIso(),
     })
     .select("*")
     .single();
@@ -288,7 +289,7 @@ export async function generateWalkthroughReport(
 
   await markPdfGenerated(walkthroughId);
 
-  const datePart = (walkthrough.walkthrough_date ?? new Date().toISOString().slice(0, 10)).replace(
+  const datePart = (walkthrough.walkthrough_date ?? todayInZoneIso()).replace(
     /-/g,
     "",
   );

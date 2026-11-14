@@ -24,16 +24,12 @@ import {
 } from "@/app/lease/actions";
 import { renderNoticeTemplate } from "./notice-template";
 import { noticeTerm } from "@/lib/lease/notice-term";
+import { addDaysIso, isoDateInZone, isoToPickerDate, pickerDateToIso, todayInZoneIso } from "@/lib/dates";
 import type { LeaseTerms, NoticeDraft } from "@/schemas/lease";
 
 interface NoticeComposerProps {
   lease: LeaseTerms;
   draft: NoticeDraft | null;
-}
-
-// Pure: compute today (UTC ISO date) once per render.
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 // "2027-10-25" → "Monday, Oct 25" for the calendar trigger button.
@@ -62,28 +58,14 @@ function buildMailtoUrl(
   return `mailto:${encodeURIComponent(recipient)}?${params.toString()}`;
 }
 
-// `react-day-picker` works in local time; convert YYYY-MM-DD ↔ Date the same way.
-function isoToDate(iso: string): Date {
-  return new Date(iso + "T00:00:00.000Z");
-}
-function dateToIso(d: Date): string {
-  // Use UTC to keep date-only stable across TZs (matches actions.ts convention).
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
 // "today + N days" as a Date object, used for the calendar's `disabled` predicate.
 function addDaysDate(iso: string, days: number): Date {
-  const d = isoToDate(iso);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d;
+  return isoToPickerDate(addDaysIso(iso, days));
 }
 
 export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
   // ── state ────────────────────────────────────────────────────────────────
-  const today = todayIso();
+  const today = todayInZoneIso();
   const minMoveOutDate = useMemo(
     () => addDaysDate(today, lease.notice_days_required),
     [today, lease.notice_days_required],
@@ -117,13 +99,13 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
 
   const locked = Boolean(draft?.sent_at);
   const sentDate = draft?.sent_at
-    ? formatLockedDate(draft.sent_at.slice(0, 10))
+    ? formatLockedDate(isoDateInZone(new Date(draft.sent_at)))
     : null;
 
   // ── actions ──────────────────────────────────────────────────────────────
   function onMoveOutSelect(d: Date | undefined) {
     if (!d) return;
-    const iso = dateToIso(d);
+    const iso = pickerDateToIso(d);
     setMoveOut(iso);
     setCalendarOpen(false);
     // Re-render template only if the user hasn't manually edited (best-effort:
@@ -307,15 +289,15 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
               >
                 <Calendar
                   mode="single"
-                  selected={isoToDate(moveOut)}
+                  selected={isoToPickerDate(moveOut)}
                   onSelect={onMoveOutSelect}
                   disabled={(d) => d < minMoveOutDate}
-                  defaultMonth={isoToDate(moveOut)}
+                  defaultMonth={isoToPickerDate(moveOut)}
                 />
               </PopoverContent>
             </Popover>
             <p className="label-cap text-[9px] text-muted-foreground">
-              EARLIEST: {dateToIso(minMoveOutDate)} · TODAY +{" "}
+              EARLIEST: {pickerDateToIso(minMoveOutDate)} · TODAY +{" "}
               {lease.notice_days_required}D
             </p>
           </div>

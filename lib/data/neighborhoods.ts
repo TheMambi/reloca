@@ -22,7 +22,7 @@ export interface NeighborhoodSummary {
 // Why: slug must round-trip with `app/properties/[neighborhood]/page.tsx`,
 // which decodes `-` back to ` ` and lowercase-compares against
 // `property.neighborhood`. Keep this rule in lockstep with that page.
-function toSlug(name: string): string {
+export function toSlug(name: string): string {
   return name.toLowerCase().replace(/\s+/g, "-");
 }
 

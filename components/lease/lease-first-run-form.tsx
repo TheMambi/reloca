@@ -15,25 +15,15 @@ import {
   UTILITY_OPTIONS,
 } from "./lease-first-run-defaults";
 import { cn } from "@/lib/utils";
+import { isoToPickerDate, pickerDateToIso } from "@/lib/dates";
 
-// ── date helpers (UTC, ISO date in/out) ───────────────────────────────────
-function isoToDate(iso: string): Date {
-  return new Date(iso + "T00:00:00.000Z");
-}
-function dateToIso(d: Date): string {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 function formatTriggerDate(iso: string): string {
   if (!iso) return "Pick a date";
-  const d = isoToDate(iso);
+  const d = isoToPickerDate(iso);
   return d.toLocaleDateString("en-US", {
     weekday: "long",
     month: "short",
     day: "numeric",
-    timeZone: "UTC",
   });
 }
 
@@ -285,16 +275,16 @@ export function LeaseFirstRunForm() {
 
   // ── memoized derived UI bits ─────────────────────────────────────────────
   const earliestEndMonth = useMemo(
-    () => (leaseEndDate ? isoToDate(leaseEndDate) : new Date()),
+    () => (leaseEndDate ? isoToPickerDate(leaseEndDate) : new Date()),
     [leaseEndDate],
   );
   const targetMonth = useMemo(
-    () => (targetMoveOutDate ? isoToDate(targetMoveOutDate) : earliestEndMonth),
+    () => (targetMoveOutDate ? isoToPickerDate(targetMoveOutDate) : earliestEndMonth),
     [targetMoveOutDate, earliestEndMonth],
   );
   const renewalMonth = useMemo(
     () =>
-      renewalOfferExpires ? isoToDate(renewalOfferExpires) : earliestEndMonth,
+      renewalOfferExpires ? isoToPickerDate(renewalOfferExpires) : earliestEndMonth,
     [renewalOfferExpires, earliestEndMonth],
   );
 
@@ -769,13 +759,13 @@ function CalendarPickerButton({
       <PopoverContent align="start" className="w-auto p-0">
         <Calendar
           mode="single"
-          selected={value ? isoToDate(value) : undefined}
+          selected={value ? isoToPickerDate(value) : undefined}
           onSelect={(d) => {
             if (!d) return;
-            onChange(dateToIso(d));
+            onChange(pickerDateToIso(d));
             setOpen(false);
           }}
-          defaultMonth={value ? isoToDate(value) : defaultMonth}
+          defaultMonth={value ? isoToPickerDate(value) : defaultMonth}
         />
         {clearable && value && (
           <div className="border-t border-border px-2 py-1.5">

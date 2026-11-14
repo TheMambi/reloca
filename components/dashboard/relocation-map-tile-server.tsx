@@ -8,7 +8,6 @@ import {
   countdownCell,
   countdownTone,
   daysUntilIso,
-  todayUtcIso,
 } from "@/lib/dates";
 
 const milesFmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
@@ -66,7 +65,7 @@ export function RelocationMapTileServer({ context }: { context: MoveContext }) {
   );
   // Shared countdown vocabulary (lib/dates): "T-12" pre-move, "3d ago" after —
   // and the destination cell flips from "Heading to" to "Now home" on arrival.
-  const days = daysUntilIso(context.moveDate, todayUtcIso());
+  const days = daysUntilIso(context.moveDate);
   const arrived = days !== null && days < 0;
 
   return (

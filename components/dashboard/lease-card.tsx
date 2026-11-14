@@ -1,6 +1,7 @@
 import { KeyRound } from "lucide-react";
 import { ModuleCard, MetaCell } from "./operations-grid";
 import { getActiveLease, getLeaseEvents } from "@/lib/data/lease-db";
+import { daysUntilIso, todayInZoneIso } from "@/lib/dates";
 
 // Friendly labels for the lease decision enum. Matches AtAGlance's voice —
 // no schema-leak words ("vacate" / "m2m") in user-facing copy.
@@ -15,6 +16,7 @@ const DECISION_LABEL: Record<
 };
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
+  timeZone: "UTC",
   month: "short",
   day: "numeric",
 });
@@ -50,7 +52,7 @@ export async function LeaseCard() {
 
   // Mirrors the leaseGlance computation in app/page.tsx — kept inline so the
   // tile is self-fetching and doesn't rely on prop plumbing.
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = todayInZoneIso();
   const moveOutIso = lease.target_move_out_date ?? lease.lease_end_date;
   const noticeSent = events.some((e) => e.kind === "notice_sent");
   const pastMoveOut = todayIso > moveOutIso;
@@ -72,12 +74,7 @@ export async function LeaseCard() {
       (e) => e.kind === "deposit_claim_window_end",
     );
     const depositIso = depositEvent?.occurs_on ?? null;
-    const daysToDeposit = depositIso
-      ? Math.ceil(
-          (new Date(depositIso + "T00:00:00.000Z").getTime() - Date.now()) /
-            86_400_000,
-        )
-      : null;
+    const daysToDeposit = daysUntilIso(depositIso, todayIso);
     if (daysToDeposit === null) {
       noticeValue = "—";
       noticeLabel = "Deposit pending";
@@ -98,12 +95,7 @@ export async function LeaseCard() {
   } else {
     const sendByEvent = events.find((e) => e.kind === "notice_send_by");
     const sendByIso = sendByEvent?.occurs_on ?? null;
-    const days = sendByIso
-      ? Math.ceil(
-          (new Date(sendByIso + "T00:00:00.000Z").getTime() - Date.now()) /
-            86_400_000,
-        )
-      : null;
+    const days = daysUntilIso(sendByIso, todayIso);
     if (days === null) {
       noticeValue = "—";
       noticeLabel = "Notice";

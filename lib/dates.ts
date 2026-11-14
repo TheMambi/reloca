@@ -9,6 +9,10 @@
 // Date-only ISO strings (YYYY-MM-DD) are treated as UTC-midnight throughout so
 // arithmetic is stable across timezones (repo-wide convention; see
 // decision-deadline-tracker's formatCellDate).
+//
+// "Today" has one definition, `todayInZoneIso()`: the calendar day in the
+// household's configured time zone. Nothing else may derive today from
+// `new Date()`, and nothing else may convert for the date picker.
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS = 86_400_000;
@@ -18,18 +22,57 @@ export function isValidIsoDate(value: string | null | undefined): value is strin
   return !Number.isNaN(new Date(`${value}T00:00:00.000Z`).getTime());
 }
 
-/** Today as YYYY-MM-DD in UTC — the server-side "today". */
-export function todayUtcIso(): string {
-  return new Date().toISOString().slice(0, 10);
+/**
+ * The household's time zone (IANA name). "Today" is the calendar day there,
+ * on the server and in the browser alike, whatever zone either runs in. The
+ * NEXT_PUBLIC_ prefix is what lets the browser read the same setting; a time
+ * zone is not a secret.
+ */
+export const HOUSEHOLD_TIME_ZONE =
+  process.env.NEXT_PUBLIC_RELOCA_TIME_ZONE || "America/Denver";
+
+/** The calendar day (YYYY-MM-DD) an instant falls on in a time zone. */
+export function isoDateInZone(
+  instant: Date,
+  timeZone: string = HOUSEHOLD_TIME_ZONE,
+): string {
+  let parts: Intl.DateTimeFormatPart[];
+  try {
+    parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(instant);
+  } catch {
+    throw new Error(
+      `NEXT_PUBLIC_RELOCA_TIME_ZONE must be an IANA time zone such as America/Los_Angeles, got "${timeZone}".`,
+    );
+  }
+  const part = (type: string) => parts.find((p) => p.type === type)!.value;
+  return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
-/** Today as YYYY-MM-DD in the runtime's local timezone — the client "today". */
-export function todayLocalIso(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+/** Today as YYYY-MM-DD in the household's time zone: the one "today". */
+export function todayInZoneIso(): string {
+  return isoDateInZone(new Date());
+}
+
+/**
+ * The date picker (react-day-picker) works in the browser's local time: it
+ * highlights and returns local-midnight dates. This pair is the only bridge
+ * between it and date-only ISO strings, so the day shown is the day saved.
+ */
+export function isoToPickerDate(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+export function pickerDateToIso(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 /** Date-only offset in UTC: addDaysIso("2027-09-30", -60) → "2027-08-01". */
@@ -47,12 +90,13 @@ export function daysBetweenIso(fromIso: string, toIso: string): number {
 }
 
 /**
- * Days until a target date measured from `todayIso` (defaults to UTC today).
+ * Days until a target date measured from `todayIso` (defaults to today in the
+ * household's time zone).
  * Positive = upcoming, 0 = today, negative = already passed, null = no/bad date.
  */
 export function daysUntilIso(
   targetIso: string | null | undefined,
-  todayIso: string = todayUtcIso(),
+  todayIso: string = todayInZoneIso(),
 ): number | null {
   if (!isValidIsoDate(targetIso)) return null;
   return daysBetweenIso(todayIso, targetIso);

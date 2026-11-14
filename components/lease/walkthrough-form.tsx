@@ -30,17 +30,8 @@ import type {
   MoveOutRoomRecord,
 } from "@/schemas/move-out";
 import { cn } from "@/lib/utils";
+import { isoToPickerDate, pickerDateToIso } from "@/lib/dates";
 
-// UTC ISO helpers (mirror checklist-task-dialog).
-function isoToDate(iso: string): Date {
-  return new Date(iso + "T00:00:00.000Z");
-}
-function dateToIso(d: Date): string {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 
 interface Props {
   walkthrough: MoveOutWalkthrough;
@@ -137,14 +128,14 @@ export function WalkthroughForm({ walkthrough, rooms }: Props) {
               <Calendar
                 mode="single"
                 selected={
-                  walkthroughDate ? isoToDate(walkthroughDate) : undefined
+                  walkthroughDate ? isoToPickerDate(walkthroughDate) : undefined
                 }
                 defaultMonth={
-                  walkthroughDate ? isoToDate(walkthroughDate) : new Date()
+                  walkthroughDate ? isoToPickerDate(walkthroughDate) : new Date()
                 }
                 onSelect={(d) => {
                   if (!d) return;
-                  handleDateChange(dateToIso(d));
+                  handleDateChange(pickerDateToIso(d));
                   setCalOpen(false);
                 }}
               />

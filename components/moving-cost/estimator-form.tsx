@@ -12,16 +12,8 @@ import {
 } from "@/components/ui/popover";
 import { upsertMoveEstimate } from "@/app/moving-cost/actions";
 import { cn } from "@/lib/utils";
+import { isoToPickerDate, pickerDateToIso } from "@/lib/dates";
 
-function isoToDate(iso: string): Date {
-  return new Date(iso + "T00:00:00.000Z");
-}
-function dateToIso(d: Date): string {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 function numOrNull(s: string): number | null {
   if (s.trim() === "") return null;
   const n = Number(s);
@@ -152,11 +144,11 @@ export function EstimatorForm({ initial, onSaved, variant = "first-run" }: Props
             <PopoverContent align="start" className="w-auto p-0">
               <Calendar
                 mode="single"
-                selected={moveDate ? isoToDate(moveDate) : undefined}
-                defaultMonth={moveDate ? isoToDate(moveDate) : new Date()}
+                selected={moveDate ? isoToPickerDate(moveDate) : undefined}
+                defaultMonth={moveDate ? isoToPickerDate(moveDate) : new Date()}
                 onSelect={(d) => {
                   if (!d) return;
-                  setMoveDate(dateToIso(d));
+                  setMoveDate(pickerDateToIso(d));
                   setCalOpen(false);
                 }}
               />

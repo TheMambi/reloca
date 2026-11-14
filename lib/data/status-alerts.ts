@@ -5,6 +5,7 @@ import {
   getAddressTargets,
 } from "@/lib/data/transitions-db";
 import { getActiveMoveContext } from "@/lib/data/relocation-db";
+import { addDaysIso, todayInZoneIso } from "@/lib/dates";
 import type { PillTone } from "@/lib/lease/pill";
 import type { ChecklistItem } from "@/schemas";
 import type {
@@ -35,8 +36,8 @@ export async function getStatusAlerts(): Promise<StatusAlert[]> {
   try {
     const { moveDate } = await getActiveMoveContext();
     if (moveDate) {
-      const graceEnd = addDaysUtc(moveDate, 14);
-      windDown = todayUtcDateString() > graceEnd;
+      const graceEnd = addDaysIso(moveDate, 14);
+      windDown = todayInZoneIso() > graceEnd;
     }
   } catch {
     // Status row must never throw; without a context, keep loud behavior.
@@ -81,8 +82,8 @@ async function computeChecklistAlert(
     return null;
   }
 
-  const today = todayUtcDateString();
-  const sevenDaysOut = addDaysUtc(today, 7);
+  const today = todayInZoneIso();
+  const sevenDaysOut = addDaysIso(today, 7);
 
   let overdueCount = 0;
   let dueThisWeekCount = 0;
@@ -134,8 +135,8 @@ async function computeUtilityAlert(
     return null;
   }
 
-  const today = todayUtcDateString();
-  const threeDaysAgo = addDaysUtc(today, -3);
+  const today = todayInZoneIso();
+  const threeDaysAgo = addDaysIso(today, -3);
 
   let overdueCount = 0;
   let stalePendingCount = 0;
@@ -186,7 +187,7 @@ async function computeAddressAlert(
     return null;
   }
 
-  const today = todayUtcDateString();
+  const today = todayInZoneIso();
 
   let overdueCount = 0;
   for (const r of rows) {
@@ -269,14 +270,4 @@ async function computeCostAlert(): Promise<StatusAlert | null> {
 
 function pluralize(n: number, singular: string, plural: string): string {
   return `${n} ${n === 1 ? singular : plural}`;
-}
-
-function todayUtcDateString(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function addDaysUtc(isoDate: string, days: number): string {
-  const d = new Date(isoDate + "T00:00:00.000Z");
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
 }

@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createClient, requireUserId } from "@/lib/supabase/server";
+import { daysUntilIso } from "@/lib/dates";
 import {
   LeaseTermsSchema,
   LeaseEventSchema,
@@ -155,9 +156,7 @@ export const getLeaseStatus = cache(async (): Promise<LeaseStatus> => {
   const noticeSent = events.some((e) => e.kind === "notice_sent");
   const sendByEvent = events.find((e) => e.kind === "notice_send_by");
   const sendByIso = sendByEvent?.occurs_on ?? null;
-  const days = sendByIso
-    ? Math.ceil((new Date(sendByIso).getTime() - Date.now()) / 86_400_000)
-    : null;
+  const days = daysUntilIso(sendByIso);
   return {
     exists: true,
     decision: lease.decision,

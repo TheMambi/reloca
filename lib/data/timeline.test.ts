@@ -412,4 +412,13 @@ const baseInput: TimelineInput = {
   assert.deepEqual(tones([pending("lease_end", "2027-09-01")], "2027-09-20"), ["info"], "other lease events keep their tone");
 }
 
+// The window is date arithmetic on ISO days: 30 days is 30 days in every zone,
+// including across the spring clock change.
+assert.deepEqual(getTimelineWindow([], "2027-03-01"), { start: "2027-03-01", end: "2027-03-31" });
+assert.deepEqual(getTimelineWindow([], "2027-10-20"), { start: "2027-10-20", end: "2027-11-19" });
+{
+  const early = aggregateTimelineEvents({ ...baseInput, today: "2027-03-01" });
+  assert.equal(getTimelineWindow(early.slice(0, 1), "2027-03-01").end, early[0].at > "2027-03-31" ? early[0].at : "2027-03-31");
+}
+
 console.log("timeline.test.ts ✅");

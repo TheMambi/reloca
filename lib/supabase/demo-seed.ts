@@ -1,5 +1,6 @@
 import checklistSeed from "@/data/checklist-seed.json";
 import { fillSeedText } from "@/lib/data/move-seeds";
+import { addDaysIso, todayInZoneIso } from "@/lib/dates";
 
 /**
  * Sample data for the public demo (RELOCA_DEMO_MODE=1). Everything here is
@@ -18,10 +19,7 @@ const DESTINATION_ID = "00000000-0000-4000-8000-0000000000d1";
 type Row = Record<string, unknown>;
 
 function isoDay(offset: number): string {
-  const d = new Date();
-  d.setUTCHours(0, 0, 0, 0);
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
+  return addDaysIso(todayInZoneIso(), offset);
 }
 
 function stamp(offset: number): string {

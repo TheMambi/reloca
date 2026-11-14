@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { computeDeadlinePill, type PillTone } from "@/lib/lease/pill";
 import type { MoveReadiness } from "@/lib/data/move-readiness";
 import { getActiveMoveContext } from "@/lib/data/relocation-db";
-import { countdownPhrase, countdownTone, daysUntilIso, todayUtcIso } from "@/lib/dates";
+import { countdownPhrase, countdownTone, daysUntilIso } from "@/lib/dates";
 
 export type AtAGlanceProps = {
   /** Multi-source roll-up of readiness across checklist + lease + utility +
@@ -88,7 +88,7 @@ export async function AtAGlance({
   // Move day row's sub label, using the shared vocabulary (lib/dates) so it
   // reads "Moved 3 days ago" after the move, never "+3d".
   const { moveDate: moveDateIso } = await getActiveMoveContext();
-  const days = daysUntilIso(moveDateIso, todayUtcIso());
+  const days = daysUntilIso(moveDateIso);
   const phrase = countdownPhrase(days);
   const moveDaySub = moveDateIso
     ? [phrase.lead, phrase.count, phrase.trail].filter((p) => p !== null && p !== "").join(" ")

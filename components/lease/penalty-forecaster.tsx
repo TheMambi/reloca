@@ -1,5 +1,6 @@
 import type { LeaseTerms } from "@/schemas/lease";
 import { computeForecast, type ForecastBar } from "@/lib/lease/forecast";
+import { todayInZoneIso } from "@/lib/dates";
 import { ForecasterBarChart } from "./forecaster-bar-chart";
 import { TargetMoveOutEditor } from "./target-move-out-editor";
 // NOTE (AD-044): a next/dynamic split of this chart bought nothing — the RSC
@@ -38,7 +39,7 @@ export function PenaltyForecaster({
   noticeSent,
   pastMoveOut = false,
 }: PenaltyForecasterProps) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayInZoneIso();
   const target = lease.target_move_out_date ?? lease.lease_end_date;
 
   // Terminal state: with the move-out behind you, monthsRemaining is 0 and

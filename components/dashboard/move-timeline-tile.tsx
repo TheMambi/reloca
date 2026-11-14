@@ -15,12 +15,12 @@
 import {
   getTimelineEvents,
   getTimelineWindow,
-  todayIso,
   type TimelineEvent,
   type TimelineSource,
   type TimelineTone,
 } from "@/lib/data/timeline";
 import { getActiveMoveContext } from "@/lib/data/relocation-db";
+import { addDaysIso, daysBetweenIso, todayInZoneIso } from "@/lib/dates";
 
 const TONE_COLOR: Record<TimelineTone, string> = {
   ok: "var(--ok)",
@@ -66,19 +66,8 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
 });
 
-function isoToUtcMillis(iso: string): number {
-  return new Date(`${iso}T00:00:00.000Z`).getTime();
-}
-
-function daysBetween(startIso: string, endIso: string): number {
-  return (isoToUtcMillis(endIso) - isoToUtcMillis(startIso)) / 86_400_000;
-}
-
 function isoAtFraction(startIso: string, endIso: string, fraction: number): string {
-  const startMs = isoToUtcMillis(startIso);
-  const endMs = isoToUtcMillis(endIso);
-  const ms = startMs + (endMs - startMs) * fraction;
-  return new Date(ms).toISOString().slice(0, 10);
+  return addDaysIso(startIso, Math.floor(daysBetweenIso(startIso, endIso) * fraction));
 }
 
 function formatLabelDate(iso: string): string {
@@ -98,7 +87,7 @@ function eventToXPercent(
   totalDays: number,
 ): string {
   if (totalDays <= 0) return "0%";
-  const fromStart = daysBetween(startIso, event.at);
+  const fromStart = daysBetweenIso(startIso, event.at);
   const pct = Math.max(0, Math.min(100, (fromStart / totalDays) * 100));
   return `${pct}%`;
 }
@@ -122,20 +111,20 @@ export async function MoveTimelineTile({ at }: { at?: string }) {
     getTimelineEvents(),
     getActiveMoveContext(),
   ]);
-  const today = todayIso();
+  const today = todayInZoneIso();
   const cursorIso = at ?? today;
   const { start, end } = getTimelineWindow(allEvents, today, moveDate);
   // Post-move the window brackets the move (AD-039); anything earlier is
   // discharged history and drops off the strip rather than rendering at a
   // negative x-position.
   const events = allEvents.filter((e) => e.at >= start && e.at <= end);
-  const totalDays = daysBetween(start, end);
+  const totalDays = daysBetweenIso(start, end);
 
   const isEmpty = events.length === 0;
   const cursorVisible =
     !isEmpty && cursorIso >= start && cursorIso <= end && totalDays > 0;
   const cursorXPercent = cursorVisible
-    ? `${Math.max(0, Math.min(100, (daysBetween(start, cursorIso) / totalDays) * 100))}%`
+    ? `${Math.max(0, Math.min(100, (daysBetweenIso(start, cursorIso) / totalDays) * 100))}%`
     : null;
 
   const quartileLabels = [

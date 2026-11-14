@@ -18,22 +18,12 @@ import {
 import {
   countdownPhrase,
   countdownTone,
+  isValidIsoDate,
+  isoToPickerDate,
+  pickerDateToIso,
   type CountdownTone,
 } from "@/lib/dates";
 import { updateActiveMoveDate } from "@/app/relocations/actions";
-
-function toISODate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function fromISODate(iso: string | null): Date | undefined {
-  if (!iso) return undefined;
-  const d = new Date(`${iso}T00:00:00`);
-  return Number.isNaN(d.getTime()) ? undefined : d;
-}
 
 // Move countdown is data (a deadline indicator), so status tones are allowed
 // on it per AD-004 — but only on the number + the bar fill, never the chrome.
@@ -150,10 +140,10 @@ export function MoveDateEditor({
         </div>
         <Calendar
           mode="single"
-          selected={fromISODate(moveDate)}
+          selected={isValidIsoDate(moveDate) ? isoToPickerDate(moveDate) : undefined}
           onSelect={(date) => {
             if (date) {
-              persistMoveDate(toISODate(date));
+              persistMoveDate(pickerDateToIso(date));
               setOpen(false);
             }
           }}

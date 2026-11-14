@@ -32,6 +32,7 @@ import {
 } from "@/app/lease/actions";
 import type { InsurancePolicy, InsuranceScopeEnum } from "@/schemas/lease";
 import type { z } from "zod";
+import { isoToPickerDate, pickerDateToIso, todayInZoneIso } from "@/lib/dates";
 
 type Scope = z.infer<typeof InsuranceScopeEnum>;
 
@@ -46,19 +47,6 @@ interface InsurancePolicyFormProps {
   defaultPropertyLabel?: string;
 }
 
-// UTC throughout — same convention as the rest of the lease module so date-only
-// ISO strings stay stable across TZs.
-function isoToDate(iso: string): Date {
-  return new Date(iso + "T00:00:00.000Z");
-}
-
-function dateToIso(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export function InsurancePolicyForm({
   open,
@@ -88,7 +76,7 @@ export function InsurancePolicyForm({
     policy?.monthly_cost != null ? String(policy.monthly_cost) : "",
   );
   const [effectiveFrom, setEffectiveFrom] = useState<string>(
-    policy?.effective_from ?? todayIso(),
+    policy?.effective_from ?? todayInZoneIso(),
   );
   const [effectiveTo, setEffectiveTo] = useState<string | null>(
     policy?.effective_to ?? null,
@@ -122,7 +110,7 @@ export function InsurancePolicyForm({
     setLiability(String(policy?.liability_amount ?? 100000));
     setProperty(String(policy?.personal_property_amount ?? 5000));
     setMonthly(policy?.monthly_cost != null ? String(policy.monthly_cost) : "");
-    setEffectiveFrom(policy?.effective_from ?? todayIso());
+    setEffectiveFrom(policy?.effective_from ?? todayInZoneIso());
     setEffectiveTo(policy?.effective_to ?? null);
     setInterestedListed(policy?.interested_party_listed ?? false);
     setInterestedName(policy?.interested_party_name ?? "");
@@ -329,11 +317,11 @@ export function InsurancePolicyForm({
                   <PopoverContent align="start" className="w-auto p-0">
                     <Calendar
                       mode="single"
-                      selected={isoToDate(effectiveFrom)}
-                      defaultMonth={isoToDate(effectiveFrom)}
+                      selected={isoToPickerDate(effectiveFrom)}
+                      defaultMonth={isoToPickerDate(effectiveFrom)}
                       onSelect={(d) => {
                         if (!d) return;
-                        setEffectiveFrom(dateToIso(d));
+                        setEffectiveFrom(pickerDateToIso(d));
                         setFromOpen(false);
                       }}
                     />
@@ -357,16 +345,16 @@ export function InsurancePolicyForm({
                     <Calendar
                       mode="single"
                       selected={
-                        effectiveTo ? isoToDate(effectiveTo) : undefined
+                        effectiveTo ? isoToPickerDate(effectiveTo) : undefined
                       }
                       defaultMonth={
                         effectiveTo
-                          ? isoToDate(effectiveTo)
-                          : isoToDate(effectiveFrom)
+                          ? isoToPickerDate(effectiveTo)
+                          : isoToPickerDate(effectiveFrom)
                       }
                       onSelect={(d) => {
                         if (!d) return;
-                        setEffectiveTo(dateToIso(d));
+                        setEffectiveTo(pickerDateToIso(d));
                         setToOpen(false);
                       }}
                     />

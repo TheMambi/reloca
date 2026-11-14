@@ -142,4 +142,18 @@ for (const today of ["2026-10-25", "2027-04-01", "2027-08-15", "2027-11-13"]) {
   }
 }
 
+// monthsBetween reads date-only strings as UTC days, so the count is the same
+// on a laptop in Los Angeles and on a server in UTC. These pairs sit on month
+// starts, where local getters used to slip back a month west of UTC.
+assert.equal(monthsBetween("2027-05-01", "2027-07-31"), 2, "May 1 → Jul 31");
+assert.equal(monthsBetween("2027-10-01", "2027-10-31"), 0, "Oct 1 → Oct 31");
+assert.equal(monthsBetween("2027-05-01", "2027-08-01"), 3, "May 1 → Aug 1");
+assert.equal(monthsBetween("2027-01-31", "2027-03-01"), 1, "Jan 31 → Mar 1");
+assert.equal(
+  computeForecast({ ...input, today: "2027-05-01", lease_end_date: "2027-07-31", target_move_out_date: "2027-07-31" })
+    .find((b) => b.key === "vacate_on_time")?.total,
+  3600,
+  "two months left on the first of the month, in every zone",
+);
+
 console.log("forecast.test.ts ✅");

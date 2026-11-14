@@ -17,6 +17,7 @@ import {
   getLeaseEvents,
 } from "@/lib/data/lease-db";
 import { getActiveMoveContext } from "@/lib/data/relocation-db";
+import { addDaysIso, todayInZoneIso } from "@/lib/dates";
 import { getChecklistItems } from "@/lib/data/checklist-db";
 import {
   getUtilityTransitions,
@@ -225,10 +226,6 @@ export function aggregateTimelineEvents(input: TimelineInput): TimelineEvent[] {
   });
 }
 
-export function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export const getTimelineEvents = cache(async (): Promise<TimelineEvent[]> => {
   const [lease, { moveDate }] = await Promise.all([
     getActiveLease(),
@@ -248,7 +245,7 @@ export const getTimelineEvents = cache(async (): Promise<TimelineEvent[]> => {
     checklist,
     utilities,
     addressTargets,
-    today: todayIso(),
+    today: todayInZoneIso(),
     moveDate,
   });
 });
@@ -266,23 +263,16 @@ export function getTimelineWindow(
   moveDate?: string | null,
 ): { start: string; end: string } {
   if (events.length === 0) {
-    const t = new Date(today);
-    const end = new Date(t);
-    end.setDate(end.getDate() + 30);
-    return { start: today, end: end.toISOString().slice(0, 10) };
+    return { start: today, end: addDaysIso(today, 30) };
   }
   const latest = events[events.length - 1].at;
   const earliest = events[0].at;
   let start = earliest < today ? earliest : today;
   if (moveDate && today > moveDate) {
-    const d = new Date(`${moveDate}T00:00:00.000Z`);
-    d.setUTCDate(d.getUTCDate() - 30);
-    const bracket = d.toISOString().slice(0, 10);
+    const bracket = addDaysIso(moveDate, -30);
     if (bracket > start) start = bracket;
   }
-  const t = new Date(today);
-  t.setDate(t.getDate() + 30);
-  const fallbackEnd = t.toISOString().slice(0, 10);
+  const fallbackEnd = addDaysIso(today, 30);
   const end = latest > fallbackEnd ? latest : fallbackEnd;
   return { start, end };
 }

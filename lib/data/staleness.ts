@@ -5,7 +5,8 @@
 // year-less timestamp. These pure helpers give every provenance surface one
 // shared answer to "how old is this, and is that too old for its kind?".
 
-import { todayUtcIso } from "@/lib/dates";
+import { todayInZoneIso } from "@/lib/dates";
+import type { DataSourceTier } from "@/schemas/data-source";
 
 /**
  * Age in whole days of a provenance timestamp. Accepts the formats that appear
@@ -14,7 +15,7 @@ import { todayUtcIso } from "@/lib/dates";
  */
 export function ageInDays(
   stamp: string | null | undefined,
-  todayIso: string = todayUtcIso(),
+  todayIso: string = todayInZoneIso(),
 ): number | null {
   if (!stamp) return null;
   const m = stamp.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/);
@@ -40,7 +41,7 @@ export const STALE_AFTER_DAYS = {
 export function isStale(
   stamp: string | null | undefined,
   thresholdDays: number,
-  todayIso: string = todayUtcIso(),
+  todayIso: string = todayInZoneIso(),
 ): boolean {
   const age = ageInDays(stamp, todayIso);
   if (age === null) return false; // unknown age → don't cry wolf
@@ -50,7 +51,7 @@ export function isStale(
 /** Threshold for a data-source registry entry, by id + tier. */
 export function sourceStaleThreshold(source: {
   id: string;
-  tier: "live" | "modeled" | "community";
+  tier: DataSourceTier;
 }): number {
   if (source.tier !== "live") return STALE_AFTER_DAYS.modeled;
   if (source.id.startsWith("air-quality")) return STALE_AFTER_DAYS.airQuality;

@@ -24,25 +24,14 @@ import {
 } from "@/app/checklist/actions";
 import type { ChecklistCategory, ChecklistItem } from "@/schemas";
 import { cn } from "@/lib/utils";
+import { isoToPickerDate, pickerDateToIso } from "@/lib/dates";
 
-// UTC ↔ ISO date helpers — same convention as the lease module so date-only
-// strings stay stable across TZs.
-function isoToDate(iso: string): Date {
-  return new Date(iso + "T00:00:00.000Z");
-}
-function dateToIso(d: Date): string {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 function formatTriggerDate(iso: string): string {
-  const d = isoToDate(iso);
+  const d = isoToPickerDate(iso);
   return d.toLocaleDateString("en-US", {
     weekday: "long",
     month: "short",
     day: "numeric",
-    timeZone: "UTC",
   });
 }
 
@@ -256,11 +245,11 @@ export function ChecklistTaskDialog({
               <PopoverContent align="start" className="w-auto p-0">
                 <Calendar
                   mode="single"
-                  selected={dueDate ? isoToDate(dueDate) : undefined}
-                  defaultMonth={dueDate ? isoToDate(dueDate) : new Date()}
+                  selected={dueDate ? isoToPickerDate(dueDate) : undefined}
+                  defaultMonth={dueDate ? isoToPickerDate(dueDate) : new Date()}
                   onSelect={(d) => {
                     if (!d) return;
-                    setDueDate(dateToIso(d));
+                    setDueDate(pickerDateToIso(d));
                     setCalOpen(false);
                   }}
                 />

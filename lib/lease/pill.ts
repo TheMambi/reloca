@@ -1,4 +1,5 @@
 import type { LeaseTerms } from "@/schemas/lease";
+import { daysBetweenIso } from "@/lib/dates";
 
 // Status pill states. Coral is mapped to `--brand-secondary` per the warm-decoration
 // vocabulary (off-chrome status data is allowed to use coral here, design §3.1).
@@ -44,9 +45,7 @@ export function computeTMinus(
   if (pastMoveOut) return { headline: "Done", sub: "MOVED OUT" };
   if (noticeSentDate) {
     if (!sendByDate) return { headline: "Sent", sub: "" };
-    const late = Math.round(
-      (Date.parse(noticeSentDate + "T00:00:00Z") - Date.parse(sendByDate + "T00:00:00Z")) / 86_400_000,
-    );
+    const late = daysBetweenIso(sendByDate, noticeSentDate);
     return late > 0
       ? { headline: "Sent", sub: `${late} ${late === 1 ? "DAY" : "DAYS"} LATE` }
       : { headline: "Sent", sub: "ON TIME" };

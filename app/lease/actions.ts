@@ -9,6 +9,7 @@ import {
   requireUserId,
 } from "@/lib/supabase/server";
 import { recomputeDestinationOverlays } from "@/lib/lease/overlays";
+import { isoDateInZone } from "@/lib/dates";
 import {
   buildLeaseTasks,
   depositDeadline,
@@ -303,7 +304,9 @@ export async function markNoticeSent(draftId: string): Promise<void> {
       user_id: userId,
       lease_id: draft.lease_id,
       kind: "notice_sent",
-      occurs_on: sentAt.slice(0, 10),
+      // The calendar day in the household's zone: an evening send in the US is
+      // already tomorrow in UTC, and would be recorded as a day late.
+      occurs_on: isoDateInZone(new Date(sentAt)),
       status: "done",
     });
     if (evErr) throw new Error(`markNoticeSent.event: ${evErr.message}`);

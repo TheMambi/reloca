@@ -28,17 +28,8 @@ import type {
   AddressChangeTarget,
 } from "@/schemas/transitions";
 import { cn } from "@/lib/utils";
+import { isoToPickerDate, pickerDateToIso } from "@/lib/dates";
 
-// UTC ISO helpers (mirror checklist-task-dialog).
-function isoToDate(iso: string): Date {
-  return new Date(iso + "T00:00:00.000Z");
-}
-function dateToIso(d: Date): string {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 function strOrNull(s: string): string | null {
   const t = s.trim();
   return t === "" ? null : t;
@@ -481,11 +472,11 @@ function DateField({
         <PopoverContent align="start" className="w-auto p-0">
           <Calendar
             mode="single"
-            selected={value ? isoToDate(value) : undefined}
-            defaultMonth={value ? isoToDate(value) : new Date()}
+            selected={value ? isoToPickerDate(value) : undefined}
+            defaultMonth={value ? isoToPickerDate(value) : new Date()}
             onSelect={(d) => {
               if (!d) return;
-              onChange(dateToIso(d));
+              onChange(pickerDateToIso(d));
               onOpenChange(false);
             }}
           />

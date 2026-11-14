@@ -1,23 +1,10 @@
 import type { InsurancePolicy } from "@/schemas/lease";
+import { addDaysIso, daysBetweenIso, todayInZoneIso } from "@/lib/dates";
 
 // UTC throughout — same convention as the rest of the lease module so date-only
 // ISO strings stay stable across TZs.
 function isoToUtcMs(iso: string): number {
   return new Date(iso + "T00:00:00.000Z").getTime();
-}
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function addDays(iso: string, days: number): string {
-  const d = new Date(iso + "T00:00:00.000Z");
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
-function diffDays(fromIso: string, toIso: string): number {
-  return Math.round((isoToUtcMs(toIso) - isoToUtcMs(fromIso)) / 86_400_000);
 }
 
 export interface CoverageGap {
@@ -44,12 +31,12 @@ export function detectGaps(policies: InsurancePolicy[]): CoverageGap[] {
     const prev = sorted[i - 1];
     const next = sorted[i];
     if (!prev.effective_to) continue;
-    const expectedNext = addDays(prev.effective_to, 1);
+    const expectedNext = addDaysIso(prev.effective_to, 1);
     if (next.effective_from > expectedNext) {
-      const days = diffDays(prev.effective_to, next.effective_from) - 1;
+      const days = daysBetweenIso(prev.effective_to, next.effective_from) - 1;
       gaps.push({
         from: expectedNext,
-        to: addDays(next.effective_from, -1),
+        to: addDaysIso(next.effective_from, -1),
         days,
       });
     }
@@ -87,11 +74,11 @@ export function InsuranceCoverageTimeline({
     return null;
   }
 
-  const today = todayIso();
+  const today = todayInZoneIso();
 
   const fromCandidates = policies.map((p) => isoToUtcMs(p.effective_from));
   const toCandidates = policies.map((p) =>
-    p.effective_to ? isoToUtcMs(p.effective_to) : isoToUtcMs(addDays(today, 30)),
+    p.effective_to ? isoToUtcMs(p.effective_to) : isoToUtcMs(addDaysIso(today, 30)),
   );
   // Always include today + lease_end so the hairlines stay inside the viewBox.
   fromCandidates.push(isoToUtcMs(today));
@@ -213,7 +200,7 @@ export function InsuranceCoverageTimeline({
         {/* Origin policy bars */}
         {originPolicies.map((p) => {
           const x1 = xPos(p.effective_from);
-          const x2 = xPos(p.effective_to ?? addDays(today, 30));
+          const x2 = xPos(p.effective_to ?? addDaysIso(today, 30));
           const w = Math.max(2, x2 - x1);
           const ongoing = p.effective_to === null;
           return (
@@ -245,7 +232,7 @@ export function InsuranceCoverageTimeline({
         {/* Destination policy bars */}
         {destinationPolicies.map((p) => {
           const x1 = xPos(p.effective_from);
-          const x2 = xPos(p.effective_to ?? addDays(today, 30));
+          const x2 = xPos(p.effective_to ?? addDaysIso(today, 30));
           const w = Math.max(2, x2 - x1);
           const ongoing = p.effective_to === null;
           return (

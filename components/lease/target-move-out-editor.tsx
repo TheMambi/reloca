@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { updateLeaseTerms } from "@/app/lease/actions";
+import { isoToPickerDate, pickerDateToIso, todayInZoneIso } from "@/lib/dates";
 
 interface TargetMoveOutEditorProps {
   leaseId: string;
@@ -18,20 +19,6 @@ interface TargetMoveOutEditorProps {
   disabled?: boolean;
 }
 
-// UTC throughout — same convention as the rest of the lease module so date-only
-// ISO strings stay stable across TZs.
-function isoToDate(iso: string): Date {
-  return new Date(iso + "T00:00:00.000Z");
-}
-
-function dateToIso(d: Date): string {
-  // `toISOString()` always emits UTC; slice the date portion.
-  return d.toISOString().slice(0, 10);
-}
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export function TargetMoveOutEditor({
   leaseId,
@@ -44,13 +31,13 @@ export function TargetMoveOutEditor({
 
   // The earliest date we'll accept: whichever is later between today and the
   // lease start. Past-dated targets are nonsensical for a forecaster.
-  const today = todayIso();
+  const today = todayInZoneIso();
   const minIso = leaseStartDate > today ? leaseStartDate : today;
-  const minDate = isoToDate(minIso);
+  const minDate = isoToPickerDate(minIso);
 
   function onSelect(d: Date | undefined) {
     if (!d) return;
-    const iso = dateToIso(d);
+    const iso = pickerDateToIso(d);
     if (iso === current) {
       setOpen(false);
       return;
@@ -76,9 +63,9 @@ export function TargetMoveOutEditor({
       <PopoverContent align="end" className="w-auto p-0">
         <Calendar
           mode="single"
-          selected={isoToDate(current)}
+          selected={isoToPickerDate(current)}
           onSelect={onSelect}
-          defaultMonth={isoToDate(current)}
+          defaultMonth={isoToPickerDate(current)}
           disabled={(d) => d < minDate}
         />
       </PopoverContent>

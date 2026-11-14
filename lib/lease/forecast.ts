@@ -71,12 +71,14 @@ const LABELS: Record<ForecastBarKey, string> = {
  * because Aug 5 + 2 months = Oct 5 ≤ Oct 20.
  */
 export function monthsBetween(from: string, to: string): number {
-  const f = new Date(from);
-  const t = new Date(to);
+  // Date-only strings are UTC midnight, so they are read with UTC getters.
+  // Local getters gave a different count on any host west of UTC.
+  const f = new Date(`${from}T00:00:00.000Z`);
+  const t = new Date(`${to}T00:00:00.000Z`);
   return (
-    (t.getFullYear() - f.getFullYear()) * 12 +
-    (t.getMonth() - f.getMonth()) +
-    (t.getDate() >= f.getDate() ? 0 : -1)
+    (t.getUTCFullYear() - f.getUTCFullYear()) * 12 +
+    (t.getUTCMonth() - f.getUTCMonth()) +
+    (t.getUTCDate() >= f.getUTCDate() ? 0 : -1)
   );
 }
 
