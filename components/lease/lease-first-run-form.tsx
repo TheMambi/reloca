@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { createLeaseTerms } from "@/app/lease/actions";
 import { settle } from "@/lib/settle-action";
 import {
+  FIRST_RUN_BLANK,
   FIRST_RUN_DEFAULTS,
   UTILITY_OPTIONS,
 } from "./lease-first-run-defaults";
@@ -31,8 +32,8 @@ function formatTriggerDate(iso: string): string {
 // ── form-local resident type (controlled inputs require non-undefined email) ──
 type ResidentRow = { name: string; email: string; isPrimary: boolean };
 
-function defaultResidents(): ResidentRow[] {
-  return FIRST_RUN_DEFAULTS.residents.map((r) => ({
+function toResidentRows(residents: typeof FIRST_RUN_DEFAULTS.residents): ResidentRow[] {
+  return residents.map((r) => ({
     name: r.name,
     email: r.email ?? "",
     isPrimary: r.isPrimary,
@@ -46,61 +47,65 @@ function parseNumber(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function LeaseFirstRunForm() {
+/** `sample` is true in the demo, where the form starts filled with a fictional household. */
+export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
+  const initial = sample ? FIRST_RUN_DEFAULTS : FIRST_RUN_BLANK;
+  // Outside the demo the sample values show as greyed examples only.
+  const example = (value: string | number | null) => (sample || value == null ? undefined : `e.g. ${value}`);
   // ── state ────────────────────────────────────────────────────────────────
   // Identity
-  const [propertyName, setPropertyName] = useState(FIRST_RUN_DEFAULTS.property_name);
-  const [unitAddress, setUnitAddress] = useState(FIRST_RUN_DEFAULTS.unit_address);
-  const [city, setCity] = useState(FIRST_RUN_DEFAULTS.city);
-  const [landlordEmail, setLandlordEmail] = useState(FIRST_RUN_DEFAULTS.landlord_email);
+  const [propertyName, setPropertyName] = useState(initial.property_name);
+  const [unitAddress, setUnitAddress] = useState(initial.unit_address);
+  const [city, setCity] = useState(initial.city);
+  const [landlordEmail, setLandlordEmail] = useState(initial.landlord_email);
   const [landlordDisplayName, setLandlordDisplayName] = useState(
-    FIRST_RUN_DEFAULTS.landlord_display_name ?? "",
+    initial.landlord_display_name ?? "",
   );
 
   // Residents
-  const [residents, setResidents] = useState<ResidentRow[]>(defaultResidents);
+  const [residents, setResidents] = useState<ResidentRow[]>(() => toResidentRows(initial.residents));
 
   // Dates
-  const [leaseStartDate, setLeaseStartDate] = useState(FIRST_RUN_DEFAULTS.lease_start_date);
-  const [leaseEndDate, setLeaseEndDate] = useState(FIRST_RUN_DEFAULTS.lease_end_date);
+  const [leaseStartDate, setLeaseStartDate] = useState(initial.lease_start_date);
+  const [leaseEndDate, setLeaseEndDate] = useState(initial.lease_end_date);
   const [noticeDaysRequired, setNoticeDaysRequired] = useState<string>(
-    String(FIRST_RUN_DEFAULTS.notice_days_required),
+    initial.notice_days_required != null ? String(initial.notice_days_required) : "",
   );
   const [targetMoveOutDate, setTargetMoveOutDate] = useState<string>(
-    FIRST_RUN_DEFAULTS.target_move_out_date ?? "",
+    initial.target_move_out_date ?? "",
   );
   const [renewalOfferExpires, setRenewalOfferExpires] = useState<string>(
-    FIRST_RUN_DEFAULTS.renewal_offer_expires ?? "",
+    initial.renewal_offer_expires ?? "",
   );
 
   // Money
   const [currentMonthlyRent, setCurrentMonthlyRent] = useState<string>(
-    String(FIRST_RUN_DEFAULTS.current_monthly_rent),
+    initial.current_monthly_rent != null ? String(initial.current_monthly_rent) : "",
   );
   const [renewalMonthlyRent, setRenewalMonthlyRent] = useState<string>(
-    FIRST_RUN_DEFAULTS.renewal_monthly_rent != null
-      ? String(FIRST_RUN_DEFAULTS.renewal_monthly_rent)
+    initial.renewal_monthly_rent != null
+      ? String(initial.renewal_monthly_rent)
       : "",
   );
   const [m2mPremium, setM2mPremium] = useState<string>(
-    String(FIRST_RUN_DEFAULTS.m2m_premium),
+    initial.m2m_premium != null ? String(initial.m2m_premium) : "",
   );
   const [securityDeposit, setSecurityDeposit] = useState<string>(
-    FIRST_RUN_DEFAULTS.security_deposit != null
-      ? String(FIRST_RUN_DEFAULTS.security_deposit)
+    initial.security_deposit != null
+      ? String(initial.security_deposit)
       : "",
   );
   const [petRentMonthly, setPetRentMonthly] = useState<string>(
-    String(FIRST_RUN_DEFAULTS.pet_rent_monthly),
+    String(initial.pet_rent_monthly),
   );
   const [parkingMonthly, setParkingMonthly] = useState<string>(
-    String(FIRST_RUN_DEFAULTS.parking_monthly),
+    String(initial.parking_monthly),
   );
   const [includedUtilities, setIncludedUtilities] = useState<string[]>(
-    [...FIRST_RUN_DEFAULTS.included_utilities],
+    [...initial.included_utilities],
   );
   const [lateFeeRules, setLateFeeRules] = useState<string>(
-    FIRST_RUN_DEFAULTS.late_fee_rules ?? "",
+    initial.late_fee_rules ?? "",
   );
 
   // Calendar popover open state — keyed by field name.
@@ -243,7 +248,7 @@ export function LeaseFirstRunForm() {
       parking_monthly: parkingNum!,
       included_utilities: includedUtilities,
       late_fee_rules: lateFeeRules.trim() || null,
-      decision: FIRST_RUN_DEFAULTS.decision,
+      decision: initial.decision,
     };
     return { ok: true, payload };
   }
@@ -297,8 +302,9 @@ export function LeaseFirstRunForm() {
           Tell us about your lease
         </h1>
         <p className="text-xs text-muted-foreground">
-          Look over what we&rsquo;ve pre-filled from your renewal letter and
-          add anything that&rsquo;s missing.
+          {sample
+            ? "This demo starts with a sample household. Change anything you like, then save."
+            : "Enter the details from your lease and your renewal letter."}
         </p>
       </header>
 
@@ -313,6 +319,7 @@ export function LeaseFirstRunForm() {
             <Input
               value={propertyName}
               onChange={(e) => setPropertyName(e.target.value)}
+              placeholder={example(FIRST_RUN_DEFAULTS.property_name)}
               aria-invalid={Boolean(fieldErrors.property_name)}
               className={cn(fieldErrors.property_name && "border-[var(--danger)]")}
             />
@@ -321,6 +328,7 @@ export function LeaseFirstRunForm() {
             <Input
               value={city}
               onChange={(e) => setCity(e.target.value)}
+              placeholder={example(FIRST_RUN_DEFAULTS.city)}
               aria-invalid={Boolean(fieldErrors.city)}
               className={cn(fieldErrors.city && "border-[var(--danger)]")}
             />
@@ -333,6 +341,7 @@ export function LeaseFirstRunForm() {
             <Input
               value={unitAddress}
               onChange={(e) => setUnitAddress(e.target.value)}
+              placeholder={example(FIRST_RUN_DEFAULTS.unit_address)}
               aria-invalid={Boolean(fieldErrors.unit_address)}
               className={cn(fieldErrors.unit_address && "border-[var(--danger)]")}
             />
@@ -355,6 +364,7 @@ export function LeaseFirstRunForm() {
             <Input
               value={landlordDisplayName}
               onChange={(e) => setLandlordDisplayName(e.target.value)}
+              placeholder={example(FIRST_RUN_DEFAULTS.landlord_display_name)}
             />
           </Field>
         </div>
@@ -460,6 +470,7 @@ export function LeaseFirstRunForm() {
               step={1}
               value={noticeDaysRequired}
               onChange={(e) => setNoticeDaysRequired(e.target.value)}
+              placeholder={example(FIRST_RUN_DEFAULTS.notice_days_required)}
               aria-invalid={Boolean(fieldErrors.notice_days_required)}
               className={cn(
                 "mono-num",
@@ -511,6 +522,7 @@ export function LeaseFirstRunForm() {
               step="0.01"
               value={currentMonthlyRent}
               onChange={(e) => setCurrentMonthlyRent(e.target.value)}
+              placeholder={example(FIRST_RUN_DEFAULTS.current_monthly_rent)}
               aria-invalid={Boolean(fieldErrors.current_monthly_rent)}
               className={cn(
                 "mono-num",
@@ -529,6 +541,7 @@ export function LeaseFirstRunForm() {
               step="0.01"
               value={renewalMonthlyRent}
               onChange={(e) => setRenewalMonthlyRent(e.target.value)}
+              placeholder={example(FIRST_RUN_DEFAULTS.renewal_monthly_rent)}
               aria-invalid={Boolean(fieldErrors.renewal_monthly_rent)}
               className={cn(
                 "mono-num",
@@ -548,6 +561,7 @@ export function LeaseFirstRunForm() {
               step="0.01"
               value={m2mPremium}
               onChange={(e) => setM2mPremium(e.target.value)}
+              placeholder={example(FIRST_RUN_DEFAULTS.m2m_premium)}
               aria-invalid={Boolean(fieldErrors.m2m_premium)}
               className={cn(
                 "mono-num",

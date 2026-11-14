@@ -21,7 +21,12 @@ function standIn(specifier: string, exports: object) {
 standIn("next/cache", { revalidatePath() {}, revalidateTag() {} });
 standIn("next/server", { connection: async () => {} });
 standIn("next/headers", {
-  cookies: async () => ({ get: () => undefined, set() {}, delete() {} }),
+  // The demo database takes writes only from a request that carries a visitor id.
+  cookies: async () => ({
+    get: (name: string) => (name === "reloca_demo_visitor" ? { name, value: "00000000-0000-4000-8000-000000000001" } : undefined),
+    set() {},
+    delete() {},
+  }),
   headers: async () => new Headers(),
 });
 
@@ -158,9 +163,12 @@ async function main() {
   // A lease whose follow-up steps fail is removed again, so a retry cannot leave two.
   await db.from("checklist_items").delete().eq("user_id", DEMO_USER_ID).eq("category", "lease");
   await db.from("lease_terms").delete().eq("user_id", DEMO_USER_ID);
-  unfill = await fill("lease_events", { ...eventFiller, lease_id: "88888888-8888-4888-8888-888888888888" });
+  // An event has to belong to a lease, so the filler rows get one of their own.
+  const other = await db.from("lease_terms").insert({ ...input, user_id: "88888888-8888-4888-8888-888888888888" }).select("id").single();
+  unfill = await fill("lease_events", { ...eventFiller, lease_id: (other.data as Row).id });
   await refused(lease.createLeaseTerms(input));
   await unfill();
+  await db.from("lease_terms").delete().eq("id", (other.data as Row).id);
   assert.equal((await rows("lease_terms")).length, 0, "the half-made lease is gone");
 
   // ---- a 30-day California lease: 30-day letter and task, no Colorado deposit date ----

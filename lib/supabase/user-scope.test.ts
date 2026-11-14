@@ -39,7 +39,8 @@ Object.assign(process.env, {
 // Server actions call into Next's request machinery, which exists only inside
 // a running server. Stand-ins go into the module cache before the app loads.
 const appRequire = createRequire(join(process.cwd(), "package.json"));
-const cookieJar = new Map<string, string>();
+// The demo database takes writes only from a request that carries a visitor id.
+const cookieJar = new Map<string, string>([["reloca_demo_visitor", "00000000-0000-4000-8000-000000000001"]]);
 function standIn(specifier: string, exports: object) {
   const file = appRequire.resolve(specifier);
   const mod = new Module(file);

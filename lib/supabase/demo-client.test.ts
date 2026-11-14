@@ -1,5 +1,6 @@
 // Run: npx tsx lib/supabase/demo-client.test.ts
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { createDemoClient } from "./demo-client";
 import { DEMO_SEED, DEMO_USER_ID } from "./demo-seed";
 import {
@@ -14,6 +15,8 @@ import {
   NoticeDraftSchema,
 } from "@/schemas/lease";
 import { MoveEstimateSchema } from "@/schemas/move-cost";
+
+const limitMessage = "The demo keeps a small amount of data per visitor. Delete something and try again.";
 
 async function main() {
   const db = createDemoClient();
@@ -38,18 +41,17 @@ async function main() {
   // Insert fills defaults, id and timestamps; missing columns come back null.
   const ins = await db
     .from("checklist_items")
-    .insert({ user_id: DEMO_USER_ID, category: "pre-move", title: "Test task" })
+    .insert({ user_id: DEMO_USER_ID, category: "pre-move", title: "Test task", order_index: 90 })
     .select("*")
     .single();
   assert.equal(ins.error, null);
   const row = ins.data as Record<string, unknown>;
   assert.equal(row.completed, false, "default completed");
-  assert.equal(row.order_index, 0, "default order_index");
   assert.equal(row.description, null, "missing column is null");
   assert.match(String(row.id), /^[0-9a-f-]{36}$/, "uuid id");
 
   // Insert without .select() returns no data.
-  const quiet = await db.from("checklist_items").insert({ user_id: DEMO_USER_ID, category: "post-move", title: "Quiet" });
+  const quiet = await db.from("checklist_items").insert({ user_id: DEMO_USER_ID, category: "post-move", title: "Quiet", order_index: 90 });
   assert.equal(quiet.data, null);
 
   // update + eq + maybeSingle round trip.
@@ -98,15 +100,80 @@ async function main() {
   assert.equal(mw[0].id, last.id, "moved to index 0");
   assert.deepEqual(mw.map((r) => r.order_index), mw.map((_, i) => i), "renumbered 0..n");
 
+  // What the real client drops on the way out is dropped here: an undefined
+  // key leaves the column as it was.
+  const utility = ((await db.from("utility_transitions").select("*").limit(1)).data as Record<string, unknown>[])[0];
+  await db.from("utility_transitions").update({ provider: undefined, notes: "n" }).eq("id", utility.id);
+  const kept = await db.from("utility_transitions").select("*").eq("id", utility.id).single();
+  assert.equal((kept.data as Record<string, unknown>).provider, utility.provider, "undefined leaves provider unchanged");
+  UtilityTransitionSchema.parse(kept.data);
+
+  // Unique keys answer with the code Postgres uses.
+  const twice = await db.from("saved_neighborhoods").insert({ user_id: DEMO_USER_ID, neighborhood: "Downtown", city: "Long Beach" });
+  assert.equal(twice.error?.code, "23505", "a second saved neighborhood with the same key");
+  const sameSlot = await db.from("checklist_items").insert({ user_id: DEMO_USER_ID, category: "pre-move", title: "Same slot", order_index: 0 });
+  assert.equal(sameSlot.error?.code, "23505", "two tasks in one position");
+  const active = ((await db.from("relocations").select("*").eq("is_active_move", true)).data as Record<string, unknown>[])[0];
+  const secondActive = await db.from("relocations").insert({ ...active, id: randomUUID() });
+  assert.equal(secondActive.error?.code, "23505", "two active moves");
+
+  // Column rules: a date that is not on the calendar, a value off the list, a missing required column.
+  const task = ((await db.from("checklist_items").select("*").eq("category", "pre-move").limit(1)).data as Record<string, unknown>[])[0];
+  for (const patch of [{ due_date: "2027-02-30" }, { category: "someday" }, { title: null }, { order_index: "3" }]) {
+    const bad = await db.from("checklist_items").update(patch).eq("id", task.id);
+    assert.equal(bad.error?.code, "23514", `refused: ${JSON.stringify(patch)}`);
+  }
+  assert.deepEqual((await db.from("checklist_items").select("*").eq("id", task.id).single()).data, task, "a refused write changes nothing");
+  // NULL is not "not equal" to anything in SQL.
+  const withDue = await db.from("checklist_items").select("id").neq("due_date", "1999-01-01");
+  const noDue = await db.from("checklist_items").select("id").eq("due_date", null);
+  const everyTask = await db.from("checklist_items").select("id");
+  assert.equal((withDue.data as unknown[]).length + (noDue.data as unknown[]).length, (everyTask.data as unknown[]).length, "neq skips NULL");
+
+  // The completed_at trigger.
+  await db.from("checklist_items").update({ completed: true }).eq("id", task.id);
+  const done = (await db.from("checklist_items").select("completed_at").eq("id", task.id).single()).data as { completed_at: string | null };
+  assert.ok(done.completed_at, "ticking a task stamps it");
+  await db.from("checklist_items").update({ completed: false }).eq("id", task.id);
+  const undone = (await db.from("checklist_items").select("completed_at").eq("id", task.id).single()).data as { completed_at: string | null };
+  assert.equal(undone.completed_at, null, "and unticking clears the stamp");
+
+  // A child row needs its parent, and goes with it.
+  const orphan = await db.from("move_out_room_records").insert({ walkthrough_id: randomUUID(), user_id: DEMO_USER_ID, room_name: "Hall" });
+  assert.equal(orphan.error?.code, "23503", "a room without a walkthrough");
+  const walk = await db.from("move_out_walkthroughs").insert({ user_id: DEMO_USER_ID, walkthrough_date: "2027-01-05" }).select("id").single();
+  assert.equal(walk.error, null);
+  const walkId = (walk.data as { id: string }).id;
+  assert.equal((await db.from("move_out_room_records").insert({ walkthrough_id: walkId, user_id: DEMO_USER_ID, room_name: "Hall" })).error, null);
+  await db.from("move_out_walkthroughs").delete().eq("id", walkId);
+  assert.equal(((await db.from("move_out_room_records").select("id").eq("walkthrough_id", walkId)).data as unknown[]).length, 0, "rooms go with their walkthrough");
+
+  // Values JSON cannot carry are refused before they are counted. A Map or a
+  // buffer would otherwise sit in memory at full size and count as "{}".
+  const heavy = "x".repeat(900_000);
+  for (const value of [new Map([["k", heavy]]), new Set([heavy]), new ArrayBuffer(900_000), new Uint8Array(900_000), new Date(), () => heavy, Number.NaN, BigInt(10)]) {
+    const smuggled = await db.from("move_out_room_records").insert({ walkthrough_id: value, user_id: DEMO_USER_ID, room_name: "Hall" });
+    assert.ok(smuggled.error, `refused: ${Object.prototype.toString.call(value)}`);
+    const nested = await db.from("move_estimates").update({ scenarios: [{ deep: [value] }] }).eq("user_id", DEMO_USER_ID);
+    assert.ok(nested.error, `refused when nested: ${Object.prototype.toString.call(value)}`);
+  }
+  const badIndex = await db.rpc("reorder_checklist_item", { p_id: last.id, p_target_category: new Map([["k", heavy]]), p_target_index: 0 });
+  assert.ok(badIndex.error, "the reorder function checks its arguments too");
+
   // Memory limits: an oversized write and a table past its row cap are refused.
-  const huge = await db.from("checklist_items").insert({ user_id: DEMO_USER_ID, category: "pre-move", title: "x".repeat(1_100_000) });
-  assert.ok(huge.error, "oversized write refused");
+  // Size is counted in bytes, so text outside ASCII cannot slip under the cap.
+  const huge = await db.from("checklist_items").insert({ user_id: DEMO_USER_ID, category: "pre-move", title: "x".repeat(1_100_000), order_index: 91 });
+  assert.equal(huge.error?.message, limitMessage, "oversized write refused");
+  const wide = await db.from("checklist_items").insert({ user_id: DEMO_USER_ID, category: "pre-move", title: "\u00e9".repeat(600_000), order_index: 91 });
+  assert.equal(wide.error?.message, limitMessage, "600,000 two-byte characters are over a million bytes");
+  const lease = ((await db.from("lease_terms").select("id").limit(1)).data as { id: string }[])[0];
   let capped = null;
   for (let i = 0; i < 120 && !capped; i++) {
-    const r = await db.from("lease_events").insert({ user_id: DEMO_USER_ID, kind: "note", occurs_on: "2026-10-01" });
+    const r = await db.from("lease_events").insert({ user_id: DEMO_USER_ID, lease_id: lease.id, kind: "walkthrough", occurs_on: "2026-10-01" });
     capped = r.error;
   }
-  assert.ok(capped, "row cap reached");
+  assert.equal(capped?.message, limitMessage, "row cap reached");
+  assert.equal(((await db.from("lease_events").select("id")).data as unknown[]).length, 100, "at the cap, not past it");
 
   console.log("demo-client.test.ts ✅");
 }

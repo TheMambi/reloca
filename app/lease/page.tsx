@@ -14,6 +14,7 @@ import {
 } from "@/lib/data/lease-db";
 import { getChecklistItems } from "@/lib/data/checklist-db";
 import { daysUntilIso, todayInZoneIso } from "@/lib/dates";
+import { appMode } from "@/lib/mode";
 import { LeaseFirstRunForm } from "@/components/lease/lease-first-run-form";
 import { DecisionDeadlineTracker } from "@/components/lease/decision-deadline-tracker";
 import { NoticeComposer } from "@/components/lease/notice-composer";
@@ -50,7 +51,7 @@ export default async function LeasePage({
   const { tab } = await searchParams;
 
   const lease = await getActiveLease();
-  if (!lease) return <LeaseFirstRunForm />;
+  if (!lease) return <LeaseFirstRunForm sample={appMode() === "demo"} />;
 
   // Post-move the notice question is history — land on the walkthrough/deposit
   // surface instead (AD-039). An explicit ?tab= still wins for deep links.

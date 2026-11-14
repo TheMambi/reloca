@@ -20,7 +20,12 @@ let caller = "203.0.113.7";
 standIn("next/cache", { revalidatePath() {}, revalidateTag() {} });
 standIn("next/server", { connection: async () => {} });
 standIn("next/headers", {
-  cookies: async () => ({ get: () => undefined, set() {}, delete() {} }),
+  // The demo database takes writes only from a request that carries a visitor id.
+  cookies: async () => ({
+    get: (name: string) => (name === "reloca_demo_visitor" ? { name, value: "00000000-0000-4000-8000-000000000001" } : undefined),
+    set() {},
+    delete() {},
+  }),
   headers: async () => new Headers({ "x-forwarded-for": caller }),
 });
 

@@ -51,7 +51,11 @@ export function middleware(req: NextRequest) {
     return notFound;
   }
   const current = req.cookies.get(DEMO_VISITOR_COOKIE)?.value;
-  const id = !demo || (current && VISITOR_ID.test(current)) ? null : crypto.randomUUID();
+  // Only a page view starts a visitor. A browser has loaded a page before it
+  // posts anything, so a post that arrives with no id is a script, and giving
+  // each one a new id would let it push real visitors' copies out of memory.
+  const pageView = req.method === "GET" || req.method === "HEAD";
+  const id = !demo || !pageView || (current && VISITOR_ID.test(current)) ? null : crypto.randomUUID();
   if (id) req.cookies.set(DEMO_VISITOR_COOKIE, id);
   const res = NextResponse.next({ request: { headers: req.headers } });
   res.headers.set("Content-Security-Policy", csp);
@@ -68,7 +72,11 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // The second entry covers neighborhood addresses that contain a dot, which
-  // the first one skips as if they were files.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)", "/properties/:neighborhood"],
+  // Skips only what is served as a file. A dot elsewhere in an address must
+  // not skip the visitor id, the policy header or the rate limit. The second
+  // entry covers neighborhood addresses that end like an image file.
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|maplibre-gl-worker.mjs|.*\\.(?:png|svg|ico)$).*)",
+    "/properties/:neighborhood",
+  ],
 };

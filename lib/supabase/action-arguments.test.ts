@@ -21,7 +21,8 @@ Object.assign(process.env, {
 });
 
 const appRequire = createRequire(join(process.cwd(), "package.json"));
-const cookieJar = new Map<string, string>();
+// The demo database takes writes only from a request that carries a visitor id.
+const cookieJar = new Map<string, string>([["reloca_demo_visitor", "00000000-0000-4000-8000-000000000001"]]);
 function standIn(specifier: string, exports: object) {
   const file = appRequire.resolve(specifier);
   const mod = new Module(file);
@@ -192,9 +193,10 @@ async function main() {
   await refuses("deleteRelocation", (x) => r.deleteRelocation(x));
   await refuses("updateActiveMoveDate", (x) => r.updateActiveMoveDate(x), notADate);
   await refuses("setActiveMove", (x) => r.setActiveMove(x));
+  const cookiesBefore = cookieJar.size;
   for (const wrong of [7, [id], { id }, "not-an-id"]) {
     await r.setViewingRelocation(wrong as never);
-    assert.equal(cookieJar.size, 0, "only an id is kept as the viewed relocation");
+    assert.equal(cookieJar.size, cookiesBefore, "only an id is kept as the viewed relocation");
   }
 
   // ---- transitions ----
