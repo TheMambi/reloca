@@ -7,8 +7,8 @@
 --
 -- Idempotent: re-running is a no-op (only seeds when the user has no relocation,
 -- only backfills NULL rows). The single-user UUID is derived in-DB from an
--- existing table so the secret never enters the migration file or any tool output
--- (same pattern as 0020's RLS policies).
+-- existing table so the id never has to be typed into the migration file. It is
+-- an identifier, not a secret (see docs/security-lockdown.md).
 
 DO $$
 DECLARE

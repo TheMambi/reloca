@@ -1,6 +1,8 @@
 -- Reloca migration 0001 — checklist_items table + RLS for single-user mode (v1)
 --
--- The committed file uses a placeholder for the user UUID so secrets do not enter git.
+-- The committed file uses a placeholder for the user UUID so the real id stays out of git.
+-- The id is an identifier, not a secret: these policies never checked who was calling.
+-- Migration 0025 drops them and closes the tables to anon and authenticated.
 -- Before running, substitute <RELOCA_SINGLE_USER_ID> with the value from .env.local.
 -- Re-running is safe: every statement is idempotent (CREATE OR REPLACE / IF NOT EXISTS-friendly trigger pattern).
 

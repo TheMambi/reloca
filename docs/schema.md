@@ -266,6 +266,15 @@ CREATE TRIGGER checklist_items_sync_completed_at
 
 ### Row-Level Security
 
+> **Replaced by migration 0025.** The grants and policies below are how the
+> tables were first set up. The policies compared `user_id` with a fixed UUID
+> and never looked at who was calling, so anyone holding the anon key could
+> read and write every row. Migration 0025 revokes every grant to `anon` and
+> `authenticated` and drops these policies on all tables. Row level security
+> stays on, only the server reaches the data (with the service role key), and
+> the code filters every query by `user_id`. The UUID is an identifier, not a
+> secret. See `docs/security-lockdown.md`.
+
 ```sql
 ALTER TABLE checklist_items ENABLE ROW LEVEL SECURITY;
 
@@ -297,7 +306,7 @@ CREATE POLICY "single_user_delete"
 
 **RLS approach (decided AD at Phase 0.4):** literal UUID in policies. Re-running a single migration is fine for a single-user app; rotating per-connection `current_setting` was rejected as overkill. Trade-off: rotating the UUID requires editing the migration and re-applying — acceptable in v1 because rotation should never happen unless the project moves to multi-user (which itself triggers a full RLS rewrite, ADR-eligible).
 
-**v2 hook:** when auth is added, swap the literal for `auth.uid()` in all four policies — that's the only change required to flip from single-user to multi-user mode.
+**v2 hook:** adding auth takes more than swapping the literal for `auth.uid()`. The policies must also be written `TO authenticated`, the `anon` grants must stay revoked, sign-up must be closed, and `reorder_checklist_item` needs its own owner check.
 
 ### Zod schema mirroring the table
 
@@ -568,4 +577,4 @@ The sections above describe v1 (0001–0002), the lease module (0003–0008), an
 | `0019_saved_neighborhoods.sql` | `saved_neighborhoods` — heart-save rows, `UNIQUE(user_id, neighborhood, city)`. |
 | `0024_checklist_reorder_transient_safe.sql` | Rewrites the reorder RPC through a disjoint negative range so the 0009 unique index can't trip mid-shuffle (AD-038). |
 
-All tables follow the single-user RLS literal-UUID pattern with GRANTs to `anon` / `authenticated` / `service_role` (Phase 2.5b lesson). `relocation_id` columns from 0021/0022 exist on `destinations` + `saved_neighborhoods` but are not yet read anywhere (open call — audit plan §3.3).
+All tables were created with the single-user RLS literal-UUID pattern and GRANTs to `anon` / `authenticated` / `service_role`; migration 0025 leaves only the `service_role` grants (see `docs/security-lockdown.md`). `relocation_id` columns from 0021/0022 exist on `destinations` + `saved_neighborhoods` but are not yet read anywhere (open call — audit plan §3.3).
