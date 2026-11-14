@@ -32,6 +32,11 @@ assert.equal(UpdateLeaseTermsPatch.safeParse({ decision: "maybe" }).success, fal
 assert.equal(UpdateLeaseTermsPatch.safeParse({ m2m_premium: -1 }).success, false);
 assert.deepEqual(UpdateLeaseTermsPatch.parse({ target_move_out_date: null }), { target_move_out_date: null });
 
+// A default nested inside a patch field is still a default.
+const residents = [{ name: "Sam", isPrimary: true }, { name: "Alex", isPrimary: false }];
+assert.deepEqual(UpdateLeaseTermsPatch.parse({ residents }), { residents });
+assert.equal(UpdateLeaseTermsPatch.safeParse({ residents: [{ name: "Sam" }] }).success, false);
+
 // ---- patches reject keys that are not editable fields -----------------------
 
 const someId = "11111111-1111-4111-8111-111111111111";

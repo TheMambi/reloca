@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createClient, requireUserId } from "@/lib/supabase/server";
+import { createClient, friendlyDbError, requireUserId } from "@/lib/supabase/server";
 import {
   MoveOutWalkthroughSchema,
   MoveOutRoomRecordSchema,
@@ -241,7 +241,7 @@ export async function generateWalkthroughReport(
     .eq("user_id", userId)
     .maybeSingle();
   if (walkErr)
-    return { ok: false, error: `report.read: ${walkErr.message}` };
+    return { ok: false, error: friendlyDbError("report.read", walkErr) };
   if (!walkRow)
     return { ok: false, error: "Walkthrough not found" };
   const walkthrough = MoveOutWalkthroughSchema.parse(walkRow);
@@ -253,7 +253,7 @@ export async function generateWalkthroughReport(
     .eq("walkthrough_id", walkthroughId)
     .order("order_index", { ascending: true });
   if (roomsErr)
-    return { ok: false, error: `report.readRooms: ${roomsErr.message}` };
+    return { ok: false, error: friendlyDbError("report.readRooms", roomsErr) };
   const rooms = (roomRows ?? []).map((r) => MoveOutRoomRecordSchema.parse(r));
 
   // Lease is optional — the walkthrough is usable for either move-out

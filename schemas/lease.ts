@@ -191,7 +191,13 @@ export const CreateLeaseTermsInput = LeaseTermsFields.extend({
     { message: "target_move_out_date must be on or after lease_start_date", path: ["target_move_out_date"] },
   );
 
-export const UpdateLeaseTermsPatch = LeaseTermsFields.partial().strict();
+// Residents are replaced whole, so a patch that sends them must say who is
+// primary instead of having the row schema's default filled in.
+export const UpdateLeaseTermsPatch = LeaseTermsFields.extend({
+  residents: z.array(ResidentSchema.extend({ isPrimary: z.boolean() })).min(1),
+})
+  .partial()
+  .strict();
 
 const InsurancePolicyFields = InsurancePolicySchema.pick({
   scope: true,

@@ -457,17 +457,30 @@ async function main() {
   }
 
   // A file that starts using the database client has to be run above too.
+  // The whole repo is read, so a helper in lib/supabase, a file in the root or
+  // a script cannot slip past. Only lib/supabase/server.ts may load a Supabase
+  // package: a client built anywhere else would not be seen by this test.
   const usesClient: string[] = [];
+  const importsSupabase: string[] = [];
+  const leaksDbText: string[] = [];
+  const skipped = new Set(["node_modules", "Inspiration"]);
   const walk = (dir: string) => {
     for (const entry of readdirSync(join(process.cwd(), dir), { withFileTypes: true })) {
-      const path = `${dir}/${entry.name}`;
+      if (skipped.has(entry.name) || entry.name.startsWith(".")) continue;
+      const path = dir === "." ? entry.name : `${dir}/${entry.name}`;
       if (entry.isDirectory()) walk(path);
-      else if (/\.tsx?$/.test(path) && !path.endsWith(".test.ts") && !path.startsWith("lib/supabase/")) {
-        if (/\bcreate(Admin)?Client\(/.test(readFileSync(join(process.cwd(), path), "utf8"))) usesClient.push(path);
+      else if (/\.(tsx?|mjs|js)$/.test(path) && !path.endsWith(".test.ts") && path !== "lib/supabase/server.ts") {
+        const source = readFileSync(join(process.cwd(), path), "utf8");
+        if (/\bcreate(Admin)?Client\(/.test(source)) usesClient.push(path);
+        if (/["']@supabase\//.test(source)) importsSupabase.push(path);
+        // A database error's own text names tables and columns. Callers get friendlyDbError instead.
+        if (/error:\s*`[^`]*\$\{\w+\.message\}/.test(source)) leaksDbText.push(path);
       }
     }
   };
-  for (const dir of ["app", "components", "lib"]) walk(dir);
+  walk(".");
+  assert.deepEqual(importsSupabase, [], "only lib/supabase/server.ts may import a Supabase package");
+  assert.deepEqual(leaksDbText, [], "an action returns a database error's own text to the browser");
   assert.deepEqual(usesClient.sort(), [
     "app/checklist/actions.ts",
     "app/lease/actions.ts",

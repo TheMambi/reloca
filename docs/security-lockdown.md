@@ -15,9 +15,15 @@ This is containment, not a login. Whoever can open a private deployment can stil
 
 Do the steps in this order. The new code works against the database both before and after the migration, because the service role key does not depend on the grants to `anon` or on the policies. The old code stops working the moment the migration runs, so the migration must come second.
 
-1. **Settings.** On the hosting project that runs on the real database, confirm `SUPABASE_SERVICE_ROLE_KEY` and `RELOCA_SINGLE_USER_ID` are set for every environment that deploys, and add `SUPABASE_URL` with the project URL. The older `NEXT_PUBLIC_SUPABASE_URL` is still read while `SUPABASE_URL` is empty, so nothing breaks if you add it later.
-2. **Deploy the code.** Open every page and save one change. Everything should behave as before.
-3. **Run migration 0025** in the Supabase SQL editor, exactly as written. It has no placeholder. It is one statement: it applies completely or changes nothing, and it stops with a message if something would be left open. Running it twice is safe.
+1. **Settings.** On the hosting project that runs on the real database, for every environment that deploys:
+   - set `RELOCA_MODE` to `private`;
+   - set `RELOCA_ACCESS_GATE` to the name of whatever keeps strangers out of the site (the README explains the values);
+   - confirm `SUPABASE_SERVICE_ROLE_KEY` and `RELOCA_SINGLE_USER_ID` are set;
+   - add `SUPABASE_URL` with the project URL. The older `NEXT_PUBLIC_SUPABASE_URL` is still read while `SUPABASE_URL` is empty, so nothing breaks if you add it later.
+
+   Without the first two the new code refuses to build, and the host keeps serving the previous deployment, which still uses the anon key.
+2. **Deploy the code and confirm it is the one serving.** In the hosting dashboard, the deployment built from this code (commit `5beb0e2` or later) must show as ready and be the current production deployment. If its build failed with "Reloca refuses to serve", fix the setting the message names and deploy again. Then open every page and save one change. Everything should behave as before. Do not go on to step 3 until both are true: a page that loads proves nothing if the old deployment is still the one answering, and the old code stops working the moment the migration runs.
+3. **Run migration 0025, then 0026,** in the Supabase SQL editor, each exactly as written. Neither has a placeholder. Each is one statement: it applies completely or changes nothing, and 0025 stops with a message if something would be left open. Running them twice is safe. 0026 closes new functions and sequences the way 0025 closes new tables.
 4. **Run the two checks** below, then open the app again.
 5. **Remove `NEXT_PUBLIC_SUPABASE_ANON_KEY`** from the hosting settings and from `.env.local`. Once `SUPABASE_URL` is set, `NEXT_PUBLIC_SUPABASE_URL` can go too.
 
@@ -83,23 +89,25 @@ The service role key skips row level security, so the database no longer filters
 
 - Re-running any of migrations 0001 to 0024 grants access to `anon` again and recreates the policies. Run 0025 again afterwards.
 - A new table needs `ENABLE ROW LEVEL SECURITY`, a `user_id` column, and a grant to `service_role` only. Tables created by the role that ran 0025 no longer get grants to `anon` or `authenticated` by default. Tables created by another role still might, so run check 1 after adding one.
-- A new function is runnable by everyone by default in Postgres. Give it `REVOKE ALL ON FUNCTION ... FROM PUBLIC` and grant it to `service_role`.
+- A new function is runnable by everyone by default in Postgres, and Supabase also grants it to `anon` and `authenticated` by name, so revoking from `PUBLIC` alone leaves it open. Give every new function `REVOKE ALL ON FUNCTION ... FROM PUBLIC, anon, authenticated` and grant it to `service_role`. Migration 0026 makes this the default for functions and sequences created by the role that ran it. One created by another role still starts open, so run check 1 after adding a function too.
 - `scripts/keepalive.sh` uses the service role key from `.env.local`, since the anon key can no longer read a table.
 
 ## Undo
 
-This reopens the database to anyone with the anon key. Use it only to get an old deployment working again while you fix forward, and run 0025 again as soon as the new code is live. It reads the user id from the data, so it also needs no placeholder.
+This reopens the database to anyone with the anon key. Use it only to get an old deployment working again while you fix forward, and run 0025 again as soon as the new code is live. It reads the user id from the data, so it also needs no placeholder. It stops without changing anything unless the data holds exactly one user id. It leaves 0026 in place: an old deployment does not need new functions or sequences to start open.
 
 ```sql
 DO $undo$
 DECLARE
   uid uuid;
+  owners integer;
   tbl text;
 BEGIN
-  SELECT user_id INTO uid FROM public.checklist_items LIMIT 1;
-  IF uid IS NULL THEN
-    RAISE EXCEPTION 'checklist_items is empty, so there is no user id to rebuild the policies from.';
+  SELECT count(DISTINCT user_id) INTO owners FROM public.checklist_items;
+  IF owners <> 1 THEN
+    RAISE EXCEPTION 'checklist_items holds % user ids. The old policies fit exactly one, so nothing was changed.', owners;
   END IF;
+  SELECT user_id INTO uid FROM public.checklist_items ORDER BY user_id LIMIT 1;
 
   GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon, authenticated;
   FOR tbl IN
