@@ -87,7 +87,6 @@ PropertySchema.parse({
   price: 1800,
   coordinates: { lat: 38.57, lng: -121.48 },
   seaProximityKm: 0,
-  imageUrl: "/x.jpg",
   climateProfileRef: "sacramento",
   crimeRecordRef: "sacramento",
 });
@@ -102,6 +101,13 @@ DataSourceSchema.parse({
   tier: "modeled",
   fetchedAt: "2025-04-01",
 });
+// A license is optional, but never an empty string, and the federal sources carry theirs.
+assert.throws(() =>
+  DataSourceSchema.parse({ id: "x", label: "X", provider: "P", url: "https://example.com", tier: "live", fetchedAt: "2025-04-01", license: "" }),
+);
+for (const id of ["rent-hud-fmr-2026", "climate-noaa-2026", "walkability-epa-2026"]) {
+  assert.match(getDataSources().find((s) => s.id === id)?.license ?? "", /public domain/, `${id} names its license`);
+}
 assert.throws(
   () =>
     DataSourceSchema.parse({

@@ -15,7 +15,6 @@ export const PropertySchema = z.object({
     lng: z.number(),
   }),
   seaProximityKm: z.number().nonnegative(),
-  imageUrl: z.union([z.url(), z.string().startsWith("/")]),
   climateProfileRef: z.string(), // city slug — keyed to data/cities.json
   crimeRecordRef: z.string(), // city slug — keyed to data/cities.json
   source: z.string().optional(), // DataSource id — keyed to data/data-sources.json

@@ -15,6 +15,9 @@ export const DataSourceSchema = z.object({
   url: z.url(),
   tier: DataSourceTierSchema,
   fetchedAt: z.iso.date(), // when the data was pulled / authored
+  // The terms the provider publishes the data under. Left out until someone
+  // has read the provider's own terms page: a guess here would be a legal claim.
+  license: z.string().min(1).optional(),
   notes: z.string().optional(),
 });
 

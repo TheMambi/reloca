@@ -66,6 +66,8 @@ const COUNTY_FIPS: Record<string, string> = {
   sacramento: "06067",
 };
 
+const FEDERAL_WORK = "U.S. Government work, in the public domain in the United States";
+
 // Live/derived DataSource definitions this script can attach to a field. Upserted
 // into data/data-sources.json with a fresh `fetchedAt` whenever the pull succeeds.
 const LIVE_SOURCES: Record<string, Omit<DataSource, "fetchedAt">> = {
@@ -75,6 +77,7 @@ const LIVE_SOURCES: Record<string, Omit<DataSource, "fetchedAt">> = {
     provider: "NOAA National Centers for Environmental Information",
     url: "https://www.ncei.noaa.gov/cdo-web/",
     tier: "live",
+    license: FEDERAL_WORK,
     notes:
       "Average high/low temperature, annual precipitation, and days at or above 90°F are pulled live from NOAA's climate normals (CDO NORMAL_ANN product — the 1981–2010 normals vintage; the newer 1991–2020 set isn't served by this endpoint). The flood, wildfire, earthquake, and sea-level fields in each climate profile are hand-verified estimates, cross-checked against FEMA NFHL/NRI and USGS (modeled).",
   },
@@ -84,6 +87,7 @@ const LIVE_SOURCES: Record<string, Omit<DataSource, "fetchedAt">> = {
     provider: "U.S. Department of Housing and Urban Development",
     url: "https://www.huduser.gov/portal/dataset/fmr-api.html",
     tier: "live",
+    license: FEDERAL_WORK,
     notes: "Two-bedroom Fair Market Rent for the metro area, fiscal year 2026.",
   },
   airnow: {
@@ -101,6 +105,7 @@ const LIVE_SOURCES: Record<string, Omit<DataSource, "fetchedAt">> = {
     provider: "U.S. Environmental Protection Agency — Smart Location Database",
     url: "https://www.epa.gov/smartgrowth/smart-location-mapping",
     tier: "live",
+    license: FEDERAL_WORK,
     notes:
       "Population-weighted mean of the EPA National Walkability Index (NatWalkInd, 1–20 scale) across Census block groups within ~10 km of the city centroid, served live from EPA's GeoPlatform ArcGIS feature service (public domain / CC0). Mapped to a 0–100 score; the 25/50/75 category cuts are EPA's own walkability tier boundaries. Block-group geography vintage 2018.",
   },

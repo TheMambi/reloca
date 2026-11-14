@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+  # Weekly, so an advisory published between pushes still fails the audit step.
+  schedule:
+    - cron: '17 6 * * 1'
+
+# The jobs only read the code. No job gets a token that can write to the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Actions are pinned to a commit so a moved tag cannot change what runs here.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Corepack ships with Node and installs the pnpm version package.json names.
+      - run: corepack enable
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+      # No install scripts run, this project's own included. The build step
+      # copies the map worker that the postinstall script would have copied.
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm audit --prod
+      # Tools that never ship. One moderate advisory is open there (see SECURITY.md).
+      - run: pnpm audit --audit-level=high
+      - run: pnpm lint
+      - run: pnpm exec tsc --noEmit
+      # Every test file, once in UTC and once in Pacific time.
+      - run: pnpm test
+      - run: pnpm build
+        env:
+          RELOCA_MODE: demo
+
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # A throwaway PostgreSQL that lives for this job only. It takes local
+    # connections without a password, so there is no credential to keep.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: corepack enable
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      # Applies every migration twice to an empty database, runs
+      # supabase/tests/lockdown.sql and checks.sql, then compares the database
+      # with the row schemas and the generated types.
+      - run: pnpm db:check

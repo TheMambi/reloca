@@ -32,6 +32,22 @@ Every reference number in the UI is labeled with how it was made, because some o
 
 `scripts/ingest-city.ts` refreshes the live tiers from the free APIs and writes JSON snapshots into `data/`.
 
+### Data sources and notices
+
+Reloca is an independent project. It uses public data from the agencies below, and none of them endorses, certifies or is responsible for it.
+
+| Data | Publisher | Notes |
+| --- | --- | --- |
+| Fair Market Rent | U.S. Department of Housing and Urban Development, through the HUD User API | A work of the U.S. Government. |
+| Climate normals | NOAA National Centers for Environmental Information | A work of the U.S. Government. |
+| Walkability index | U.S. Environmental Protection Agency, National Walkability Index | A work of the U.S. Government. |
+| Air quality readings | U.S. EPA AirNow and the state, local and tribal agencies that report to it | Readings are preliminary and can change after the agencies review them. Each one is a single observation with its time shown. |
+| Sacramento crime totals | City of Sacramento Open Data, police records for 2024 | Totals are regrouped by Reloca. |
+| Population and flood cross-checks | U.S. Census Bureau API, FEMA National Flood Hazard Layer and National Risk Index | The ingest script prints these for comparison. Nothing from them is saved in `data/`. |
+| Map | © OpenStreetMap contributors, © CARTO | The credit is shown on every map. |
+
+Figures marked Modeled or Sample are my own estimates and made-up listings, not any agency's numbers. `data/data-sources.json` lists each source with its address, the date it was fetched and, where I have confirmed it, its license.
+
 ## Stack
 
 Next.js 15 (App Router, Turbopack), TypeScript, Tailwind CSS with shadcn/ui, Supabase (Postgres with row level security), Zod for every data shape, MapLibre with CARTO tiles, Recharts, React PDF. Hosted on Vercel.
@@ -58,7 +74,7 @@ To run it on your own data you need Node 20+, pnpm, and a free Supabase project.
 3. Pick a UUID for `RELOCA_SINGLE_USER_ID`. Build the tables with the Supabase CLI: `supabase link`, then `supabase db push`. That applies every file in `supabase/migrations/` in order, exactly as written, and records which ones ran. No file needs editing. The database starts empty: add your move from the app, which also adds the starter checklist. `docs/database.md` covers the details, including how to bring a database that was set up by hand under the CLI.
 4. `pnpm dev`
 
-Tests are plain TypeScript scripts. `pnpm test` runs them all from the repo root, once in UTC and once in Pacific time, and stops at the first failure. To run one: `npx tsx --conditions=react-server path/to/file.test.ts`. After changing a migration, `pnpm db:check` builds the schema in a throwaway database on a local PostgreSQL server and checks it against the code.
+Tests are plain TypeScript scripts. `pnpm test` runs them all from the repo root, once in UTC and once in Pacific time, and stops at the first failure. To run one: `npx tsx --conditions=react-server path/to/file.test.ts`. After changing a migration, `pnpm db:check` builds the schema in a throwaway database on a local PostgreSQL server and checks it against the code. CI (`.github/workflows/ci.yml`) runs the audit, lint, the type checker, the tests, a demo build and `pnpm db:check` on every push and pull request.
 
 ## Modes and deploying
 

@@ -128,6 +128,11 @@ export function DataSourcesPanel() {
           );
         })}
       </ul>
+      <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
+        Reloca is an independent project. It uses public data from HUD, NOAA,
+        the EPA and the City of Sacramento, and none of them endorses or
+        certifies it. AirNow air quality readings are preliminary.
+      </p>
     </section>
   );
 }

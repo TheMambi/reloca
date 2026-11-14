@@ -82,6 +82,8 @@ Desktop.ini
 
 # supabase CLI local state (migrations folder `supabase/` IS committed)
 .supabase/
+supabase/.temp/
+supabase/.branches/
 
 # Local verification screenshots (Wave C)
 .tmp-verify/
