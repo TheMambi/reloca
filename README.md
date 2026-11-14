@@ -16,7 +16,7 @@ This repo is the public, portfolio version. Every name, address and dollar figur
 - **Lease.** Pick stay, renew or vacate. A forecaster prices each path (renewal, leaving on time, one or two months month-to-month), a composer drafts the notice to vacate, and an insurance panel tracks coverage across both homes so there is no gap. A move-out walkthrough exports a PDF report.
 - **Address changes.** Bank, employer, DMV, voter registration, insurance and subscriptions, each with its own deadline.
 - **Moving cost and cost of living.** Budget for the move itself, plus a category-by-category comparison of the two cities.
-- **Properties.** Neighborhoods and sample listings on a map, with a dialog that reads a listing URL you paste and fills in the details.
+- **Properties.** Neighborhoods and sample listings on a map, with a dialog that reads the details a building's own website publishes about itself (schema.org and Open Graph data, and only where the site's robots.txt allows) and fills them in.
 
   ![Properties page: Long Beach neighborhoods on a dark map with rent ranges per neighborhood](docs/images/reloca-properties.png)
 

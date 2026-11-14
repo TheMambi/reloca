@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { createClient, friendlyDbError, requireUserId } from "@/lib/supabase/server";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/schemas/move-out";
 import { getActiveLease } from "@/lib/data/lease-db";
 import { todayInZoneIso } from "@/lib/dates";
+import { clientKey, createRateLimiter } from "@/lib/rate-limit";
 // NOTE: @react-pdf/renderer + the report template are imported dynamically
 // inside generateWalkthroughReport (Wave 6, AD-044) — react-pdf is by far the
 // heaviest dependency on this route and is only needed for the one-shot
@@ -104,9 +106,18 @@ export async function addRoom(
 ): Promise<MoveOutRoomRecord> {
   const trimmed = roomName.trim();
   if (trimmed.length === 0) throw new Error("Room name required");
+  if (trimmed.length > ROOM_NAME_MAX) throw new Error(`Keep the room name under ${ROOM_NAME_MAX} characters.`);
 
   const sb = await createClient();
   const userId = requireUserId();
+
+  const { data: existingRooms, error: countErr } = await sb
+    .from("move_out_room_records")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("walkthrough_id", walkthroughId);
+  if (countErr) throw new Error(`addRoom.count: ${countErr.message}`);
+  if ((existingRooms?.length ?? 0) >= MAX_ROOMS) throw new Error(`A walkthrough holds up to ${MAX_ROOMS} rooms.`);
 
   // Compute order_index = max(existing) + 1 within this walkthrough.
   const { data: maxRow, error: maxErr } = await sb
@@ -137,15 +148,25 @@ export async function addRoom(
   return MoveOutRoomRecordSchema.parse(data);
 }
 
+// The report is drawn on the server, and drawing time grows much faster than
+// the text does (100 KB of notes took about 8 seconds and 750 MB). So each
+// field has a ceiling, a walkthrough has a room limit, and the report refuses
+// a walkthrough whose text adds up past REPORT_TEXT_BUDGET.
+const ROOM_NAME_MAX = 80;
+const NOTE_MAX = 2000;
+const MAX_ROOMS = 30;
+const REPORT_TEXT_BUDGET = 20_000;
+const noteText = z.string().max(NOTE_MAX, `Keep this under ${NOTE_MAX} characters.`).nullable().optional();
+
 const RoomPatchSchema = z.object({
-  room_name: z.string().min(1).optional(),
+  room_name: z.string().min(1).max(ROOM_NAME_MAX).optional(),
   condition_rating: RatingEnum.optional(),
   cleanliness_rating: RatingEnum.optional(),
-  walls_status: z.string().nullable().optional(),
-  floors_status: z.string().nullable().optional(),
-  appliances_status: z.string().nullable().optional(),
-  fixtures_status: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
+  walls_status: noteText,
+  floors_status: noteText,
+  appliances_status: noteText,
+  fixtures_status: noteText,
+  notes: noteText,
 });
 
 export async function updateRoomRecord(
@@ -178,7 +199,7 @@ export async function deleteRoom(id: string): Promise<void> {
 
 const WalkthroughPatchSchema = z.object({
   walkthrough_date: z.iso.date().nullable().optional(),
-  overall_notes: z.string().nullable().optional(),
+  overall_notes: noteText,
 });
 
 export async function updateWalkthrough(
@@ -221,6 +242,8 @@ export async function markPdfGenerated(walkthroughId: string): Promise<void> {
 // client doesn't need to forward stale state. Calls markPdfGenerated on
 // success so the dashboard tile + the readiness aggregator both see the
 // completion stamp.
+const reportLimiter = createRateLimiter(5, 60_000);
+
 export async function generateWalkthroughReport(
   walkthroughId: string,
 ): Promise<{
@@ -231,6 +254,9 @@ export async function generateWalkthroughReport(
   ok: false;
   error: string;
 }> {
+  if (!reportLimiter.allow(clientKey(await headers()))) {
+    return { ok: false, error: "That's a lot of reports in a short time. Wait a minute and try again." };
+  }
   const sb = await createClient();
   const userId = requireUserId();
 
@@ -255,6 +281,25 @@ export async function generateWalkthroughReport(
   if (roomsErr)
     return { ok: false, error: friendlyDbError("report.readRooms", roomsErr) };
   const rooms = (roomRows ?? []).map((r) => MoveOutRoomRecordSchema.parse(r));
+
+  // Rows saved before the limits existed, or written another way, can still be large.
+  const textLength =
+    (walkthrough.overall_notes?.length ?? 0) +
+    rooms.reduce(
+      (sum, r) =>
+        sum +
+        [r.room_name, r.walls_status, r.floors_status, r.appliances_status, r.fixtures_status, r.notes].reduce(
+          (n, text) => n + (text?.length ?? 0),
+          0,
+        ),
+      0,
+    );
+  if (rooms.length > MAX_ROOMS || textLength > REPORT_TEXT_BUDGET) {
+    return {
+      ok: false,
+      error: "This walkthrough has too much text for one report. Shorten the notes and try again.",
+    };
+  }
 
   // Lease is optional — the walkthrough is usable for either move-out
   // (deposit defense) or move-in inspection, with or without a linked lease.

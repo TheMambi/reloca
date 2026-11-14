@@ -37,7 +37,10 @@ function standIn(specifier: string, exports: object) {
 }
 standIn("next/cache", { revalidatePath() {}, revalidateTag() {} });
 standIn("next/server", { connection: async () => {} });
-standIn("next/headers", { cookies: async () => ({ get: () => undefined, set() {}, delete() {} }) });
+standIn("next/headers", {
+  cookies: async () => ({ get: () => undefined, set() {}, delete() {} }),
+  headers: async () => new Headers(),
+});
 // The real module needs a browser build of React. Outside a Next render there is no signal to pass on.
 standIn("next/navigation", { unstable_rethrow() {} });
 

@@ -20,7 +20,10 @@ function standIn(specifier: string, exports: object) {
 }
 standIn("next/cache", { revalidatePath() {}, revalidateTag() {} });
 standIn("next/server", { connection: async () => {} });
-standIn("next/headers", { cookies: async () => ({ get: () => undefined, set() {}, delete() {} }) });
+standIn("next/headers", {
+  cookies: async () => ({ get: () => undefined, set() {}, delete() {} }),
+  headers: async () => new Headers(),
+});
 
 // Rows of the demo database are untyped; the assertions below read them freely.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { appMode } from "@/lib/mode";
 import properties from "@/data/properties.json";
 import { toSlug } from "@/lib/data/neighborhood-slug";
+import { clientKey, createRateLimiter } from "@/lib/rate-limit";
 
 // Demo mode only: give each visitor an anonymous id so the in-memory demo data
 // (lib/supabase/demo-client.ts) is per visitor. The id is set on the incoming
@@ -16,10 +17,21 @@ const VISITOR_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 const NEIGHBORHOOD_SLUGS = new Set(properties.map((p) => toSlug(p.neighborhood)));
 const NEIGHBORHOOD_PATH = /^\/properties\/([^/]+)\/?$/;
 
+// Every form save and button in the app is a POST with this header. Thirty a
+// minute is far above what a person does by hand and far below a script.
+// lib/rate-limit.ts says what an in-memory count can and cannot promise.
+const actionLimiter = createRateLimiter(30, 60_000);
+
 export function middleware(req: NextRequest) {
   // Asked first: while the mode is unset or invalid this throws, so no page or
   // server action is served.
   const demo = appMode() === "demo";
+  if (req.method === "POST" && req.headers.has("next-action") && !actionLimiter.allow(clientKey(req.headers))) {
+    return new NextResponse("Too many requests. Wait a minute and try again.", {
+      status: 429,
+      headers: { "Retry-After": "60" },
+    });
+  }
   const segment = NEIGHBORHOOD_PATH.exec(req.nextUrl.pathname)?.[1];
   if (segment !== undefined && !NEIGHBORHOOD_SLUGS.has(segment)) {
     // No route matches this address, so Next answers with the 404 page.

@@ -55,6 +55,7 @@ standIn("next/headers", {
     set: (name: string, value: string) => void cookieJar.set(name, value),
     delete: (name: string) => void cookieJar.delete(name),
   }),
+  headers: async () => new Headers(),
 });
 
 // Every table the migrations create has to carry user_id. One that does not

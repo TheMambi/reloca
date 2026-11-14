@@ -21,7 +21,10 @@ function standIn(specifier: string, exports: object) {
 }
 standIn("next/cache", { revalidatePath() {}, revalidateTag() {} });
 standIn("next/server", { connection: async () => {} });
-standIn("next/headers", { cookies: async () => ({ get: () => undefined, set() {}, delete() {} }) });
+standIn("next/headers", {
+  cookies: async () => ({ get: () => undefined, set() {}, delete() {} }),
+  headers: async () => new Headers(),
+});
 
 async function main() {
   const { createDemoClient } = await import("@/lib/supabase/demo-client");

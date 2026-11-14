@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
 import {
   createClient,
@@ -10,6 +11,7 @@ import {
 } from "@/lib/supabase/server";
 import { recomputeDestinationOverlays } from "@/lib/lease/overlays";
 import { isoDateInZone } from "@/lib/dates";
+import { clientKey, createRateLimiter } from "@/lib/rate-limit";
 import {
   buildLeaseTasks,
   depositDeadline,
@@ -589,12 +591,21 @@ export async function deleteDestination(id: string): Promise<void> {
 }
 
 // "+ Add destination" Phase 1 (Task 6.25). Wraps fetchDestinationFromUrl so
-// the dialog can call it via a server action without exposing cheerio +
-// node:dns to the client bundle. Returns the parsed shape; insertion is
+// the dialog can call it via a server action without exposing cheerio and the
+// network code to the client bundle. Returns the parsed shape; insertion is
 // deferred to Phase 2 (the user reviews + edits before commit).
+// Each call makes outbound requests on the caller's say-so.
+const previewLimiter = createRateLimiter(5, 60_000);
+
 export async function fetchDestinationPreview(
   url: string,
 ): Promise<FetchResult> {
+  if (!previewLimiter.allow(clientKey(await headers()))) {
+    return {
+      status: "fetch_failed",
+      message: "That's a lot of links in a short time. Wait a minute and try again.",
+    };
+  }
   // The public demo has no sign-in, so it must not fetch arbitrary URLs.
   if (isDemoMode()) {
     return {

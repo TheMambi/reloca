@@ -224,6 +224,15 @@ export const InsurancePolicyCreateInput = InsurancePolicyFields.extend({
 
 export const InsurancePolicyPatchInput = InsurancePolicyFields.partial().strict();
 
+export const DESTINATION_TEXT_LIMITS = {
+  name: 200,
+  city: 100,
+  url: 2000,
+  amenity: 100,
+  amenities: 50,
+  notes: 2000,
+} as const;
+
 const DestinationFields = DestinationSchema.pick({
   building_name: true,
   street_address: true,
@@ -249,6 +258,16 @@ const DestinationFields = DestinationSchema.pick({
   insurance_min_property: true,
   is_active_target: true,
   notes: true,
+}).extend({
+  // What a person may send. The address goes to an outside geocoder and the
+  // rest is stored, so each has a ceiling. Stored rows are read with the row
+  // schema above, which has none.
+  building_name: z.string().min(1).max(DESTINATION_TEXT_LIMITS.name),
+  street_address: z.string().min(1).max(DESTINATION_TEXT_LIMITS.name),
+  city: z.string().min(1).max(DESTINATION_TEXT_LIMITS.city),
+  source_url: z.url().max(DESTINATION_TEXT_LIMITS.url).nullable(),
+  amenities: z.array(z.string().max(DESTINATION_TEXT_LIMITS.amenity)).max(DESTINATION_TEXT_LIMITS.amenities),
+  notes: z.string().max(DESTINATION_TEXT_LIMITS.notes).nullable(),
 });
 
 export const DestinationCreateInput = DestinationFields.extend({

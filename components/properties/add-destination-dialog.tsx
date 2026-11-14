@@ -368,7 +368,7 @@ export function AddDestinationDialog({ destination, trigger }: Props) {
           </DialogTitle>
           <DialogDescription>
             {phase === "url"
-              ? "Paste the property's website — we'll try to read the name, address, rent, and amenities for you. Or skip and type them in yourself."
+              ? "Paste the building's own website and we'll read the details it publishes about itself, such as its name and address. Listing sites usually don't allow this, so for those, skip and type the details in yourself."
               : editing
                 ? "Update what's changed and save. If you change the address, the local rent benchmark refreshes automatically."
                 : "Look over what we found and fill in anything missing before saving."}
