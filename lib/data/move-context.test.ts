@@ -57,14 +57,14 @@ const seededLongBeachMove: Relocation = {
   assert.equal(ctx.moveDate, "2027-12-14", "relocation move_date is the source of truth");
 }
 
-// ── Null move_date falls back to env (a dateless relocation) ───────────
+// ── A cleared move_date stays cleared: env never stands in for it ──────
 
 {
   const ctx = deriveMoveContext(
     { ...seededLongBeachMove, move_date: null },
     ENV_MOVE_DATE,
   );
-  assert.equal(ctx.moveDate, "2027-10-27", "null move_date falls back to env");
+  assert.equal(ctx.moveDate, null, "a relocation with no date has no date, whatever the env says");
 }
 
 // ── A different city pair resolves through the registry ───────────────

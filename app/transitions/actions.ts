@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { getActiveMoveContext } from "@/lib/data/relocation-db";
+import { ADDRESS_LEAD_DAYS, seededDueDate } from "@/lib/data/move-seeds";
 import { revalidatePath } from "next/cache";
 import {
   createClient,
@@ -45,31 +46,11 @@ const AddressPatchSchema = AddressChangeTargetSchema.pick({
 
 const INVALID_INPUT = "Those details don't look right — try again.";
 
-// Lead-day defaults for address-change targets. Convention: lead_days is the
-// number of days BEFORE move_date that the change should be due. A NEGATIVE
-// value means "due AFTER move_date" — used for post-move statutory items
-// (e.g. CO DMV: 10 days post-move). due_date = move_date - lead_days.
-const ADDRESS_LEAD_DAYS: Record<AddressChangeTarget["kind"], number> = {
-  usps: 14,
-  bank: 30,
-  subscription: 30,
-  employer: 30,
-  voter_reg: 30,
-  dmv: -10,                  // post-move: move_date - (-10) = move_date + 10
-  auto_insurance: 30,
-  health_insurance: 30,
-  custom: 14,                // safe default
-};
-
 async function computeAddressDueDate(
   kind: AddressChangeTarget["kind"],
 ): Promise<string | null> {
   const { moveDate } = await getActiveMoveContext();
-  if (!moveDate) return null;
-  const leadDays = ADDRESS_LEAD_DAYS[kind];
-  const d = new Date(moveDate + "T00:00:00.000Z");
-  d.setUTCDate(d.getUTCDate() - leadDays);
-  return d.toISOString().slice(0, 10);
+  return seededDueDate(moveDate, -ADDRESS_LEAD_DAYS[kind]);
 }
 
 // === Utility transitions ===

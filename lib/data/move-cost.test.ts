@@ -15,6 +15,7 @@ import {
   recomputeScenarioTotals,
   buildDefaultScenarios,
 } from "./move-cost-db";
+import { formatCurrency } from "@/lib/moving-cost/format";
 
 // ---- recomputeScenarioTotals -------------------------------------------------
 
@@ -36,6 +37,35 @@ import {
   );
   assert.equal(recomputed[1].total, 0, "untouched scenario stays 0");
 }
+
+// Whole dollars: lines are rounded before summing, so the total a screen shows
+// always equals the sum of the lines it shows, with no float noise stored.
+{
+  const [diy] = buildDefaultScenarios();
+  const item = (id: string, cost: number) => ({ id, name: id, cost });
+  const [cents] = recomputeScenarioTotals([
+    { ...diy, line_items: [item("a", 10.5), item("b", 10.5), item("c", 10.5)] },
+  ]);
+  assert.deepEqual(cents.line_items.map((li) => li.cost), [11, 11, 11]);
+  assert.equal(cents.total, 33, "total equals the sum of the displayed lines");
+  assert.equal(
+    cents.line_items.map((li) => formatCurrency(li.cost)).join(" + "),
+    "$11 + $11 + $11",
+  );
+  assert.equal(formatCurrency(cents.total), "$33");
+
+  const [noise] = recomputeScenarioTotals([{ ...diy, line_items: [item("a", 0.1), item("b", 0.2)] }]);
+  assert.equal(noise.total, 0, "0.1 + 0.2 stores no float noise");
+}
+
+// formatCurrency: no "-$0", and a value that is not a number is not shown as $0.
+assert.equal(formatCurrency(-0.4), "$0");
+assert.equal(formatCurrency(-0), "$0");
+assert.equal(formatCurrency(0.4), "$0");
+assert.equal(formatCurrency(-1.5), "-$1");
+assert.equal(formatCurrency(1234.5), "$1,235");
+assert.equal(formatCurrency(NaN), "—");
+assert.equal(formatCurrency(Infinity), "—");
 
 // ---- valid patches parse -------------------------------------------------------
 

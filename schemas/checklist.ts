@@ -9,8 +9,10 @@ export const ChecklistCategorySchema = z.enum([
 
 /**
  * Seed item — the template inserted into Supabase on first run.
- * Uses an offset relative to the configured move date so the template
- * stays valid no matter when NEXT_PUBLIC_MOVE_DATE changes.
+ * Uses an offset relative to the move date, and {origin} / {destination}
+ * placeholders for the two cities, so the template fits any relocation. When
+ * the move date changes, rows still on their seeded date follow it
+ * (lib/data/move-seeds.ts).
  */
 export const ChecklistSeedItemSchema = z.object({
   category: ChecklistCategorySchema,

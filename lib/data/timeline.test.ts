@@ -285,9 +285,9 @@ const baseInput: TimelineInput = {
   assert.equal(sent?.tone, "ok", "lease_event status=done → ok");
   assert.equal(sent?.label, "Notice sent");
 
-  // notice_send_by (status: active) → warn.
+  // notice_send_by with the notice already sent → ok: the deadline is settled.
   const sendBy = out.find((e) => e.kind === "notice_send_by");
-  assert.equal(sendBy?.tone, "warn", "notice_send_by while active → warn");
+  assert.equal(sendBy?.tone, "ok", "notice_send_by once notice is sent → ok");
   assert.equal(sendBy?.label, "Notice send-by");
 
   // Overdue uncompleted address target (Example Bank, due 2027-07-28) → danger.
@@ -383,6 +383,33 @@ const baseInput: TimelineInput = {
   // Pre-move: the moveDate argument changes nothing.
   const preWin = getTimelineWindow(aggregateTimelineEvents(baseInput), TODAY, "2027-10-27");
   assert.equal(preWin.start, "2027-07-28", "pre-move window unchanged with moveDate provided");
+}
+
+// A decision deadline is stored as pending for good, so its tone follows the
+// date: amber while it is ahead, red once it has passed with no notice sent,
+// neutral history after the move, green once the notice is out.
+{
+  const pending = (kind: LeaseEvent["kind"], occurs_on: string): LeaseEvent => ({
+    ...leaseEvents[0],
+    kind,
+    occurs_on,
+    status: "pending",
+  });
+  const tones = (events: LeaseEvent[], today: string, moveDate: string | null = null) =>
+    aggregateTimelineEvents({ ...baseInput, lease: null, checklist: [], utilities: [], addressTargets: [], leaseEvents: events, today, moveDate })
+      .map((e) => e.tone);
+
+  const deadlines = [pending("notice_send_by", "2027-09-01"), pending("renewal_offer_expires", "2027-09-01")];
+  assert.deepEqual(tones(deadlines, "2027-08-20"), ["warn", "warn"], "upcoming deadline → warn");
+  assert.deepEqual(tones(deadlines, "2027-09-01"), ["warn", "warn"], "deadline day itself is not overdue");
+  assert.deepEqual(tones(deadlines, "2027-09-20"), ["danger", "danger"], "missed deadline, no notice sent → danger");
+  assert.deepEqual(tones(deadlines, "2027-11-20", "2027-10-27"), ["neutral", "neutral"], "after the move it is history");
+  assert.deepEqual(
+    tones([...deadlines, { ...leaseEvents[1], occurs_on: "2027-09-05" }], "2027-09-20"),
+    ["ok", "ok", "ok"],
+    "notice sent → settled",
+  );
+  assert.deepEqual(tones([pending("lease_end", "2027-09-01")], "2027-09-20"), ["info"], "other lease events keep their tone");
 }
 
 console.log("timeline.test.ts ✅");

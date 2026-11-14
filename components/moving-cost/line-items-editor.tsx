@@ -110,13 +110,13 @@ export function LineItemsEditor({ open, onOpenChange, scenario }: Props) {
                     $
                   </span>
                   <Input
-                    inputMode="decimal"
+                    inputMode="numeric"
                     value={Number.isFinite(item.cost) ? String(item.cost) : ""}
                     onChange={(e) => {
                       const v = e.target.value;
                       const n = v.trim() === "" ? 0 : Number(v);
                       patchItem(idx, {
-                        cost: Number.isFinite(n) && n >= 0 ? n : 0,
+                        cost: Number.isFinite(n) && n >= 0 ? Math.round(n) : 0,
                       });
                     }}
                     className="h-9 pl-5 text-sm mono-num"

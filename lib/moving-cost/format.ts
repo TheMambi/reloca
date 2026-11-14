@@ -7,5 +7,8 @@ const USD = new Intl.NumberFormat("en-US", {
 });
 
 export function formatCurrency(n: number): string {
-  return USD.format(Number.isFinite(n) ? n : 0);
+  // A value that is not a number shows as missing, never as $0.
+  if (!Number.isFinite(n)) return "—";
+  // Adding 0 turns the -0 that rounding a small negative gives into 0.
+  return USD.format(Math.round(n) + 0);
 }

@@ -1,15 +1,17 @@
 // HUD Fair Market Rent overlay loader.
 //
 // Server-only. Free API at https://www.huduser.gov/portal/dataset/fmr-api.html.
-// We use it to fetch a per-zip FMR for each destination (typically 2BR) so the
+// We use it to fetch the FMR for each destination (typically 2BR) so the
 // compare table can show a Δ vs HUD baseline. Every call is gated by:
 //   - HUD_FMR_API_KEY presence (returns nulls if unset, so dev still works)
-//   - ZIP → metro entity ID lookup (only zips we care about; expand as we add destinations)
-//   - module-level cache by `${zip}-${beds}` (warm-start hits, no repeated API calls per request)
+//   - a HUD metro entity id, which the caller resolves from the destination's
+//     city through data/cities.json
+//   - module-level cache by entity, zip and beds (warm-start hits, no repeated API calls per request)
 //
 // Failure modes (network error, non-200, malformed JSON, missing row) all
-// resolve to `{ value: null, year: null }` and get cached so we don't retry
-// in a loop. The compare table renders a `—` and the "Δ vs HUD" cell hides.
+// resolve to `{ value: null, year: null }`. Only an answer from HUD is cached.
+// A timeout or an error response is not, so the next lookup can succeed.
+// The compare table renders a `—` and the "Δ vs HUD" cell hides.
 //
 // Server-only: imported from RSC loaders, server actions and the overlays
 // orchestrator. The import below turns a client import into a build error.
@@ -21,16 +23,6 @@ export type FmrEntry = { value: number | null; year: number | null };
 const HUD_FMR_API_KEY = process.env.HUD_FMR_API_KEY;
 const HUD_BASE = "https://www.huduser.gov/hudapi/public/fmr/data";
 const FETCH_TIMEOUT_MS = 10_000;
-
-// Long Beach-Glendale-Long Beach HUD Metro FMR Area.
-// Add entries here as the user saves more destinations.
-const ZIP_TO_ENTITY: Record<string, string> = {
-  "90802": "METRO31080MM4480", // Long Beach (Downtown / East Village)
-  "90803": "METRO31080MM4480", // Long Beach (Belmont Shore)
-  "90804": "METRO31080MM4480", // Long Beach (Eastside)
-  "90810": "METRO31080MM4480", // Long Beach (Westside)
-  "90813": "METRO31080MM4480", // Long Beach (Downtown / Drake Park)
-};
 
 const BED_KEYS = [
   "Efficiency",
@@ -81,18 +73,19 @@ function remember(key: string, entry: FmrEntry): FmrEntry {
   return entry;
 }
 
-export async function getFmr(zip: string, beds: number): Promise<FmrEntry> {
-  const cacheKey = `${zip}-${beds}`;
+export async function getFmr(
+  entity: string,
+  zip: string | null,
+  beds: number,
+): Promise<FmrEntry> {
+  const cacheKey = `${entity}-${zip ?? ""}-${beds}`;
   const hit = cache.get(cacheKey);
   if (hit) return hit;
 
-  if (!HUD_FMR_API_KEY) return remember(cacheKey, EMPTY);
-
-  const entity = ZIP_TO_ENTITY[zip];
-  if (!entity) return remember(cacheKey, EMPTY);
+  if (!HUD_FMR_API_KEY) return EMPTY;
 
   const bedKey = bedToKey(beds);
-  if (!bedKey) return remember(cacheKey, EMPTY);
+  if (!bedKey) return EMPTY;
 
   let res: Response;
   try {
@@ -104,15 +97,15 @@ export async function getFmr(zip: string, beds: number): Promise<FmrEntry> {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
   } catch {
-    return remember(cacheKey, EMPTY);
+    return EMPTY;
   }
-  if (!res.ok) return remember(cacheKey, EMPTY);
+  if (!res.ok) return EMPTY;
 
   let json: HudResponse;
   try {
     json = (await res.json()) as HudResponse;
   } catch {
-    return remember(cacheKey, EMPTY);
+    return EMPTY;
   }
 
   const raw = json.data?.basicdata;
@@ -130,4 +123,4 @@ export async function getFmr(zip: string, beds: number): Promise<FmrEntry> {
 }
 
 // Exported for tests only — do not use from app code.
-export const __internals = { ZIP_TO_ENTITY, bedToKey, coerceMoney, coerceYear };
+export const __internals = { bedToKey, coerceMoney, coerceYear };

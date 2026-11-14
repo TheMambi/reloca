@@ -9,6 +9,9 @@ import {
 } from "@/lib/supabase/server";
 import { getCity } from "@/lib/data/cities";
 import { VIEWING_COOKIE } from "@/lib/data/relocation-db";
+import { getChecklistSeed } from "@/lib/data/checklist";
+import { ADDRESS_LEAD_DAYS, shiftedDueDates } from "@/lib/data/move-seeds";
+import type { AddressChangeTarget } from "@/schemas/transitions";
 import { RelocationSchema, type Relocation } from "@/schemas";
 
 const UUID_RE =
@@ -40,6 +43,68 @@ export async function setViewingRelocation(id: string | null): Promise<void> {
  *  back to the active move rather than a stale or no-longer-relevant id. */
 async function clearViewingCookie(): Promise<void> {
   (await cookies()).delete(VIEWING_COOKIE);
+}
+
+/**
+ * Checklist tasks and address-change deadlines are seeded a fixed number of
+ * days from the active move's date. When that date changes, the rows still on
+ * their seeded date move with it; anything the user re-dated stays put. Lease
+ * tasks follow the lease, not the move, and are refreshed by the lease actions.
+ */
+async function shiftMoveDependentDates(
+  oldDate: string | null,
+  newDate: string | null,
+): Promise<void> {
+  if (oldDate === newDate) return;
+  const userId = requireUserId();
+  const sb = await createClient();
+
+  const { data: tasks, error: taskErr } = await sb
+    .from("checklist_items")
+    .select("id, category, order_index, due_date")
+    .eq("user_id", userId)
+    .neq("category", "lease");
+  if (taskErr) throw new Error(`shiftMoveDependentDates.tasks: ${taskErr.message}`);
+  const seed = getChecklistSeed();
+  const taskChanges = shiftedDueDates(
+    tasks ?? [],
+    (row) =>
+      seed.find((s) => s.category === row.category && s.orderIndex === row.order_index)
+        ?.daysOffsetFromMoveDate ?? null,
+    oldDate,
+    newDate,
+  );
+  for (const change of taskChanges) {
+    const { error } = await sb
+      .from("checklist_items")
+      .update({ due_date: change.due_date })
+      .eq("id", change.id)
+      .eq("user_id", userId);
+    if (error) throw new Error(`shiftMoveDependentDates.task: ${error.message}`);
+  }
+
+  const { data: targets, error: targetErr } = await sb
+    .from("address_change_targets")
+    .select("id, kind, due_date")
+    .eq("user_id", userId);
+  if (targetErr) throw new Error(`shiftMoveDependentDates.targets: ${targetErr.message}`);
+  const targetChanges = shiftedDueDates(
+    targets ?? [],
+    (row) => -ADDRESS_LEAD_DAYS[row.kind as AddressChangeTarget["kind"]],
+    oldDate,
+    newDate,
+  );
+  for (const change of targetChanges) {
+    const { error } = await sb
+      .from("address_change_targets")
+      .update({ due_date: change.due_date })
+      .eq("id", change.id)
+      .eq("user_id", userId);
+    if (error) throw new Error(`shiftMoveDependentDates.target: ${error.message}`);
+  }
+
+  revalidatePath("/checklist");
+  revalidatePath("/transitions");
 }
 
 export interface RelocationInput {
@@ -110,6 +175,14 @@ export async function updateRelocation(
   if (invalid) return { ok: false, error: invalid };
 
   const sb = await createClient();
+  const { data: before, error: readErr } = await sb
+    .from("relocations")
+    .select("move_date, is_active_move")
+    .eq("id", id)
+    .eq("user_id", requireUserId())
+    .maybeSingle();
+  if (readErr) return { ok: false, error: friendlyDbError("updateRelocation.read", readErr) };
+
   const { data, error } = await sb
     .from("relocations")
     .update({
@@ -123,6 +196,14 @@ export async function updateRelocation(
     .select("*")
     .single();
   if (error) return { ok: false, error: friendlyDbError("updateRelocation", error) };
+
+  if (before?.is_active_move) {
+    try {
+      await shiftMoveDependentDates(before.move_date, input.move_date);
+    } catch (err) {
+      return { ok: false, error: friendlyDbError("updateRelocation.dates", err as Error) };
+    }
+  }
 
   revalidatePath("/", "layout");
   return { ok: true, row: RelocationSchema.parse(data) };
@@ -183,6 +264,14 @@ export async function updateActiveMoveDate(
   }
 
   const sb = await createClient();
+  const { data: before, error: readErr } = await sb
+    .from("relocations")
+    .select("move_date")
+    .eq("user_id", requireUserId())
+    .eq("is_active_move", true)
+    .maybeSingle();
+  if (readErr) return { ok: false, error: friendlyDbError("updateActiveMoveDate.read", readErr) };
+
   const { data, error } = await sb
     .from("relocations")
     .update({ move_date: moveDate })
@@ -191,8 +280,14 @@ export async function updateActiveMoveDate(
     .select("id")
     .maybeSingle();
   if (error) return { ok: false, error: friendlyDbError("updateActiveMoveDate", error) };
-  if (!data) {
+  if (!data || !before) {
     return { ok: false, error: "No active move to set a date on yet." };
+  }
+
+  try {
+    await shiftMoveDependentDates(before.move_date, moveDate);
+  } catch (err) {
+    return { ok: false, error: friendlyDbError("updateActiveMoveDate.dates", err as Error) };
   }
 
   revalidatePath("/", "layout");

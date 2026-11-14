@@ -210,7 +210,7 @@ const ChecklistSeedItemSchema = z.object({
 const ChecklistSeed = z.array(ChecklistSeedItemSchema);
 ```
 
-**Why `daysOffsetFromMoveDate` instead of absolute due dates:** the template stays valid no matter when the move date changes. The seeder computes `due_date = NEXT_PUBLIC_MOVE_DATE + offset` at insert time.
+**Why `daysOffsetFromMoveDate` instead of absolute due dates:** the template stays valid no matter when the move date changes. The seeder computes `due_date = move date + offset` at insert time, and a later move-date change shifts every row still on its seeded date (`lib/data/move-seeds.ts`). Titles use `{origin}` and `{destination}` placeholders, filled from the active relocation.
 
 ---
 
@@ -386,7 +386,7 @@ Identity (property_name, unit_address, city, landlord_email, landlord_display_na
 
 `kind` CHECK in (`notice_send_by`, `renewal_offer_expires`, `lease_end`, `target_move_out`, `notice_sent`, `walkthrough`, `key_return`, `deposit_claim_window_end`). `status` CHECK in (`pending`, `active`, `done`, `missed`). FK to `lease_terms.id` with `ON DELETE CASCADE`.
 
-**Derived events** (`notice_send_by`, `lease_end`, `renewal_offer_expires`, `target_move_out`, `deposit_claim_window_end`) are inserted by `recomputeLeaseEvents(leaseId)` after every `lease_terms` update. Idempotent: deletes derived rows of those kinds for the lease, recomputes, re-inserts. User-action events (`notice_sent`, `walkthrough`, `key_return`) are insert-only and never recomputed.
+**Derived events** (`notice_send_by`, `lease_end`, `renewal_offer_expires`, `target_move_out`, `deposit_claim_window_end`) are inserted by `recomputeLeaseEvents(leaseId)` after every `lease_terms` update. Idempotent: inserts the recomputed rows, then deletes the ones they replace, so a failed insert leaves the old deadlines in place. `deposit_claim_window_end` is written only for a state listed in `lib/lease/deposit-rules.ts`. Only `pending` and `done` are ever written; the timeline derives overdue from the date. User-action events (`notice_sent`, `walkthrough`, `key_return`) are insert-only and never recomputed.
 
 ### `notice_drafts` — generated text + sent-state
 

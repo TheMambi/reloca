@@ -19,11 +19,17 @@ export const getMoveEstimate = cache(async (): Promise<MoveEstimate | null> => {
   return MoveEstimateSchema.parse(coerceNumerics(data, [...MOVE_COST_NUMERIC_FIELDS]));
 });
 
+// Costs are kept in whole dollars, the unit every screen shows. Rounding each
+// line before summing keeps a total equal to the sum of its displayed lines.
 export function recomputeScenarioTotals(scenarios: Scenario[]): Scenario[] {
-  return scenarios.map((s) => ({
-    ...s,
-    total: s.line_items.reduce((sum, item) => sum + item.cost, 0),
-  }));
+  return scenarios.map((s) => {
+    const line_items = s.line_items.map((item) => ({ ...item, cost: Math.round(item.cost) }));
+    return {
+      ...s,
+      line_items,
+      total: line_items.reduce((sum, item) => sum + item.cost, 0),
+    };
+  });
 }
 
 export function buildDefaultScenarios(): Scenario[] {

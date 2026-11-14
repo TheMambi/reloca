@@ -23,6 +23,7 @@ import {
   markNoticeSent,
 } from "@/app/lease/actions";
 import { renderNoticeTemplate } from "./notice-template";
+import { noticeTerm } from "@/lib/lease/notice-term";
 import type { LeaseTerms, NoticeDraft } from "@/schemas/lease";
 
 interface NoticeComposerProps {
@@ -222,7 +223,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
             MOVE-OUT NOTICE
           </span>
           <p className="mt-1 text-sm font-medium text-foreground">
-            Write your 60-day notice to the landlord
+            Write your {noticeTerm(lease.notice_days_required)} to the landlord
           </p>
           <p className="text-xs text-muted-foreground">
             We&rsquo;ll fill the email subject and body from your lease info.
@@ -268,7 +269,9 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
           NOTICE COMPOSER
         </span>
         <p className="mt-1 text-sm font-medium text-foreground">
-          60-day notice to vacate
+          {lease.notice_days_required > 0
+            ? `${noticeTerm(lease.notice_days_required)} to vacate`
+            : "Notice to vacate"}
         </p>
         <p className="text-xs text-muted-foreground">
           Render, review, then open in your mail client. Mailto only — no SMTP.

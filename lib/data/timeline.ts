@@ -131,6 +131,12 @@ export function aggregateTimelineEvents(input: TimelineInput): TimelineEvent[] {
   }
 
   // --- Lease events (notice send-by, notice sent, walkthrough, etc.) ---
+  // The two decision deadlines are only ever stored as pending, so their tone
+  // comes from the date: settled once notice went out, overdue once the day
+  // has passed without it.
+  const noticeSent = leaseEvents.some((e) => e.kind === "notice_sent");
+  const deadlineTone = (occursOn: string): TimelineTone =>
+    noticeSent ? "ok" : occursOn < today ? overdueTone : "warn";
   for (const e of leaseEvents) {
     events.push({
       source: "lease_event",
@@ -144,7 +150,7 @@ export function aggregateTimelineEvents(input: TimelineInput): TimelineEvent[] {
           : e.status === "missed"
             ? "danger"
             : e.kind === "notice_send_by" || e.kind === "renewal_offer_expires"
-              ? "warn"
+              ? deadlineTone(e.occurs_on)
               : "info",
     });
   }

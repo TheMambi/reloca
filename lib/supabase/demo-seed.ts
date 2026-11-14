@@ -1,4 +1,5 @@
 import checklistSeed from "@/data/checklist-seed.json";
+import { fillSeedText } from "@/lib/data/move-seeds";
 
 /**
  * Sample data for the public demo (RELOCA_DEMO_MODE=1). Everything here is
@@ -84,8 +85,8 @@ function event(kind: string, offset: number, status = "pending"): Row {
 
 // Same derivation as recomputeLeaseEvents in app/lease/actions.ts.
 const lease_events: Row[] = [
-  event("notice_send_by", LEASE_END - NOTICE_DAYS, "done"),
-  event("renewal_offer_expires", -20, "done"),
+  event("notice_send_by", LEASE_END - NOTICE_DAYS),
+  event("renewal_offer_expires", -20),
   event("lease_end", LEASE_END),
   event("target_move_out", LEASE_END),
   event("deposit_claim_window_end", LEASE_END + 60),
@@ -133,13 +134,22 @@ const preMove: [string, string, number, boolean][] = [
   ["Book an overnight stop for the drive", "The drive is about 15 hours; split it in two.", MOVE - 14, false],
 ];
 
+// The sample relocation above: denver to long-beach.
+const SEED_CITIES = { originName: "Denver", destinationName: "Long Beach" };
+
 const checklist_items: Row[] = [
   task("lease", "Send 60-day notice to vacate", "Reply to the renewal email with the last day in the apartment.", LEASE_END - NOTICE_DAYS, 0, true),
   task("lease", "Confirm origin renter's insurance to lease end", "Keep coverage active through lease end.", LEASE_END - 14, 1, true),
   task("lease", "Schedule the move-out walkthrough", "Ask for the walkthrough on or right after the last day.", LEASE_END - 7, 2),
   ...preMove.map(([title, description, due, done], i) => task("pre-move", title, description, due, i, done)),
   ...checklistSeed.map((item) =>
-    task(item.category, item.title, item.description, MOVE + item.daysOffsetFromMoveDate, item.orderIndex),
+    task(
+      item.category,
+      fillSeedText(item.title, SEED_CITIES),
+      item.description && fillSeedText(item.description, SEED_CITIES),
+      MOVE + item.daysOffsetFromMoveDate,
+      item.orderIndex,
+    ),
   ),
 ];
 

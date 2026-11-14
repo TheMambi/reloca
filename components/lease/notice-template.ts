@@ -1,7 +1,8 @@
 import type { LeaseTerms } from "@/schemas/lease";
+import { noticeTerm } from "@/lib/lease/notice-term";
 
 /**
- * Render a 60-day notice-to-vacate from `LeaseTerms` + a chosen move-out date.
+ * Render a notice-to-vacate, worded with the lease's own notice period, from `LeaseTerms` + a chosen move-out date.
  *
  * Pure: no React, no DOM, no env. Server- and test-safe.
  *
@@ -12,17 +13,18 @@ import type { LeaseTerms } from "@/schemas/lease";
 export function renderNoticeTemplate(
   lease: Pick<
     LeaseTerms,
-    "unit_address" | "city" | "landlord_display_name" | "residents"
+    "unit_address" | "city" | "landlord_display_name" | "residents" | "notice_days_required"
   >,
   moveOutDate: string,
 ): { subject: string; plaintext: string; markdown: string } {
   const residents = lease.residents.map((r) => r.name).join(", ");
   const moveOutFormatted = formatLongDate(moveOutDate);
-  const subject = `60-Day Notice to Vacate — Unit ${unitNumber(lease.unit_address)}, ${streetOnly(lease.unit_address)}`;
+  const term = noticeTerm(lease.notice_days_required);
+  const subject = `${lease.notice_days_required > 0 ? `${lease.notice_days_required}-Day Notice` : "Notice"} to Vacate — Unit ${unitNumber(lease.unit_address)}, ${streetOnly(lease.unit_address)}`;
   const plaintext = [
     `Hello ${lease.landlord_display_name ?? "Landlord"},`,
     "",
-    "This email serves as written 60-day notice to vacate per our lease.",
+    `This email serves as written ${term} to vacate per our lease.`,
     "",
     `  Unit:       ${lease.unit_address}, ${lease.city}`,
     `  Last day:   ${moveOutFormatted}`,

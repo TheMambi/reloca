@@ -428,6 +428,8 @@ async function main() {
     "saved-neighborhoods-db:buildSavedKeySet",
     "saved-neighborhoods-db:buildSavedIdMap",
     "overlays:extractZip",
+    "overlays:hudEntityForCity",
+    "overlays:overlayPatch",
   ]);
   const modules: Record<string, object> = {
     "lease-db": leaseDb,

@@ -7,9 +7,10 @@
 //
 // Best-effort: any failure (network, 4xx, parse) returns null and the caller
 // continues without coordinates. The map tile (Task 7.34) renders the row
-// without a pin; the rest of the row remains intact. A null result is cached
-// alongside successes so repeated lookups for an unparseable address don't
-// each spend a request.
+// without a pin; the rest of the row remains intact. An address Nominatim
+// answers with no match is cached alongside successes, so repeated lookups for
+// it don't each spend a request. A timeout or an error response is not cached,
+// so the next lookup can succeed.
 
 import "server-only";
 
@@ -34,10 +35,7 @@ export async function geocodeAddress(
       },
       signal: AbortSignal.timeout(8_000),
     });
-    if (!res.ok) {
-      cache.set(key, null);
-      return null;
-    }
+    if (!res.ok) return null;
     const json = (await res.json()) as { lat: string; lon: string }[];
     if (!Array.isArray(json) || json.length === 0) {
       cache.set(key, null);
@@ -54,7 +52,6 @@ export async function geocodeAddress(
     return result;
   } catch (err) {
     console.error("geocodeAddress failed", { address, err });
-    cache.set(key, null);
     return null;
   }
 }

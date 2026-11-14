@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createClient, createAdminClient, requireUserId } from "@/lib/supabase/server";
 import { getActiveMoveContext } from "@/lib/data/relocation-db";
 import { getChecklistSeed } from "@/lib/data/checklist";
+import { fillSeedText, seededDueDate } from "@/lib/data/move-seeds";
 import { ChecklistCategorySchema } from "@/schemas";
 
 
@@ -53,14 +54,14 @@ export async function seedChecklistIfEmpty(): Promise<void> {
   if ((existing?.length ?? 0) > 0) return;
 
   const seed = getChecklistSeed();
-  const { moveDate: moveDateIso } = await getActiveMoveContext();
+  const move = await getActiveMoveContext();
 
   const rows = seed.map((item) => ({
     user_id: requireUserId(),
     category: item.category,
-    title: item.title,
-    description: item.description,
-    due_date: moveDateIso ? offsetDate(moveDateIso, item.daysOffsetFromMoveDate) : null,
+    title: fillSeedText(item.title, move),
+    description: item.description && fillSeedText(item.description, move),
+    due_date: seededDueDate(move.moveDate, item.daysOffsetFromMoveDate),
     order_index: item.orderIndex,
   }));
 
@@ -68,12 +69,6 @@ export async function seedChecklistIfEmpty(): Promise<void> {
     .from("checklist_items")
     .upsert(rows, { onConflict: "user_id,category,order_index", ignoreDuplicates: true });
   if (error) throw new Error(`seedChecklistIfEmpty insert: ${error.message}`);
-}
-
-function offsetDate(moveDateIso: string, days: number): string {
-  const d = new Date(`${moveDateIso}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
 }
 
 const ChecklistCreateInput = z.object({

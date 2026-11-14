@@ -24,8 +24,8 @@ assert.equal(bars.length, 5, "expected 5 scenarios when renewal offer is set");
 
 const byKey = Object.fromEntries(bars.map((b) => [b.key, b]));
 
-// Stay renew: 1750 * 12 = 21000
-assert.equal(byKey.stay_renew.total, 21000, "stay_renew total");
+// Stay renew: 2 months left at 1800, then 12 months at 1750 = 3600 + 21000.
+assert.equal(byKey.stay_renew.total, 24600, "stay_renew total");
 assert.equal(byKey.stay_renew.monthly, 1750, "stay_renew monthly");
 assert.equal(byKey.stay_renew.color, "info", "stay_renew color");
 assert.equal(
@@ -66,14 +66,14 @@ assert.equal(
   "m2m_2mo delta vs vacate-on-time",
 );
 
-// Indefinite M2M: annualized worst case = 2200 * 12 = 26400.
+// Indefinite M2M: 2 months left at 1800, then 12 months at 2200 = 3600 + 26400.
 assert.equal(byKey.m2m_indefinite.monthly, 2200, "m2m_indefinite monthly");
-assert.equal(byKey.m2m_indefinite.total, 26400, "m2m_indefinite total");
+assert.equal(byKey.m2m_indefinite.total, 30000, "m2m_indefinite total");
 assert.equal(byKey.m2m_indefinite.color, "danger", "m2m_indefinite color");
 assert.equal(byKey.m2m_indefinite.ongoing, true, "m2m_indefinite ongoing flag");
 assert.equal(
   byKey.m2m_indefinite.deltaVsCurrentPath,
-  22800,
+  26400,
   "m2m_indefinite delta vs vacate-on-time",
 );
 
@@ -112,5 +112,34 @@ assert.equal(
   26400,
   "m2m_indefinite unchanged by past lease end",
 );
+
+// A target move-out two months after lease end adds two month-to-month
+// payments to the on-time path, and says so in its label.
+const holdover = computeForecast({ ...input, target_move_out_date: "2027-12-25" });
+const holdoverByKey = Object.fromEntries(holdover.map((b) => [b.key, b]));
+assert.equal(
+  holdoverByKey.vacate_on_time.total,
+  byKey.vacate_on_time.total + 2 * 2200,
+  "two months past lease end cost two month-to-month payments",
+);
+assert.equal(
+  holdoverByKey.vacate_on_time.label,
+  "Notice on time → move out 2 months after lease end",
+  "the planned holdover is labeled",
+);
+assert.equal(holdoverByKey.m2m_1mo.total, holdoverByKey.vacate_on_time.total + 2200, "late paths build on the plan");
+assert.equal(holdoverByKey.m2m_indefinite.total, byKey.m2m_indefinite.total, "worst case does not depend on the plan");
+
+// One span for every bar: the worst case is never below a milder one, whatever
+// the lease length, premium or target date.
+for (const today of ["2026-10-25", "2027-04-01", "2027-08-15", "2027-11-13"]) {
+  for (const target_move_out_date of ["2027-09-25", "2027-10-25", "2028-01-25", "2029-10-25"]) {
+    for (const m2m_premium of [0, 300, 400]) {
+      const order = computeForecast({ ...input, today, target_move_out_date, m2m_premium }).filter((b) => b.key !== "stay_renew");
+      const totals = order.map((b) => b.total);
+      assert.deepEqual(totals, [...totals].sort((a, b) => a - b), `paths rank mildest to worst (${today}, ${target_move_out_date}, ${m2m_premium})`);
+    }
+  }
+}
 
 console.log("forecast.test.ts ✅");

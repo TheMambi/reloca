@@ -88,11 +88,12 @@ export function PenaltyForecaster({
           COST OF EACH PATH
         </span>
         <p className="mt-1 text-sm font-medium text-foreground">
-          What each option costs you over 12 months
+          What each option costs at this address, from today to 12 months
+          after the lease ends
         </p>
         <p className="text-xs text-muted-foreground">
           Cheapest at the top. The coral-outlined bar is the path you&rsquo;ve
-          chosen.
+          chosen. Rent at your next home is not included.
         </p>
       </header>
 
@@ -123,7 +124,7 @@ export function PenaltyForecaster({
             <span className="mono-num not-italic text-foreground">
               {fmtCurrency.format(Math.abs(stayBar.deltaVsCurrentPath))}
             </span>{" "}
-            cheaper over 12 months. The case for moving is non-financial — flag
+            cheaper over that period. The case for moving is non-financial — flag
             this trade-off before sending notice.
           </p>
         )}
@@ -233,7 +234,7 @@ function ScenarioTable({ bars, activeKey }: ScenarioTableProps) {
               scope="col"
               className="label-cap py-2 pr-4 text-right text-[9px] font-medium text-muted-foreground"
             >
-              12-MONTH TOTAL
+              TOTAL
             </th>
             <th
               scope="col"
@@ -297,7 +298,7 @@ function ScenarioTable({ bars, activeKey }: ScenarioTableProps) {
                   {formatMonthly(bar)}
                 </dd>
                 <dt className="label-cap text-[9px] text-muted-foreground">
-                  12-month total
+                  Total
                 </dt>
                 <dd className="mono-num text-right text-foreground">
                   {formatTotal(bar)}
@@ -318,14 +319,12 @@ function ScenarioTable({ bars, activeKey }: ScenarioTableProps) {
 }
 
 function formatMonthly(bar: ForecastBar): string {
-  // Indefinite M2M is annualized worst-case; show "/mo" for clarity that the
-  // monthly burn keeps going.
+  // Indefinite M2M: show "/mo" for clarity that the monthly burn keeps going.
   if (bar.ongoing) return `${fmtCurrency.format(bar.monthly)}/mo`;
   return fmtCurrency.format(bar.monthly);
 }
 
 function formatTotal(bar: ForecastBar): string {
-  if (bar.ongoing) return `${fmtCurrency.format(bar.total)}/yr`;
   return fmtCurrency.format(bar.total);
 }
 
@@ -346,12 +345,10 @@ function formatDelta(bar: ForecastBar, isReference: boolean): React.ReactNode {
         ? "text-[var(--danger)]"
         : "text-[var(--warn)]"
       : "text-[var(--ok)]";
-  const suffix = bar.ongoing ? "/yr" : "";
   return (
     <span className={tone}>
       {sign}
       {fmtCurrency.format(Math.abs(delta))}
-      {suffix}
     </span>
   );
 }

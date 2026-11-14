@@ -10,6 +10,11 @@ import {
 } from "@/lib/supabase/server";
 import { recomputeDestinationOverlays } from "@/lib/lease/overlays";
 import {
+  buildLeaseTasks,
+  depositDeadline,
+  noticeSendByDate,
+} from "@/lib/lease/lease-tasks";
+import {
   fetchDestinationFromUrl,
   type FetchResult,
 } from "@/lib/lease/destination-fetch";
@@ -24,13 +29,6 @@ import {
   DestinationPatchInput,
   type NoticeDraft,
 } from "@/schemas/lease";
-
-// Lease task offsets (days). Mostly statutory or operational defaults.
-const CO_DEPOSIT_RETURN_DAYS = 60;        // CO statute: itemized deposit return within 60 days
-const INSURANCE_LEAD_BEFORE_LEASE_END = 14;
-const DESTINATION_INSURANCE_LEAD = 7;
-const ORIGIN_POLICY_CANCEL_OFFSET = 7;    // days after move-out
-const CONDITION_DOC_LEAD = 3;             // days before move-out
 
 // ── lease_terms CRUD ──────────────────────────────────────────────────────
 
@@ -47,9 +45,16 @@ export async function createLeaseTerms(
     .single();
   if (error) throw new Error(`createLeaseTerms: ${error.message}`);
 
-  // 3 follow-ups, all idempotent and serial:
-  await recomputeLeaseEvents(data.id);
-  await seedLeaseChecklistTasks(data.id);
+  // Follow-ups, idempotent and serial. There is no transaction across them,
+  // so a failure removes the new lease again: a retry would otherwise leave
+  // two leases behind.
+  try {
+    await recomputeLeaseEvents(data.id);
+    await seedLeaseChecklistTasks(data.id);
+  } catch (err) {
+    await sb.from("lease_terms").delete().eq("id", data.id).eq("user_id", userId);
+    throw err;
+  }
 
   revalidatePath("/lease");
   revalidatePath("/");
@@ -69,6 +74,9 @@ export async function updateLeaseTerms(
     .eq("user_id", requireUserId());
   if (error) throw new Error(`updateLeaseTerms: ${error.message}`);
   await recomputeLeaseEvents(leaseId);
+  if (LEASE_TASK_FIELDS.some((field) => field in parsed)) {
+    await refreshLeaseChecklistTasks(leaseId);
+  }
   revalidatePath("/lease");
   revalidatePath("/");
 }
@@ -81,6 +89,14 @@ export async function updateLeaseDecision(
   LeaseDecisionEnum.parse(decision);
   await updateLeaseTerms(leaseId, { decision });
 }
+
+// Lease fields the checklist tasks are computed from.
+const LEASE_TASK_FIELDS = [
+  "city",
+  "lease_end_date",
+  "notice_days_required",
+  "target_move_out_date",
+] as const;
 
 // ── derived events ────────────────────────────────────────────────────────
 
@@ -106,14 +122,15 @@ export async function recomputeLeaseEvents(leaseId: string): Promise<void> {
   if (leaseErr) throw new Error(`recomputeLeaseEvents.load: ${leaseErr.message}`);
   if (!lease) throw new Error(`recomputeLeaseEvents: lease ${leaseId} not found`);
 
-  // 2. Delete derived rows
-  const { error: delErr } = await admin
+  // 2. Note the derived rows to replace. They are deleted only after the new
+  // set is in, so a failed insert never leaves the lease without a deadline.
+  const { data: stale, error: staleErr } = await admin
     .from("lease_events")
-    .delete()
+    .select("id")
     .eq("lease_id", leaseId)
     .eq("user_id", userId)
     .in("kind", [...DERIVED_EVENT_KINDS]);
-  if (delErr) throw new Error(`recomputeLeaseEvents.delete: ${delErr.message}`);
+  if (staleErr) throw new Error(`recomputeLeaseEvents.read: ${staleErr.message}`);
 
   // 3. Build new derived rows
   type DerivedKind = (typeof DERIVED_EVENT_KINDS)[number];
@@ -126,7 +143,7 @@ export async function recomputeLeaseEvents(leaseId: string): Promise<void> {
   }[] = [];
 
   // notice_send_by = lease_end - notice_days_required
-  const sendBy = subtractDays(lease.lease_end_date, lease.notice_days_required);
+  const sendBy = noticeSendByDate(lease);
   inserts.push({
     user_id: userId,
     lease_id: leaseId,
@@ -160,12 +177,15 @@ export async function recomputeLeaseEvents(leaseId: string): Promise<void> {
       occurs_on: lease.target_move_out_date,
       status: "pending",
     });
-    // CO statute default: itemized deposit return within CO_DEPOSIT_RETURN_DAYS of move-out
+  }
+  // Only for a state whose deposit rule is on file (lib/lease/deposit-rules.ts).
+  const depositBy = depositDeadline(lease);
+  if (depositBy) {
     inserts.push({
       user_id: userId,
       lease_id: leaseId,
       kind: "deposit_claim_window_end",
-      occurs_on: addDays(lease.target_move_out_date, CO_DEPOSIT_RETURN_DAYS),
+      occurs_on: depositBy,
       status: "pending",
     });
   }
@@ -173,19 +193,17 @@ export async function recomputeLeaseEvents(leaseId: string): Promise<void> {
   // 4. Insert
   const { error: insErr } = await admin.from("lease_events").insert(inserts);
   if (insErr) throw new Error(`recomputeLeaseEvents.insert: ${insErr.message}`);
-}
 
-// Pure date helpers (UTC arithmetic, ISO date in/out).
-function subtractDays(iso: string, days: number): string {
-  const d = new Date(iso + "T00:00:00.000Z");
-  d.setUTCDate(d.getUTCDate() - days);
-  return d.toISOString().slice(0, 10);
-}
-
-function addDays(iso: string, days: number): string {
-  const d = new Date(iso + "T00:00:00.000Z");
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
+  // 5. Delete the rows the new set replaces
+  const staleIds = (stale ?? []).map((row) => row.id);
+  if (staleIds.length > 0) {
+    const { error: delErr } = await admin
+      .from("lease_events")
+      .delete()
+      .eq("user_id", userId)
+      .in("id", staleIds);
+    if (delErr) throw new Error(`recomputeLeaseEvents.delete: ${delErr.message}`);
+  }
 }
 
 // ── notice_drafts ─────────────────────────────────────────────────────────
@@ -258,26 +276,38 @@ export async function markNoticeSent(draftId: string): Promise<void> {
     .maybeSingle();
   if (getErr) throw new Error(`markNoticeSent.read: ${getErr.message}`);
   if (!draft) throw new Error(`markNoticeSent: draft ${draftId} not found`);
-  if (draft.sent_at) return; // already sent — idempotent
 
-  const nowIso = new Date().toISOString();
-  const today = nowIso.slice(0, 10);
+  // Two writes, no transaction. Each is skipped when already done, so calling
+  // again after a failure between them finishes the job instead of returning
+  // early with the draft locked and no event.
+  const sentAt = draft.sent_at ?? new Date().toISOString();
+  if (!draft.sent_at) {
+    const { error: updErr } = await sb
+      .from("notice_drafts")
+      .update({ sent_at: sentAt })
+      .eq("id", draftId)
+      .eq("user_id", userId);
+    if (updErr) throw new Error(`markNoticeSent.update: ${updErr.message}`);
+  }
 
-  const { error: updErr } = await sb
-    .from("notice_drafts")
-    .update({ sent_at: nowIso })
-    .eq("id", draftId)
-    .eq("user_id", userId);
-  if (updErr) throw new Error(`markNoticeSent.update: ${updErr.message}`);
-
-  const { error: evErr } = await sb.from("lease_events").insert({
-    user_id: userId,
-    lease_id: draft.lease_id,
-    kind: "notice_sent",
-    occurs_on: today,
-    status: "done",
-  });
-  if (evErr) throw new Error(`markNoticeSent.event: ${evErr.message}`);
+  const { data: recorded, error: evReadErr } = await sb
+    .from("lease_events")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("lease_id", draft.lease_id)
+    .eq("kind", "notice_sent")
+    .limit(1);
+  if (evReadErr) throw new Error(`markNoticeSent.eventRead: ${evReadErr.message}`);
+  if ((recorded ?? []).length === 0) {
+    const { error: evErr } = await sb.from("lease_events").insert({
+      user_id: userId,
+      lease_id: draft.lease_id,
+      kind: "notice_sent",
+      occurs_on: sentAt.slice(0, 10),
+      status: "done",
+    });
+    if (evErr) throw new Error(`markNoticeSent.event: ${evErr.message}`);
+  }
 
   await recomputeLeaseEvents(draft.lease_id);
   revalidatePath("/lease");
@@ -309,62 +339,7 @@ export async function seedLeaseChecklistTasks(leaseId: string): Promise<void> {
   if (leaseErr) throw new Error(`seedLeaseChecklistTasks.lease: ${leaseErr.message}`);
   if (!lease) throw new Error(`seedLeaseChecklistTasks: lease ${leaseId} not found`);
 
-  const moveOut = lease.target_move_out_date ?? lease.lease_end_date;
-  const noticeSendBy = subtractDays(lease.lease_end_date, lease.notice_days_required);
-
-  type Seed = {
-    title: string;
-    description: string | null;
-    due_date: string;
-    order_index: number;
-  };
-  const seeds: Seed[] = [
-    {
-      title: "Send 60-day notice to vacate",
-      description:
-        "Reply to renewal email with last-day-in-apartment date. Generated by /lease notice composer.",
-      due_date: noticeSendBy,
-      order_index: 0,
-    },
-    {
-      title: "Confirm origin renter's insurance to lease end",
-      description:
-        "Keep coverage active through lease end and list your landlord as an interested party if the lease requires it.",
-      due_date: subtractDays(lease.lease_end_date, INSURANCE_LEAD_BEFORE_LEASE_END),
-      order_index: 1,
-    },
-    {
-      title: "Set up destination renter's insurance",
-      description:
-        "Coverage starts on or before move-out date. Liability/property minimums per destination requirements.",
-      due_date: subtractDays(moveOut, DESTINATION_INSURANCE_LEAD),
-      order_index: 2,
-    },
-    {
-      title: "Cancel/transfer origin policy",
-      description: "Avoid double-billing after move-out.",
-      due_date: addDays(moveOut, ORIGIN_POLICY_CANCEL_OFFSET),
-      order_index: 3,
-    },
-    {
-      title: "Document apartment condition (photo + video)",
-      description: "Move-out walkthrough — protects deposit recovery.",
-      due_date: subtractDays(moveOut, CONDITION_DOC_LEAD),
-      order_index: 4,
-    },
-    {
-      title: "Return keys + provide forwarding address",
-      description: "Confirms move-out per landlord procedure.",
-      due_date: moveOut,
-      order_index: 5,
-    },
-    {
-      title: "Track deposit return",
-      description: "Colorado: landlord must itemize within 60 days of move-out.",
-      due_date: addDays(moveOut, CO_DEPOSIT_RETURN_DAYS),
-      order_index: 6,
-    },
-  ];
+  const seeds = buildLeaseTasks(lease);
 
   const rows = seeds.map((s) => ({
     user_id: userId,
@@ -382,6 +357,46 @@ export async function seedLeaseChecklistTasks(leaseId: string): Promise<void> {
   revalidatePath("/checklist");
   revalidatePath("/lease");
   revalidatePath("/");
+}
+
+// Lease tasks have no edit control in the checklist, so after a lease edit
+// their titles, notes and due dates are rewritten here from the fresh lease.
+// A task is recognized by its position and title; anything else is left alone.
+async function refreshLeaseChecklistTasks(leaseId: string): Promise<void> {
+  const userId = requireUserId();
+  const admin = createAdminClient();
+
+  const { data: lease, error: leaseErr } = await admin
+    .from("lease_terms")
+    .select("*")
+    .eq("id", leaseId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (leaseErr) throw new Error(`refreshLeaseChecklistTasks.lease: ${leaseErr.message}`);
+  if (!lease) throw new Error(`refreshLeaseChecklistTasks: lease ${leaseId} not found`);
+
+  const { data: rows, error: readErr } = await admin
+    .from("checklist_items")
+    .select("id, title, order_index")
+    .eq("user_id", userId)
+    .eq("category", "lease");
+  if (readErr) throw new Error(`refreshLeaseChecklistTasks.read: ${readErr.message}`);
+
+  for (const task of buildLeaseTasks(lease)) {
+    const row = (rows ?? []).find(
+      (r) =>
+        r.order_index === task.order_index &&
+        (task.titlePattern ? task.titlePattern.test(r.title) : r.title === task.title),
+    );
+    if (!row) continue;
+    const { error: updErr } = await admin
+      .from("checklist_items")
+      .update({ title: task.title, description: task.description, due_date: task.due_date })
+      .eq("id", row.id)
+      .eq("user_id", userId);
+    if (updErr) throw new Error(`refreshLeaseChecklistTasks.update: ${updErr.message}`);
+  }
+  revalidatePath("/checklist");
 }
 
 // ── insurance_policies CRUD ───────────────────────────────────────────────
@@ -496,12 +511,24 @@ export async function setActiveDestination(destinationId: string): Promise<void>
   revalidatePath("/");
 }
 
+const ADDRESS_FIELDS = ["street_address", "city", "state_code", "zip_code"] as const;
+
 export async function updateDestination(
   id: string,
   patch: z.input<typeof DestinationPatchInput>,
 ): Promise<void> {
   const parsed = DestinationPatchInput.parse(patch);
   const sb = await createClient();
+
+  // The edit dialog sends the address fields on every save, so "present in the
+  // patch" does not mean "changed". Compare against the stored row.
+  const { data: before, error: beforeErr } = await sb
+    .from("destinations")
+    .select("street_address, city, state_code, zip_code")
+    .eq("id", id)
+    .eq("user_id", requireUserId())
+    .maybeSingle();
+  if (beforeErr) throw new Error(`updateDestination.read: ${beforeErr.message}`);
 
   // If patch sets is_active_target to true, flip others off first
   if (parsed.is_active_target === true) {
@@ -531,9 +558,12 @@ export async function updateDestination(
     parsed.city !== undefined ||
     parsed.state_code !== undefined ||
     parsed.zip_code !== undefined;
+  const addressChanged = ADDRESS_FIELDS.some(
+    (field) => parsed[field] !== undefined && parsed[field] !== before?.[field],
+  );
   if (addressTouched) {
     try {
-      await recomputeDestinationOverlays(id);
+      await recomputeDestinationOverlays(id, { addressChanged });
     } catch (err) {
       console.error("updateDestination.overlays:", err);
     }

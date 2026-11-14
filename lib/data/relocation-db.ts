@@ -69,7 +69,8 @@ const FALLBACK_DESTINATION = "long-beach";
 
 /**
  * Pure derivation (testable without the DB). Resolves the active relocation to a
- * MoveContext, falling back to the legacy env date + denver→long-beach defaults
+ * MoveContext. With no relocation it falls back to the legacy env date +
+ * denver→long-beach defaults,
  * so the app renders identically whether or not a relocation has been seeded
  * (the B.3 cutover must preserve current behavior; AD-028). Once a relocation is
  * seeded with move_date = the current env value, this returns byte-identical
@@ -81,7 +82,9 @@ export function deriveMoveContext(
 ): MoveContext {
   const originSlug = active?.origin_slug ?? FALLBACK_ORIGIN;
   const destinationSlug = active?.destination_slug ?? FALLBACK_DESTINATION;
-  const moveDate = active?.move_date ?? envMoveDate ?? null;
+  // A relocation carries its own date, which may be cleared. The env date
+  // stands in only while there is no relocation at all.
+  const moveDate = active ? active.move_date : envMoveDate;
 
   return {
     moveDate,
