@@ -216,15 +216,21 @@ const ChecklistSeed = z.array(ChecklistSeedItemSchema);
 
 ## Mutable Data (Supabase)
 
+> **Design history.** The SQL in this part shows how each table was first
+> written. The tables as they stand today are built by
+> `supabase/migrations/0024_baseline.sql` and the files after it. The original
+> files 0001 to 0023 are in the git history. `docs/database.md` is the current
+> guide to applying migrations and to the generated types.
+
 ### `checklist_items` table
 
-The only mutable surface in v1.
+The first table. Twelve more followed (the lease module below, then the migration index at the end).
 
 ```sql
 CREATE TABLE checklist_items (
   id           uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id      uuid          NOT NULL,
-  category     text          NOT NULL CHECK (category IN ('pre-move-90d','pre-move-30d','move-week','post-move')),
+  category     text          NOT NULL CHECK (category IN ('pre-move','move-week','post-move','lease')),
   title        text          NOT NULL,
   description  text,
   due_date     date,
@@ -327,7 +333,7 @@ const ChecklistItemSchema = z.object({
 type ChecklistItem = z.infer<typeof ChecklistItemSchema>;
 ```
 
-Database types live in the **hand-written** `lib/supabase/types.ts` (the Supabase type-gen was unavailable at Phase 0; the file mirrors the migrations 1:1 — its header lists coverage). The Zod schema above is the authoritative shape for the *application* (it adds the brand contracts the generated types lack — like the `category` enum). Use Zod to parse Supabase responses before they hit UI code.
+Database types live in `lib/supabase/types.ts`, which is generated from the database and never edited by hand (`docs/database.md`). The Zod schema above is the authoritative shape for the *application* (it adds what the generated types lack, like the `category` values). `lib/supabase/schema-drift.test.ts` fails when the two disagree. Use Zod to parse Supabase responses before they hit UI code.
 
 ---
 
@@ -347,7 +353,7 @@ The pattern is uniform: **never let unparsed data reach a component.**
 ## Migration / Schema Evolution Rules
 
 1. Every change to a Zod schema requires a corresponding `data/*.json` update in the same commit.
-2. Every change to any table requires a migration file in `supabase/migrations/` and a matching update to the hand-written `lib/supabase/types.ts`.
+2. Every change to any table requires a new migration file in `supabase/migrations/`, the matching change to its Zod schema, and a regenerated `lib/supabase/types.ts`. `pnpm db:check` fails until all three agree.
 3. Breaking schema changes block a phase gate — surface to user, do not auto-migrate.
 
 ---
@@ -367,7 +373,7 @@ The pattern is uniform: **never let unparsed data reach a component.**
 | Supabase migration `0001_checklist.sql` | Table + RLS | 0.4 |
 | Supabase migration `0002_grant_service_role.sql` | service_role GRANT fix | 2.5b |
 | Supabase migrations `0003_lease_terms.sql` … `0008_lease_checklist_category.sql` | Lease module tables + lease category extension | 6.2 |
-| `/lib/supabase/types.ts` | Hand-written DB types (mirrors migrations) | 0.4 |
+| `/lib/supabase/types.ts` | DB types, generated from the database | 0.4 |
 
 ---
 
@@ -408,7 +414,7 @@ Fields: scope CHECK in (`origin`, `destination`), property_label, carrier, polic
 
 ### `checklist_items.category` CHECK extension (Q6b)
 
-Migration `0008_lease_checklist_category.sql`:
+Migration `0008_lease_checklist_category.sql` (migration 0017 later merged the two pre-move values into `pre-move`):
 ```sql
 ALTER TABLE checklist_items DROP CONSTRAINT checklist_items_category_check;
 ALTER TABLE checklist_items ADD CONSTRAINT checklist_items_category_check
@@ -559,6 +565,8 @@ Loader `getWalkabilityProfile(slug)` returns `null` when absent.
 ---
 
 ## Migration index — 0009 through 0024 (added Wave 6, AD-044)
+
+These files were later folded into `supabase/migrations/0024_baseline.sql`. The index stays as a record of what each one did.
 
 The sections above describe v1 (0001–0002), the lease module (0003–0008), and Phase 8 relocations (0020–0023) in prose. The remaining migrations, previously undocumented here:
 

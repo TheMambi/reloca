@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient, requireUserId } from "@/lib/supabase/server";
-import { ChecklistPhaseSchema, type ChecklistPhase } from "@/schemas";
+import { ChecklistCategorySchema, ChecklistPhaseSchema, type ChecklistPhase } from "@/schemas";
 
 
 const ToggleInput = z.object({
@@ -122,11 +122,13 @@ export async function updateChecklistItem(
       throw new Error(`updateChecklistItem.read: ${readErr.message}`);
     if (!current)
       throw new Error(`updateChecklistItem: row ${id} not found`);
-    if (current.category === "lease")
+    // The column is text to the database client. The schema narrows it.
+    const from = ChecklistCategorySchema.parse(current.category);
+    if (from === "lease")
       throw new Error("updateChecklistItem: a lease task cannot change phase");
-    if (current.category !== parsed.category) movedFrom = current.category;
+    if (from !== parsed.category) movedFrom = from;
 
-    if (current.category !== parsed.category) {
+    if (from !== parsed.category) {
       const { data: maxRow, error: maxErr } = await sb
         .from("checklist_items")
         .select("order_index")
@@ -169,7 +171,8 @@ export async function deleteChecklistItem(id: string): Promise<void> {
     .eq("user_id", userId);
   if (error) throw new Error(`deleteChecklistItem: ${error.message}`);
   // Lease tasks keep the numbers the lease code gave them.
-  if (row && row.category !== "lease") await closeOrderGaps(sb, userId, row.category);
+  const from = row && ChecklistCategorySchema.parse(row.category);
+  if (from && from !== "lease") await closeOrderGaps(sb, userId, from);
   revalidatePath("/checklist");
   revalidatePath("/");
 }

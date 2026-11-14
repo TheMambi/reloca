@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { TABLE_SCHEMAS } from "@/schemas/tables";
 import { DEMO_SEED } from "./demo-seed";
 
 /**
@@ -13,24 +14,13 @@ type Row = Record<string, unknown>;
 type DbError = { message: string; code?: string };
 type Result = { data: unknown; error: DbError | null; count: number | null };
 
-const COLUMNS: Record<string, string[]> = {
-  checklist_items: ["id", "user_id", "category", "title", "description", "due_date", "completed", "completed_at", "order_index", "created_at", "updated_at"],
-  lease_terms: ["id", "user_id", "property_name", "unit_address", "city", "landlord_email", "landlord_display_name", "residents", "lease_start_date", "lease_end_date", "notice_days_required", "target_move_out_date", "renewal_offer_expires", "current_monthly_rent", "renewal_monthly_rent", "m2m_premium", "security_deposit", "pet_rent_monthly", "parking_monthly", "included_utilities", "late_fee_rules", "decision", "origin_lat", "origin_lng", "created_at", "updated_at"],
-  lease_events: ["id", "user_id", "lease_id", "kind", "occurs_on", "status", "notes", "created_at"],
-  notice_drafts: ["id", "user_id", "lease_id", "body_markdown", "body_plaintext", "subject_line", "recipient_email", "move_out_date", "created_at", "sent_at"],
-  destinations: ["id", "user_id", "relocation_id", "building_name", "street_address", "city", "state_code", "zip_code", "source_url", "fetch_status", "fetched_at", "monthly_rent_low", "monthly_rent_high", "application_fee", "security_deposit", "pet_rent_monthly", "parking_monthly", "beds", "baths", "sqft", "amenities", "pets_allowed", "furnished", "hud_fmr_2br", "hud_fmr_year", "walk_score", "transit_score", "bike_score", "lat", "lng", "insurance_required", "insurance_min_liability", "insurance_min_property", "is_active_target", "notes", "created_at", "updated_at"],
-  insurance_policies: ["id", "user_id", "scope", "property_label", "carrier", "policy_number", "liability_amount", "personal_property_amount", "monthly_cost", "effective_from", "effective_to", "interested_party_listed", "interested_party_name", "document_url", "created_at", "updated_at"],
-  utility_transitions: ["id", "user_id", "kind", "side", "custom_label", "provider", "account_number", "login_url", "phone", "notes", "scheduled_date", "status", "confirmed_at", "order_index", "created_at", "updated_at"],
-  address_change_targets: ["id", "user_id", "kind", "name", "due_date", "channel", "reference_number", "status", "submitted_at", "confirmed_at", "notes", "order_index", "created_at", "updated_at"],
-  move_estimates: ["id", "user_id", "distance_miles", "volume_cuft", "move_date", "scenarios", "chosen_scenario_id", "created_at", "updated_at"],
-  move_out_walkthroughs: ["id", "user_id", "lease_terms_id", "walkthrough_date", "overall_notes", "pdf_generated_at", "created_at", "updated_at"],
-  move_out_room_records: ["id", "walkthrough_id", "user_id", "room_name", "condition_rating", "cleanliness_rating", "walls_status", "floors_status", "appliances_status", "fixtures_status", "notes", "order_index", "created_at", "updated_at"],
-  saved_neighborhoods: ["id", "user_id", "relocation_id", "neighborhood", "city", "notes", "created_at"],
-  relocations: ["id", "user_id", "label", "origin_slug", "destination_slug", "move_date", "is_active_move", "created_at", "updated_at"],
-};
+const COLUMNS: Record<string, string[]> = Object.fromEntries(
+  Object.entries(TABLE_SCHEMAS).map(([name, schema]) => [name, Object.keys(schema.shape)]),
+);
 
 // Column defaults from supabase/migrations (id and timestamps handled below).
-const DEFAULTS: Record<string, Row> = {
+// schema-drift.test.ts compares them with the database.
+export const DEFAULTS: Record<string, Row> = {
   checklist_items: { completed: false, order_index: 0 },
   lease_terms: { notice_days_required: 60, m2m_premium: 0, pet_rent_monthly: 0, parking_monthly: 0, included_utilities: [], decision: "undecided" },
   lease_events: { status: "pending" },

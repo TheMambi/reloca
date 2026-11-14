@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createClient, requireUserId } from "@/lib/supabase/server";
+import { parseRow, parseRows } from "@/lib/data/parse-rows";
 import { daysUntilIso } from "@/lib/dates";
 import {
   LeaseTermsSchema,
@@ -63,7 +64,7 @@ export const getActiveLease = cache(async (): Promise<LeaseTerms | null> => {
     .maybeSingle();
   if (error) throw new Error(`getActiveLease: ${error.message}`);
   if (!data) return null;
-  return LeaseTermsSchema.parse(coerceNumerics(data, LEASE_NUMERIC_FIELDS));
+  return parseRow(LeaseTermsSchema, coerceNumerics(data, LEASE_NUMERIC_FIELDS), "lease_terms");
 });
 
 export const getLeaseEvents = cache(async (leaseId: string): Promise<LeaseEvent[]> => {
@@ -75,7 +76,7 @@ export const getLeaseEvents = cache(async (leaseId: string): Promise<LeaseEvent[
     .eq("lease_id", leaseId)
     .order("occurs_on", { ascending: true });
   if (error) throw new Error(`getLeaseEvents: ${error.message}`);
-  return LeaseEventSchema.array().parse(data ?? []);
+  return parseRows(LeaseEventSchema, data ?? [], "lease_events");
 });
 
 export const getLatestNoticeDraft = cache(async (leaseId: string): Promise<NoticeDraft | null> => {
@@ -90,7 +91,7 @@ export const getLatestNoticeDraft = cache(async (leaseId: string): Promise<Notic
     .maybeSingle();
   if (error) throw new Error(`getLatestNoticeDraft: ${error.message}`);
   if (!data) return null;
-  return NoticeDraftSchema.parse(data);
+  return parseRow(NoticeDraftSchema, data, "notice_drafts");
 });
 
 export const getDestinations = cache(async (): Promise<Destination[]> => {
@@ -102,7 +103,7 @@ export const getDestinations = cache(async (): Promise<Destination[]> => {
     .order("created_at", { ascending: false });
   if (error) throw new Error(`getDestinations: ${error.message}`);
   const rows = (data ?? []).map((row) => coerceNumerics(row, DESTINATION_NUMERIC_FIELDS));
-  return DestinationSchema.array().parse(rows);
+  return parseRows(DestinationSchema, rows, "destinations");
 });
 
 export const getActiveDestination = cache(async (): Promise<Destination | null> => {
@@ -115,7 +116,7 @@ export const getActiveDestination = cache(async (): Promise<Destination | null> 
     .maybeSingle();
   if (error) throw new Error(`getActiveDestination: ${error.message}`);
   if (!data) return null;
-  return DestinationSchema.parse(coerceNumerics(data, DESTINATION_NUMERIC_FIELDS));
+  return parseRow(DestinationSchema, coerceNumerics(data, DESTINATION_NUMERIC_FIELDS), "destinations");
 });
 
 export const getInsurancePolicies = cache(async (): Promise<InsurancePolicy[]> => {
@@ -128,7 +129,7 @@ export const getInsurancePolicies = cache(async (): Promise<InsurancePolicy[]> =
     .order("effective_from", { ascending: true });
   if (error) throw new Error(`getInsurancePolicies: ${error.message}`);
   const rows = (data ?? []).map((row) => coerceNumerics(row, INSURANCE_NUMERIC_FIELDS));
-  return InsurancePolicySchema.array().parse(rows);
+  return parseRows(InsurancePolicySchema, rows, "insurance_policies");
 });
 
 export interface LeaseStatus {

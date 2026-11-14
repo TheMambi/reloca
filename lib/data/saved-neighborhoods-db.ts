@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createClient, requireUserId } from "@/lib/supabase/server";
+import { parseRows } from "@/lib/data/parse-rows";
 import {
   SavedNeighborhoodSchema,
   type SavedNeighborhood,
@@ -15,7 +16,7 @@ export const getSavedNeighborhoods = cache(
       .eq("user_id", requireUserId())
       .order("created_at", { ascending: false });
     if (error) throw new Error(`getSavedNeighborhoods: ${error.message}`);
-    return (data ?? []).map((row) => SavedNeighborhoodSchema.parse(row));
+    return parseRows(SavedNeighborhoodSchema, data ?? [], "saved_neighborhoods");
   },
 );
 

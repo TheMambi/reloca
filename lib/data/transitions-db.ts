@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createClient, requireUserId } from "@/lib/supabase/server";
+import { parseRows } from "@/lib/data/parse-rows";
 import {
   UtilityTransitionSchema,
   AddressChangeTargetSchema,
@@ -15,7 +16,7 @@ export const getUtilityTransitions = cache(async (): Promise<UtilityTransition[]
     .eq("user_id", requireUserId())
     .order("order_index", { ascending: true });
   if (error) throw new Error(`getUtilityTransitions: ${error.message}`);
-  return (data ?? []).map((row) => UtilityTransitionSchema.parse(row));
+  return parseRows(UtilityTransitionSchema, data ?? [], "utility_transitions");
 });
 
 export const getAddressTargets = cache(async (): Promise<AddressChangeTarget[]> => {
@@ -26,5 +27,5 @@ export const getAddressTargets = cache(async (): Promise<AddressChangeTarget[]> 
     .order("due_date", { ascending: true, nullsFirst: false })
     .order("order_index", { ascending: true });
   if (error) throw new Error(`getAddressTargets: ${error.message}`);
-  return (data ?? []).map((row) => AddressChangeTargetSchema.parse(row));
+  return parseRows(AddressChangeTargetSchema, data ?? [], "address_change_targets");
 });

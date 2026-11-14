@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createClient, requireUserId } from "@/lib/supabase/server";
+import { parseRow } from "@/lib/data/parse-rows";
 import {
   MoveEstimateSchema,
   MOVE_COST_NUMERIC_FIELDS,
@@ -16,7 +17,7 @@ export const getMoveEstimate = cache(async (): Promise<MoveEstimate | null> => {
     .limit(1).maybeSingle();
   if (error) throw new Error(`getMoveEstimate: ${error.message}`);
   if (!data) return null;
-  return MoveEstimateSchema.parse(coerceNumerics(data, [...MOVE_COST_NUMERIC_FIELDS]));
+  return parseRow(MoveEstimateSchema, coerceNumerics(data, [...MOVE_COST_NUMERIC_FIELDS]), "move_estimates");
 });
 
 // Costs are kept in whole dollars, the unit every screen shows. Rounding each

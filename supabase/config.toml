@@ -1,0 +1,13 @@
+# Settings for the Supabase CLI. docs/database.md explains how the migrations
+# are applied and how an existing database is brought under the CLI.
+project_id = "reloca"
+
+[db]
+# Must match the Postgres major version of the hosted project
+# (Supabase dashboard, Project Settings, Infrastructure).
+major_version = 17
+
+[db.seed]
+# A new database starts empty. The first move is created in the app, which
+# also inserts the checklist template.
+enabled = false

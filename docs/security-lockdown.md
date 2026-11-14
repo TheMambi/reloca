@@ -23,7 +23,7 @@ Do the steps in this order. The new code works against the database both before 
 
    Without the first two the new code refuses to build, and the host keeps serving the previous deployment, which still uses the anon key.
 2. **Deploy the code and confirm it is the one serving.** In the hosting dashboard, the deployment built from this code (commit `5beb0e2` or later) must show as ready and be the current production deployment. If its build failed with "Reloca refuses to serve", fix the setting the message names and deploy again. Then open every page and save one change. Everything should behave as before. Do not go on to step 3 until both are true: a page that loads proves nothing if the old deployment is still the one answering, and the old code stops working the moment the migration runs.
-3. **Run migration 0025, then 0026,** in the Supabase SQL editor, each exactly as written. Neither has a placeholder. Each is one statement: it applies completely or changes nothing, and 0025 stops with a message if something would be left open. Running them twice is safe. 0026 closes new functions and sequences the way 0025 closes new tables.
+3. **Run migration 0025, then 0026,** each exactly as written: with `supabase db push` once the database is under the CLI (`docs/database.md`), or in the Supabase SQL editor. Neither has a placeholder. Each is one statement: it applies completely or changes nothing, and 0025 stops with a message if something would be left open. Running them twice is safe. 0026 closes new functions and sequences the way 0025 closes new tables.
 4. **Run the two checks** below, then open the app again.
 5. **Remove `NEXT_PUBLIC_SUPABASE_ANON_KEY`** from the hosting settings and from `.env.local`. Once `SUPABASE_URL` is set, `NEXT_PUBLIC_SUPABASE_URL` can go too.
 
@@ -87,7 +87,7 @@ The service role key skips row level security, so the database no longer filters
 
 ## Keeping it closed
 
-- Re-running any of migrations 0001 to 0024 grants access to `anon` again and recreates the policies. Run 0025 again afterwards.
+- The original migrations 0001 to 0023 (now only in the git history) each granted access to `anon` and recreated the policies. Never run one of them again. The baseline that replaced them, `0024_baseline.sql`, grants nothing to `anon` or `authenticated`.
 - A new table needs `ENABLE ROW LEVEL SECURITY`, a `user_id` column, and a grant to `service_role` only. Tables created by the role that ran 0025 no longer get grants to `anon` or `authenticated` by default. Tables created by another role still might, so run check 1 after adding one.
 - A new function is runnable by everyone by default in Postgres, and Supabase also grants it to `anon` and `authenticated` by name, so revoking from `PUBLIC` alone leaves it open. Give every new function `REVOKE ALL ON FUNCTION ... FROM PUBLIC, anon, authenticated` and grant it to `service_role`. Migration 0026 makes this the default for functions and sequences created by the role that ran it. One created by another role still starts open, so run check 1 after adding a function too.
 - `scripts/keepalive.sh` uses the service role key from `.env.local`, since the anon key can no longer read a table.

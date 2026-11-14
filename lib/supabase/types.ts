@@ -1,30 +1,6 @@
-/**
- * Database types — mirrors the Postgres tables defined in `supabase/migrations/`.
- *
- * Hand-written until we wire up `supabase gen types typescript`. Keep this
- * file in sync with the migrations. The Zod schemas under `/schemas/` are the
- * single source of truth for *application* shape; this file describes the
- * *database* shape (with Insert/Update variants the Zod schemas lack) so the
- * Supabase client can type-check `.insert()` / `.update()` payloads.
- *
- * Coverage:
- *   - 0001_checklist.sql                   → checklist_items
- *   - 0003_lease_terms.sql                 → lease_terms
- *   - 0004_lease_events.sql                → lease_events
- *   - 0005_notice_drafts.sql               → notice_drafts
- *   - 0006_destinations.sql                → destinations
- *   - 0007_insurance_policies.sql          → insurance_policies
- *   - 0008_lease_checklist_category.sql    → adds 'lease' to ChecklistCategory
- *   - 0011_utility_transitions.sql         → utility_transitions
- *   - 0012_address_change_targets.sql      → address_change_targets
- *   - 0013_move_estimates.sql              → move_estimates
- *   - 0014_move_out_walkthroughs.sql       → move_out_walkthroughs
- *   - 0015_move_out_room_records.sql       → move_out_room_records
- *   - 0016_geocoded_addresses.sql          → lat/lng on destinations + lease_terms
- *   - 0019_saved_neighborhoods.sql         → saved_neighborhoods
- *   - 0020_relocations.sql                 → relocations
- *   - 0021/0022 (relocation_id)            → nullable FK on destinations + saved_neighborhoods
- */
+// Generated from the database by scripts/gen-db-types.mjs. Do not edit by hand.
+// To change a table, add a migration, then run `pnpm db:check` and follow its
+// message. docs/database.md has the details.
 
 export type Json =
   | string
@@ -32,757 +8,746 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[];
+  | Json[]
 
-export type ChecklistCategory =
-  | "pre-move"
-  | "move-week"
-  | "post-move"
-  | "lease";
-
-export type LeaseDecision = "undecided" | "renew" | "vacate" | "m2m";
-
-export type LeaseEventKind =
-  | "notice_send_by"
-  | "renewal_offer_expires"
-  | "lease_end"
-  | "target_move_out"
-  | "notice_sent"
-  | "walkthrough"
-  | "key_return"
-  | "deposit_claim_window_end";
-
-export type LeaseEventStatus = "pending" | "active" | "done" | "missed";
-
-export type FetchStatus = "manual" | "needs_review" | "verified" | "fetch_failed";
-
-export type InsuranceScope = "origin" | "destination";
-
-export type UtilityKind =
-  | "electricity"
-  | "gas"
-  | "water"
-  | "trash"
-  | "internet"
-  | "tv"
-  | "custom";
-
-export type UtilitySide = "origin" | "destination";
-
-export type UtilityStatus =
-  | "needs_action"
-  | "scheduled"
-  | "in_progress"
-  | "confirmed"
-  | "skipped";
-
-export type AddressTargetKind =
-  | "usps"
-  | "bank"
-  | "employer"
-  | "dmv"
-  | "voter_reg"
-  | "auto_insurance"
-  | "health_insurance"
-  | "subscription"
-  | "custom";
-
-export type AddressTargetChannel = "online" | "phone" | "in_person" | "mail";
-
-export type AddressTargetStatus =
-  | "needs_action"
-  | "submitted"
-  | "confirmed"
-  | "skipped";
-
-export interface Database {
+export type Database = {
   public: {
     Tables: {
-      checklist_items: {
-        Row: {
-          id: string;
-          user_id: string;
-          category: ChecklistCategory;
-          title: string;
-          description: string | null;
-          due_date: string | null;
-          completed: boolean;
-          completed_at: string | null;
-          order_index: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          category: ChecklistCategory;
-          title: string;
-          description?: string | null;
-          due_date?: string | null;
-          completed?: boolean;
-          completed_at?: string | null;
-          order_index?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          category?: ChecklistCategory;
-          title?: string;
-          description?: string | null;
-          due_date?: string | null;
-          completed?: boolean;
-          completed_at?: string | null;
-          order_index?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      lease_terms: {
-        Row: {
-          id: string;
-          user_id: string;
-          property_name: string;
-          unit_address: string;
-          city: string;
-          landlord_email: string;
-          landlord_display_name: string | null;
-          residents: Json;
-          lease_start_date: string;
-          lease_end_date: string;
-          notice_days_required: number;
-          target_move_out_date: string | null;
-          renewal_offer_expires: string | null;
-          current_monthly_rent: string;
-          renewal_monthly_rent: string | null;
-          m2m_premium: string;
-          security_deposit: string | null;
-          pet_rent_monthly: string;
-          parking_monthly: string;
-          included_utilities: string[];
-          late_fee_rules: string | null;
-          decision: LeaseDecision;
-          origin_lat: string | null;
-          origin_lng: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          property_name: string;
-          unit_address: string;
-          city: string;
-          landlord_email: string;
-          landlord_display_name?: string | null;
-          residents: Json;
-          lease_start_date: string;
-          lease_end_date: string;
-          notice_days_required?: number;
-          target_move_out_date?: string | null;
-          renewal_offer_expires?: string | null;
-          current_monthly_rent: number | string;
-          renewal_monthly_rent?: number | string | null;
-          m2m_premium?: number | string;
-          security_deposit?: number | string | null;
-          pet_rent_monthly?: number | string;
-          parking_monthly?: number | string;
-          included_utilities?: string[];
-          late_fee_rules?: string | null;
-          decision?: LeaseDecision;
-          origin_lat?: number | string | null;
-          origin_lng?: number | string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          property_name?: string;
-          unit_address?: string;
-          city?: string;
-          landlord_email?: string;
-          landlord_display_name?: string | null;
-          residents?: Json;
-          lease_start_date?: string;
-          lease_end_date?: string;
-          notice_days_required?: number;
-          target_move_out_date?: string | null;
-          renewal_offer_expires?: string | null;
-          current_monthly_rent?: number | string;
-          renewal_monthly_rent?: number | string | null;
-          m2m_premium?: number | string;
-          security_deposit?: number | string | null;
-          pet_rent_monthly?: number | string;
-          parking_monthly?: number | string;
-          included_utilities?: string[];
-          late_fee_rules?: string | null;
-          decision?: LeaseDecision;
-          origin_lat?: number | string | null;
-          origin_lng?: number | string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      lease_events: {
-        Row: {
-          id: string;
-          user_id: string;
-          lease_id: string;
-          kind: LeaseEventKind;
-          occurs_on: string;
-          status: LeaseEventStatus;
-          notes: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          lease_id: string;
-          kind: LeaseEventKind;
-          occurs_on: string;
-          status?: LeaseEventStatus;
-          notes?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          lease_id?: string;
-          kind?: LeaseEventKind;
-          occurs_on?: string;
-          status?: LeaseEventStatus;
-          notes?: string | null;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      notice_drafts: {
-        Row: {
-          id: string;
-          user_id: string;
-          lease_id: string;
-          body_markdown: string;
-          body_plaintext: string;
-          subject_line: string;
-          recipient_email: string;
-          move_out_date: string;
-          created_at: string;
-          sent_at: string | null;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          lease_id: string;
-          body_markdown: string;
-          body_plaintext: string;
-          subject_line: string;
-          recipient_email: string;
-          move_out_date: string;
-          created_at?: string;
-          sent_at?: string | null;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          lease_id?: string;
-          body_markdown?: string;
-          body_plaintext?: string;
-          subject_line?: string;
-          recipient_email?: string;
-          move_out_date?: string;
-          created_at?: string;
-          sent_at?: string | null;
-        };
-        Relationships: [];
-      };
-      destinations: {
-        Row: {
-          id: string;
-          user_id: string;
-          relocation_id: string | null;
-          building_name: string;
-          street_address: string;
-          city: string;
-          state_code: string | null;
-          zip_code: string | null;
-          source_url: string | null;
-          fetch_status: FetchStatus;
-          fetched_at: string | null;
-          monthly_rent_low: string | null;
-          monthly_rent_high: string | null;
-          application_fee: string | null;
-          security_deposit: string | null;
-          pet_rent_monthly: string | null;
-          parking_monthly: string | null;
-          beds: string | null;
-          baths: string | null;
-          sqft: number | null;
-          amenities: string[];
-          pets_allowed: boolean | null;
-          furnished: boolean | null;
-          hud_fmr_2br: string | null;
-          hud_fmr_year: number | null;
-          walk_score: number | null;
-          transit_score: number | null;
-          bike_score: number | null;
-          lat: string | null;
-          lng: string | null;
-          insurance_required: boolean;
-          insurance_min_liability: string | null;
-          insurance_min_property: string | null;
-          is_active_target: boolean;
-          notes: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          relocation_id?: string | null;
-          building_name: string;
-          street_address: string;
-          city: string;
-          state_code?: string | null;
-          zip_code?: string | null;
-          source_url?: string | null;
-          fetch_status?: FetchStatus;
-          fetched_at?: string | null;
-          monthly_rent_low?: number | string | null;
-          monthly_rent_high?: number | string | null;
-          application_fee?: number | string | null;
-          security_deposit?: number | string | null;
-          pet_rent_monthly?: number | string | null;
-          parking_monthly?: number | string | null;
-          beds?: number | string | null;
-          baths?: number | string | null;
-          sqft?: number | null;
-          amenities?: string[];
-          pets_allowed?: boolean | null;
-          furnished?: boolean | null;
-          hud_fmr_2br?: number | string | null;
-          hud_fmr_year?: number | null;
-          walk_score?: number | null;
-          transit_score?: number | null;
-          bike_score?: number | null;
-          lat?: number | string | null;
-          lng?: number | string | null;
-          insurance_required?: boolean;
-          insurance_min_liability?: number | string | null;
-          insurance_min_property?: number | string | null;
-          is_active_target?: boolean;
-          notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          relocation_id?: string | null;
-          building_name?: string;
-          street_address?: string;
-          city?: string;
-          state_code?: string | null;
-          zip_code?: string | null;
-          source_url?: string | null;
-          fetch_status?: FetchStatus;
-          fetched_at?: string | null;
-          monthly_rent_low?: number | string | null;
-          monthly_rent_high?: number | string | null;
-          application_fee?: number | string | null;
-          security_deposit?: number | string | null;
-          pet_rent_monthly?: number | string | null;
-          parking_monthly?: number | string | null;
-          beds?: number | string | null;
-          baths?: number | string | null;
-          sqft?: number | null;
-          amenities?: string[];
-          pets_allowed?: boolean | null;
-          furnished?: boolean | null;
-          hud_fmr_2br?: number | string | null;
-          hud_fmr_year?: number | null;
-          walk_score?: number | null;
-          transit_score?: number | null;
-          bike_score?: number | null;
-          lat?: number | string | null;
-          lng?: number | string | null;
-          insurance_required?: boolean;
-          insurance_min_liability?: number | string | null;
-          insurance_min_property?: number | string | null;
-          is_active_target?: boolean;
-          notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      insurance_policies: {
-        Row: {
-          id: string;
-          user_id: string;
-          scope: InsuranceScope;
-          property_label: string;
-          carrier: string | null;
-          policy_number: string | null;
-          liability_amount: string;
-          personal_property_amount: string;
-          monthly_cost: string | null;
-          effective_from: string;
-          effective_to: string | null;
-          interested_party_listed: boolean;
-          interested_party_name: string | null;
-          document_url: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          scope: InsuranceScope;
-          property_label: string;
-          carrier?: string | null;
-          policy_number?: string | null;
-          liability_amount: number | string;
-          personal_property_amount: number | string;
-          monthly_cost?: number | string | null;
-          effective_from: string;
-          effective_to?: string | null;
-          interested_party_listed?: boolean;
-          interested_party_name?: string | null;
-          document_url?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          scope?: InsuranceScope;
-          property_label?: string;
-          carrier?: string | null;
-          policy_number?: string | null;
-          liability_amount?: number | string;
-          personal_property_amount?: number | string;
-          monthly_cost?: number | string | null;
-          effective_from?: string;
-          effective_to?: string | null;
-          interested_party_listed?: boolean;
-          interested_party_name?: string | null;
-          document_url?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      utility_transitions: {
-        Row: {
-          id: string;
-          user_id: string;
-          kind: UtilityKind;
-          side: UtilitySide;
-          custom_label: string | null;
-          provider: string | null;
-          account_number: string | null;
-          login_url: string | null;
-          phone: string | null;
-          notes: string | null;
-          scheduled_date: string | null;
-          status: UtilityStatus;
-          confirmed_at: string | null;
-          order_index: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          kind: UtilityKind;
-          side: UtilitySide;
-          custom_label?: string | null;
-          provider?: string | null;
-          account_number?: string | null;
-          login_url?: string | null;
-          phone?: string | null;
-          notes?: string | null;
-          scheduled_date?: string | null;
-          status?: UtilityStatus;
-          confirmed_at?: string | null;
-          order_index?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          kind?: UtilityKind;
-          side?: UtilitySide;
-          custom_label?: string | null;
-          provider?: string | null;
-          account_number?: string | null;
-          login_url?: string | null;
-          phone?: string | null;
-          notes?: string | null;
-          scheduled_date?: string | null;
-          status?: UtilityStatus;
-          confirmed_at?: string | null;
-          order_index?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
       address_change_targets: {
         Row: {
-          id: string;
-          user_id: string;
-          kind: AddressTargetKind;
-          name: string;
-          due_date: string | null;
-          channel: AddressTargetChannel | null;
-          reference_number: string | null;
-          status: AddressTargetStatus;
-          submitted_at: string | null;
-          confirmed_at: string | null;
-          notes: string | null;
-          order_index: number;
-          created_at: string;
-          updated_at: string;
-        };
+          channel: string | null
+          confirmed_at: string | null
+          created_at: string
+          due_date: string | null
+          id: string
+          kind: string
+          name: string
+          notes: string | null
+          order_index: number
+          reference_number: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+        }
         Insert: {
-          id?: string;
-          user_id: string;
-          kind: AddressTargetKind;
-          name: string;
-          due_date?: string | null;
-          channel?: AddressTargetChannel | null;
-          reference_number?: string | null;
-          status?: AddressTargetStatus;
-          submitted_at?: string | null;
-          confirmed_at?: string | null;
-          notes?: string | null;
-          order_index?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
+          channel?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          kind: string
+          name: string
+          notes?: string | null
+          order_index?: number
+          reference_number?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
         Update: {
-          id?: string;
-          user_id?: string;
-          kind?: AddressTargetKind;
-          name?: string;
-          due_date?: string | null;
-          channel?: AddressTargetChannel | null;
-          reference_number?: string | null;
-          status?: AddressTargetStatus;
-          submitted_at?: string | null;
-          confirmed_at?: string | null;
-          notes?: string | null;
-          order_index?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
+          channel?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          notes?: string | null
+          order_index?: number
+          reference_number?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      checklist_items: {
+        Row: {
+          category: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          order_index: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          order_index?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          order_index?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      destinations: {
+        Row: {
+          amenities: string[]
+          application_fee: number | null
+          baths: number | null
+          beds: number | null
+          bike_score: number | null
+          building_name: string
+          city: string
+          created_at: string
+          fetch_status: string
+          fetched_at: string | null
+          furnished: boolean | null
+          hud_fmr_2br: number | null
+          hud_fmr_year: number | null
+          id: string
+          insurance_min_liability: number | null
+          insurance_min_property: number | null
+          insurance_required: boolean
+          is_active_target: boolean
+          lat: number | null
+          lng: number | null
+          monthly_rent_high: number | null
+          monthly_rent_low: number | null
+          notes: string | null
+          parking_monthly: number | null
+          pet_rent_monthly: number | null
+          pets_allowed: boolean | null
+          relocation_id: string | null
+          security_deposit: number | null
+          source_url: string | null
+          sqft: number | null
+          state_code: string | null
+          street_address: string
+          transit_score: number | null
+          updated_at: string
+          user_id: string
+          walk_score: number | null
+          zip_code: string | null
+        }
+        Insert: {
+          amenities?: string[]
+          application_fee?: number | null
+          baths?: number | null
+          beds?: number | null
+          bike_score?: number | null
+          building_name: string
+          city: string
+          created_at?: string
+          fetch_status?: string
+          fetched_at?: string | null
+          furnished?: boolean | null
+          hud_fmr_2br?: number | null
+          hud_fmr_year?: number | null
+          id?: string
+          insurance_min_liability?: number | null
+          insurance_min_property?: number | null
+          insurance_required?: boolean
+          is_active_target?: boolean
+          lat?: number | null
+          lng?: number | null
+          monthly_rent_high?: number | null
+          monthly_rent_low?: number | null
+          notes?: string | null
+          parking_monthly?: number | null
+          pet_rent_monthly?: number | null
+          pets_allowed?: boolean | null
+          relocation_id?: string | null
+          security_deposit?: number | null
+          source_url?: string | null
+          sqft?: number | null
+          state_code?: string | null
+          street_address: string
+          transit_score?: number | null
+          updated_at?: string
+          user_id: string
+          walk_score?: number | null
+          zip_code?: string | null
+        }
+        Update: {
+          amenities?: string[]
+          application_fee?: number | null
+          baths?: number | null
+          beds?: number | null
+          bike_score?: number | null
+          building_name?: string
+          city?: string
+          created_at?: string
+          fetch_status?: string
+          fetched_at?: string | null
+          furnished?: boolean | null
+          hud_fmr_2br?: number | null
+          hud_fmr_year?: number | null
+          id?: string
+          insurance_min_liability?: number | null
+          insurance_min_property?: number | null
+          insurance_required?: boolean
+          is_active_target?: boolean
+          lat?: number | null
+          lng?: number | null
+          monthly_rent_high?: number | null
+          monthly_rent_low?: number | null
+          notes?: string | null
+          parking_monthly?: number | null
+          pet_rent_monthly?: number | null
+          pets_allowed?: boolean | null
+          relocation_id?: string | null
+          security_deposit?: number | null
+          source_url?: string | null
+          sqft?: number | null
+          state_code?: string | null
+          street_address?: string
+          transit_score?: number | null
+          updated_at?: string
+          user_id?: string
+          walk_score?: number | null
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "destinations_relocation_id_fkey"
+            columns: ["relocation_id"]
+            isOneToOne: false
+            referencedRelation: "relocations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_policies: {
+        Row: {
+          carrier: string | null
+          created_at: string
+          document_url: string | null
+          effective_from: string
+          effective_to: string | null
+          id: string
+          interested_party_listed: boolean
+          interested_party_name: string | null
+          liability_amount: number
+          monthly_cost: number | null
+          personal_property_amount: number
+          policy_number: string | null
+          property_label: string
+          scope: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          carrier?: string | null
+          created_at?: string
+          document_url?: string | null
+          effective_from: string
+          effective_to?: string | null
+          id?: string
+          interested_party_listed?: boolean
+          interested_party_name?: string | null
+          liability_amount: number
+          monthly_cost?: number | null
+          personal_property_amount: number
+          policy_number?: string | null
+          property_label: string
+          scope: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          carrier?: string | null
+          created_at?: string
+          document_url?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          interested_party_listed?: boolean
+          interested_party_name?: string | null
+          liability_amount?: number
+          monthly_cost?: number | null
+          personal_property_amount?: number
+          policy_number?: string | null
+          property_label?: string
+          scope?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      lease_events: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          lease_id: string
+          notes: string | null
+          occurs_on: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          lease_id: string
+          notes?: string | null
+          occurs_on: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          lease_id?: string
+          notes?: string | null
+          occurs_on?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lease_events_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "lease_terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lease_terms: {
+        Row: {
+          city: string
+          created_at: string
+          current_monthly_rent: number
+          decision: string
+          id: string
+          included_utilities: string[]
+          landlord_display_name: string | null
+          landlord_email: string
+          late_fee_rules: string | null
+          lease_end_date: string
+          lease_start_date: string
+          m2m_premium: number
+          notice_days_required: number
+          origin_lat: number | null
+          origin_lng: number | null
+          parking_monthly: number
+          pet_rent_monthly: number
+          property_name: string
+          renewal_monthly_rent: number | null
+          renewal_offer_expires: string | null
+          residents: Json
+          security_deposit: number | null
+          target_move_out_date: string | null
+          unit_address: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          current_monthly_rent: number
+          decision?: string
+          id?: string
+          included_utilities?: string[]
+          landlord_display_name?: string | null
+          landlord_email: string
+          late_fee_rules?: string | null
+          lease_end_date: string
+          lease_start_date: string
+          m2m_premium?: number
+          notice_days_required?: number
+          origin_lat?: number | null
+          origin_lng?: number | null
+          parking_monthly?: number
+          pet_rent_monthly?: number
+          property_name: string
+          renewal_monthly_rent?: number | null
+          renewal_offer_expires?: string | null
+          residents: Json
+          security_deposit?: number | null
+          target_move_out_date?: string | null
+          unit_address: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          current_monthly_rent?: number
+          decision?: string
+          id?: string
+          included_utilities?: string[]
+          landlord_display_name?: string | null
+          landlord_email?: string
+          late_fee_rules?: string | null
+          lease_end_date?: string
+          lease_start_date?: string
+          m2m_premium?: number
+          notice_days_required?: number
+          origin_lat?: number | null
+          origin_lng?: number | null
+          parking_monthly?: number
+          pet_rent_monthly?: number
+          property_name?: string
+          renewal_monthly_rent?: number | null
+          renewal_offer_expires?: string | null
+          residents?: Json
+          security_deposit?: number | null
+          target_move_out_date?: string | null
+          unit_address?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       move_estimates: {
         Row: {
-          id: string;
-          user_id: string;
-          distance_miles: string | null;
-          volume_cuft: string | null;
-          move_date: string | null;
-          scenarios: Json;
-          chosen_scenario_id: string | null;
-          created_at: string;
-          updated_at: string;
-        };
+          chosen_scenario_id: string | null
+          created_at: string
+          distance_miles: number | null
+          id: string
+          move_date: string | null
+          scenarios: Json
+          updated_at: string
+          user_id: string
+          volume_cuft: number | null
+        }
         Insert: {
-          id?: string;
-          user_id: string;
-          distance_miles?: number | string | null;
-          volume_cuft?: number | string | null;
-          move_date?: string | null;
-          scenarios?: Json;
-          chosen_scenario_id?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
+          chosen_scenario_id?: string | null
+          created_at?: string
+          distance_miles?: number | null
+          id?: string
+          move_date?: string | null
+          scenarios?: Json
+          updated_at?: string
+          user_id: string
+          volume_cuft?: number | null
+        }
         Update: {
-          id?: string;
-          user_id?: string;
-          distance_miles?: number | string | null;
-          volume_cuft?: number | string | null;
-          move_date?: string | null;
-          scenarios?: Json;
-          chosen_scenario_id?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      move_out_walkthroughs: {
-        Row: {
-          id: string;
-          user_id: string;
-          lease_terms_id: string | null;
-          walkthrough_date: string | null;
-          overall_notes: string | null;
-          pdf_generated_at: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          lease_terms_id?: string | null;
-          walkthrough_date?: string | null;
-          overall_notes?: string | null;
-          pdf_generated_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          lease_terms_id?: string | null;
-          walkthrough_date?: string | null;
-          overall_notes?: string | null;
-          pdf_generated_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
+          chosen_scenario_id?: string | null
+          created_at?: string
+          distance_miles?: number | null
+          id?: string
+          move_date?: string | null
+          scenarios?: Json
+          updated_at?: string
+          user_id?: string
+          volume_cuft?: number | null
+        }
+        Relationships: []
+      }
       move_out_room_records: {
         Row: {
-          id: string;
-          walkthrough_id: string;
-          user_id: string;
-          room_name: string;
-          condition_rating: number | null;
-          cleanliness_rating: number | null;
-          walls_status: string | null;
-          floors_status: string | null;
-          appliances_status: string | null;
-          fixtures_status: string | null;
-          notes: string | null;
-          order_index: number;
-          created_at: string;
-          updated_at: string;
-        };
+          appliances_status: string | null
+          cleanliness_rating: number | null
+          condition_rating: number | null
+          created_at: string
+          fixtures_status: string | null
+          floors_status: string | null
+          id: string
+          notes: string | null
+          order_index: number
+          room_name: string
+          updated_at: string
+          user_id: string
+          walkthrough_id: string
+          walls_status: string | null
+        }
         Insert: {
-          id?: string;
-          walkthrough_id: string;
-          user_id: string;
-          room_name: string;
-          condition_rating?: number | null;
-          cleanliness_rating?: number | null;
-          walls_status?: string | null;
-          floors_status?: string | null;
-          appliances_status?: string | null;
-          fixtures_status?: string | null;
-          notes?: string | null;
-          order_index?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
+          appliances_status?: string | null
+          cleanliness_rating?: number | null
+          condition_rating?: number | null
+          created_at?: string
+          fixtures_status?: string | null
+          floors_status?: string | null
+          id?: string
+          notes?: string | null
+          order_index?: number
+          room_name: string
+          updated_at?: string
+          user_id: string
+          walkthrough_id: string
+          walls_status?: string | null
+        }
         Update: {
-          id?: string;
-          walkthrough_id?: string;
-          user_id?: string;
-          room_name?: string;
-          condition_rating?: number | null;
-          cleanliness_rating?: number | null;
-          walls_status?: string | null;
-          floors_status?: string | null;
-          appliances_status?: string | null;
-          fixtures_status?: string | null;
-          notes?: string | null;
-          order_index?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      saved_neighborhoods: {
+          appliances_status?: string | null
+          cleanliness_rating?: number | null
+          condition_rating?: number | null
+          created_at?: string
+          fixtures_status?: string | null
+          floors_status?: string | null
+          id?: string
+          notes?: string | null
+          order_index?: number
+          room_name?: string
+          updated_at?: string
+          user_id?: string
+          walkthrough_id?: string
+          walls_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "move_out_room_records_walkthrough_id_fkey"
+            columns: ["walkthrough_id"]
+            isOneToOne: false
+            referencedRelation: "move_out_walkthroughs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      move_out_walkthroughs: {
         Row: {
-          id: string;
-          user_id: string;
-          relocation_id: string | null;
-          neighborhood: string;
-          city: string;
-          notes: string | null;
-          created_at: string;
-        };
+          created_at: string
+          id: string
+          lease_terms_id: string | null
+          overall_notes: string | null
+          pdf_generated_at: string | null
+          updated_at: string
+          user_id: string
+          walkthrough_date: string | null
+        }
         Insert: {
-          id?: string;
-          user_id: string;
-          relocation_id?: string | null;
-          neighborhood: string;
-          city: string;
-          notes?: string | null;
-          created_at?: string;
-        };
+          created_at?: string
+          id?: string
+          lease_terms_id?: string | null
+          overall_notes?: string | null
+          pdf_generated_at?: string | null
+          updated_at?: string
+          user_id: string
+          walkthrough_date?: string | null
+        }
         Update: {
-          id?: string;
-          user_id?: string;
-          relocation_id?: string | null;
-          neighborhood?: string;
-          city?: string;
-          notes?: string | null;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          id?: string
+          lease_terms_id?: string | null
+          overall_notes?: string | null
+          pdf_generated_at?: string | null
+          updated_at?: string
+          user_id?: string
+          walkthrough_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "move_out_walkthroughs_lease_terms_id_fkey"
+            columns: ["lease_terms_id"]
+            isOneToOne: false
+            referencedRelation: "lease_terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notice_drafts: {
+        Row: {
+          body_markdown: string
+          body_plaintext: string
+          created_at: string
+          id: string
+          lease_id: string
+          move_out_date: string
+          recipient_email: string
+          sent_at: string | null
+          subject_line: string
+          user_id: string
+        }
+        Insert: {
+          body_markdown: string
+          body_plaintext: string
+          created_at?: string
+          id?: string
+          lease_id: string
+          move_out_date: string
+          recipient_email: string
+          sent_at?: string | null
+          subject_line: string
+          user_id: string
+        }
+        Update: {
+          body_markdown?: string
+          body_plaintext?: string
+          created_at?: string
+          id?: string
+          lease_id?: string
+          move_out_date?: string
+          recipient_email?: string
+          sent_at?: string | null
+          subject_line?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notice_drafts_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "lease_terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       relocations: {
         Row: {
-          id: string;
-          user_id: string;
-          label: string;
-          origin_slug: string;
-          destination_slug: string;
-          move_date: string | null;
-          is_active_move: boolean;
-          created_at: string;
-          updated_at: string;
-        };
+          created_at: string
+          destination_slug: string
+          id: string
+          is_active_move: boolean
+          label: string
+          move_date: string | null
+          origin_slug: string
+          updated_at: string
+          user_id: string
+        }
         Insert: {
-          id?: string;
-          user_id: string;
-          label: string;
-          origin_slug: string;
-          destination_slug: string;
-          move_date?: string | null;
-          is_active_move?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
+          created_at?: string
+          destination_slug: string
+          id?: string
+          is_active_move?: boolean
+          label: string
+          move_date?: string | null
+          origin_slug: string
+          updated_at?: string
+          user_id: string
+        }
         Update: {
-          id?: string;
-          user_id?: string;
-          label?: string;
-          origin_slug?: string;
-          destination_slug?: string;
-          move_date?: string | null;
-          is_active_move?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-    };
-    Views: Record<string, never>;
+          created_at?: string
+          destination_slug?: string
+          id?: string
+          is_active_move?: boolean
+          label?: string
+          move_date?: string | null
+          origin_slug?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_neighborhoods: {
+        Row: {
+          city: string
+          created_at: string
+          id: string
+          neighborhood: string
+          notes: string | null
+          relocation_id: string | null
+          user_id: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          id?: string
+          neighborhood: string
+          notes?: string | null
+          relocation_id?: string | null
+          user_id: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          id?: string
+          neighborhood?: string
+          notes?: string | null
+          relocation_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_neighborhoods_relocation_id_fkey"
+            columns: ["relocation_id"]
+            isOneToOne: false
+            referencedRelation: "relocations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      utility_transitions: {
+        Row: {
+          account_number: string | null
+          confirmed_at: string | null
+          created_at: string
+          custom_label: string | null
+          id: string
+          kind: string
+          login_url: string | null
+          notes: string | null
+          order_index: number
+          phone: string | null
+          provider: string | null
+          scheduled_date: string | null
+          side: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_number?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          custom_label?: string | null
+          id?: string
+          kind: string
+          login_url?: string | null
+          notes?: string | null
+          order_index?: number
+          phone?: string | null
+          provider?: string | null
+          scheduled_date?: string | null
+          side: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_number?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          custom_label?: string | null
+          id?: string
+          kind?: string
+          login_url?: string | null
+          notes?: string | null
+          order_index?: number
+          phone?: string | null
+          provider?: string | null
+          scheduled_date?: string | null
+          side?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
       reorder_checklist_item: {
-        Args: {
-          p_id: string;
-          p_target_category: ChecklistCategory;
-          p_target_index: number;
-        };
-        Returns: void;
-      };
-    };
-    Enums: Record<string, never>;
-    CompositeTypes: Record<string, never>;
-  };
+        Args: { p_id: string; p_target_category: string; p_target_index: number }
+        Returns: undefined
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
 }

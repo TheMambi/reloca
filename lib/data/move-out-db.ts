@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createClient, requireUserId } from "@/lib/supabase/server";
+import { parseRow, parseRows } from "@/lib/data/parse-rows";
 import {
   MoveOutWalkthroughSchema,
   MoveOutRoomRecordSchema,
@@ -25,7 +26,7 @@ export const getActiveWalkthrough = cache(
       .maybeSingle();
     if (error) throw new Error(`getActiveWalkthrough: ${error.message}`);
     if (!data) return null;
-    return MoveOutWalkthroughSchema.parse(data);
+    return parseRow(MoveOutWalkthroughSchema, data, "move_out_walkthroughs");
   },
 );
 
@@ -39,7 +40,7 @@ export const getRoomRecords = cache(
       .eq("walkthrough_id", walkthroughId)
       .order("order_index", { ascending: true });
     if (error) throw new Error(`getRoomRecords: ${error.message}`);
-    return (data ?? []).map((row) => MoveOutRoomRecordSchema.parse(row));
+    return parseRows(MoveOutRoomRecordSchema, data ?? [], "move_out_room_records");
   },
 );
 

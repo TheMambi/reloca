@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { createClient, requireUserId } from "@/lib/supabase/server";
+import { parseRow, parseRows } from "@/lib/data/parse-rows";
 import { RelocationSchema } from "@/schemas";
 import type { Relocation } from "@/schemas";
 import { cityName, cityCode } from "./cities";
@@ -26,7 +27,7 @@ export async function getRelocations(): Promise<Relocation[]> {
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []).map((row) => RelocationSchema.parse(row));
+  return parseRows(RelocationSchema, data ?? [], "relocations");
 }
 
 /**
@@ -45,7 +46,7 @@ export const getActiveRelocation = cache(
       .maybeSingle();
 
     if (error) throw error;
-    return data ? RelocationSchema.parse(data) : null;
+    return data ? parseRow(RelocationSchema, data, "relocations") : null;
   },
 );
 
@@ -100,7 +101,8 @@ export function deriveMoveContext(
 /** Request-cached move context for server components + actions. */
 export const getActiveMoveContext = cache(async (): Promise<MoveContext> => {
   const active = await getActiveRelocation();
-  return deriveMoveContext(active, process.env.NEXT_PUBLIC_MOVE_DATE ?? null);
+  // `||`: the template ships the variable empty, and an empty string is no date.
+  return deriveMoveContext(active, process.env.NEXT_PUBLIC_MOVE_DATE || null);
 });
 
 /**
@@ -180,7 +182,7 @@ export async function getViewingRelocation(
 export function moveContextFor(relocation: Relocation | null): MoveContext {
   const envFallback = relocation
     ? null
-    : process.env.NEXT_PUBLIC_MOVE_DATE ?? null;
+    : process.env.NEXT_PUBLIC_MOVE_DATE || null;
   return deriveMoveContext(relocation, envFallback);
 }
 

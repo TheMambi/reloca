@@ -64,7 +64,7 @@ const migrations = join(process.cwd(), "supabase/migrations");
 const tables = new Set<string>();
 for (const file of readdirSync(migrations)) {
   const sql = readFileSync(join(migrations, file), "utf8");
-  for (const [, name, columns] of sql.matchAll(/CREATE TABLE IF NOT EXISTS (\w+) \(([\s\S]*?)\n\);/g)) {
+  for (const [, name, columns] of sql.matchAll(/CREATE TABLE IF NOT EXISTS (?:public\.)?(\w+) \(([\s\S]*?)\n\);/g)) {
     assert.match(columns, /\n\s+user_id\s+uuid\s+NOT NULL/, `${name} has no user_id column: decide how it is scoped`);
     tables.add(name);
   }

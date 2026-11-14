@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient, createClient, requireUserId } from "@/lib/supabase/server";
+import { parseRows } from "@/lib/data/parse-rows";
 import { ChecklistItemSchema, type ChecklistItem } from "@/schemas";
 import { getChecklistSeed } from "@/lib/data/checklist";
 import { fillSeedText, seededDueDate } from "@/lib/data/move-seeds";
@@ -63,5 +64,5 @@ export async function getChecklistItems(): Promise<ChecklistItem[]> {
 
   if (error) throw new Error(`getChecklistItems: ${error.message}`);
 
-  return ChecklistItemSchema.array().parse(data ?? []);
+  return parseRows(ChecklistItemSchema, data ?? [], "checklist_items");
 }

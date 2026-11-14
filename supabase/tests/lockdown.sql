@@ -37,7 +37,7 @@ BEGIN
     VALUES (uid, 'pre-move', 'sample two', 1);
   INSERT INTO public.lease_terms (user_id, property_name, unit_address, city, landlord_email, residents,
       lease_start_date, lease_end_date, current_monthly_rent)
-    VALUES (uid, 'sample', 'sample', 'sample', 'sample', '[]', '2025-01-01', '2025-12-31', 1) RETURNING id INTO lease;
+    VALUES (uid, 'sample', 'sample', 'sample', 'sample', '[{"name": "sample"}]', '2025-01-01', '2025-12-31', 1) RETURNING id INTO lease;
   INSERT INTO public.lease_events (user_id, lease_id, kind, occurs_on) VALUES (uid, lease, 'lease_end', '2025-12-31');
   INSERT INTO public.notice_drafts (user_id, lease_id, body_markdown, body_plaintext, subject_line, recipient_email, move_out_date)
     VALUES (uid, lease, 'sample', 'sample', 'sample', 'sample', '2025-12-31');
