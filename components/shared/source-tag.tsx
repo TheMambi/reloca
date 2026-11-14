@@ -28,7 +28,7 @@ export function SourceTag({
   return (
     <p
       className={`text-[11px] leading-snug text-muted-foreground ${className}`}
-      title={src.notes ? `${src.provider} — ${src.notes}` : src.provider}
+      title={src.notes ? `${src.provider}: ${src.notes}` : src.provider}
     >
       Source: {src.label} · {tier} · fetched {formatMonthYear(src.fetchedAt)}
     </p>

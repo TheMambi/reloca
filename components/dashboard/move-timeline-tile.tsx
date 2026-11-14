@@ -186,7 +186,7 @@ export async function MoveTimelineTile({ at }: { at?: string }) {
               const cx = eventToXPercent(event, start, totalDays);
               const fill = TONE_COLOR[event.tone];
               const href = SOURCE_HREF[event.source];
-              const titleText = `${event.label} — ${formatLabelDate(event.at)}`;
+              const titleText = `${event.label}, ${formatLabelDate(event.at)}`;
               return (
                 <a
                   key={`${event.source}-${event.source_id}-${i}`}

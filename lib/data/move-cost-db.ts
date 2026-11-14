@@ -68,7 +68,7 @@ export function buildDefaultScenarios(): Scenario[] {
     {
       id: "hybrid",
       kind: "hybrid",
-      label: "Split — movers help, you drive",
+      label: "Split: movers help, you drive",
       line_items: [
         { id: "hyb-load",   name: "Movers load only",   cost: 0 },
         { id: "hyb-truck",  name: "Truck rental",       cost: 0 },

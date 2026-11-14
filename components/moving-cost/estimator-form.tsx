@@ -73,8 +73,8 @@ export function EstimatorForm({ initial, onSaved, variant = "first-run" }: Props
             Tell us about the move
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            We&apos;ll lay out three ways to move — drive a rental truck
-            yourself, hire professional movers, or split the work — and
+            We&apos;ll lay out three ways to move (drive a rental truck
+            yourself, hire professional movers, or split the work), and
             you can adjust each one until the costs match a real quote.
           </p>
         </div>

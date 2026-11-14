@@ -30,7 +30,7 @@ export function NeighborhoodGrid({
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <p className="rounded-[var(--radius-lg)] border border-border bg-card p-4 text-xs text-muted-foreground sm:col-span-2 xl:col-span-3">
-          No saved neighborhoods yet — heart-save one from the full list above.
+          No saved neighborhoods yet. Tap the heart on one in the full list above.
         </p>
       </div>
     );

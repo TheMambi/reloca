@@ -47,7 +47,7 @@ export function OperationsHero({
 
   const heroBlurb = arrived
     ? "You made it. Settle in, close out the old place, and wrap up the last details at your own pace."
-    : "Everything for your move in one place — cost of living, places to live, neighborhood feel, your checklist, and your lease.";
+    : "Everything for your move in one place: cost of living, places to live, neighborhood feel, your checklist, and your lease.";
 
   return (
     <section className="relative isolate overflow-hidden rounded-[var(--radius-lg)] border border-border bg-card">

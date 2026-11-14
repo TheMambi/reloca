@@ -31,7 +31,7 @@ export function RelocationsCompareBlock({
           </p>
           <p className="mx-auto mt-1.5 max-w-sm text-xs text-muted-foreground">
             Use the route switcher at the top of the screen to create another
-            relocation — then both show here side by side, city facts and all.
+            relocation. Then both show here side by side, city facts and all.
           </p>
         </div>
       ) : (

@@ -75,7 +75,7 @@ export function buildLeaseTasks(lease: LeaseDates): LeaseTask[] {
     },
     {
       title: "Document apartment condition (photo + video)",
-      description: "Move-out walkthrough — protects deposit recovery.",
+      description: "The move-out walkthrough protects your deposit.",
       due_date: addDaysIso(moveOut, -CONDITION_DOC_LEAD),
       order_index: 4,
     },

@@ -60,7 +60,7 @@ export function friendlyDbError(
   error: { message?: string | null } | null | undefined,
 ): string {
   console.error(`[action] ${context}:`, error?.message ?? error);
-  return "Something went wrong — please try again.";
+  return "Something went wrong. Please try again.";
 }
 
 /**

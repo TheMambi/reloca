@@ -57,7 +57,7 @@ export function SaveNeighborhoodButton({
   const label = failed
     ? "That wasn't saved. Click to try again"
     : optimisticSaved
-      ? "Saved — click to remove"
+      ? "Saved. Click to remove"
       : "Save neighborhood";
 
   return (

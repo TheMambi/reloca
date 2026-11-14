@@ -238,7 +238,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
             : "Notice to vacate"}
         </p>
         <p className="text-xs text-muted-foreground">
-          Render, review, then open in your mail client. Mailto only — no SMTP.
+          Render, review, then open in your mail client. It opens your own mail app and sends nothing by itself.
         </p>
       </header>
 
@@ -428,8 +428,8 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
             <DialogTitle>Mark notice as sent?</DialogTitle>
             <DialogDescription>
               Record today&rsquo;s date{" "}
-              <span className="mono-num text-foreground">({today})</span> as
-              when you sent the notice. The text will lock — if you need to
+              <span className="mono-num text-foreground">({formatDate(today)})</span> as
+              when you sent the notice. The text will lock. If you need to
               change something later, you can start a new one.
             </DialogDescription>
           </DialogHeader>

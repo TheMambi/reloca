@@ -34,6 +34,7 @@ import { settle } from "@/lib/settle-action";
 import type { InsurancePolicy, InsuranceScopeEnum } from "@/schemas/lease";
 import type { z } from "zod";
 import { formatDate, isoToPickerDate, pickerDateToIso, todayInZoneIso } from "@/lib/dates";
+import { LEASE_TEXT_LIMITS } from "@/schemas/lease";
 
 type Scope = z.infer<typeof InsuranceScopeEnum>;
 
@@ -229,6 +230,7 @@ export function InsurancePolicyForm({
             <Field label="ADDRESS / NICKNAME">
               <Input
                 value={propertyLabel}
+                maxLength={LEASE_TEXT_LIMITS.name}
                 onChange={(e) => setPropertyLabel(e.target.value)}
                 placeholder="e.g. 100 Sample St #204"
                 className="h-8 text-xs"
@@ -240,6 +242,7 @@ export function InsurancePolicyForm({
               <Field label="INSURER">
                 <Input
                   value={carrier}
+                  maxLength={LEASE_TEXT_LIMITS.name}
                   onChange={(e) => setCarrier(e.target.value)}
                   placeholder="Insurer name"
                   className="h-8 text-xs"
@@ -248,6 +251,7 @@ export function InsurancePolicyForm({
               <Field label="POLICY NUMBER">
                 <Input
                   value={policyNumber}
+                  maxLength={LEASE_TEXT_LIMITS.item}
                   onChange={(e) => setPolicyNumber(e.target.value)}
                   placeholder="123-XXX-456"
                   className="mono-num h-8 text-xs"
@@ -386,6 +390,7 @@ export function InsurancePolicyForm({
                 <Field label="LANDLORD CONTACT NAME ON POLICY">
                   <Input
                     value={interestedName}
+                    maxLength={LEASE_TEXT_LIMITS.name}
                     onChange={(e) => setInterestedName(e.target.value)}
                     placeholder="e.g. your property manager"
                     className="h-8 text-xs"

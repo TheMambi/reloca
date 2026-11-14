@@ -79,7 +79,7 @@ const LIVE_SOURCES: Record<string, Omit<DataSource, "fetchedAt">> = {
     tier: "live",
     license: FEDERAL_WORK,
     notes:
-      "Average high/low temperature, annual precipitation, and days at or above 90°F are pulled live from NOAA's climate normals (CDO NORMAL_ANN product — the 1981–2010 normals vintage; the newer 1991–2020 set isn't served by this endpoint). The flood, wildfire, earthquake, and sea-level fields in each climate profile are hand-verified estimates, cross-checked against FEMA NFHL/NRI and USGS (modeled).",
+      "Average high/low temperature, annual precipitation, and days at or above 90°F are pulled live from NOAA's climate normals (CDO NORMAL_ANN product, the 1981–2010 normals vintage; the newer 1991–2020 set isn't served by this endpoint). The flood, wildfire, earthquake, and sea-level fields in each climate profile are hand-verified estimates, cross-checked against FEMA NFHL/NRI and USGS (modeled).",
   },
   hud: {
     id: "rent-hud-fmr-2026",
@@ -93,16 +93,16 @@ const LIVE_SOURCES: Record<string, Omit<DataSource, "fetchedAt">> = {
   airnow: {
     id: "air-quality-airnow-2026",
     label: "EPA AirNow",
-    provider: "U.S. Environmental Protection Agency — AirNow",
+    provider: "U.S. Environmental Protection Agency, AirNow",
     url: "https://www.airnow.gov/",
     tier: "live",
     notes:
-      "Current air-quality observation for the city's reporting area — a point-in-time reading stamped with its local observation time, not a rolling average.",
+      "Current air-quality observation for the city's reporting area: a point-in-time reading stamped with its local observation time, not a rolling average.",
   },
   epaWalk: {
     id: "walkability-epa-2026",
     label: "EPA National Walkability Index",
-    provider: "U.S. Environmental Protection Agency — Smart Location Database",
+    provider: "U.S. Environmental Protection Agency, Smart Location Database",
     url: "https://www.epa.gov/smartgrowth/smart-location-mapping",
     tier: "live",
     license: FEDERAL_WORK,
@@ -176,7 +176,7 @@ async function ingestCity(city: City): Promise<void> {
     if (v) v.monthlyMedian = fmr.twoBr;
     else housing.values.push({ city: slug, monthlyMedian: fmr.twoBr });
     housing.source = LIVE_SOURCES.hud.id;
-    housing.notes = `Two-bedroom HUD Fair Market Rent (FY${fmr.year ?? FMR_YEAR}) per metro area — the federal yardstick for typical metro rent.`;
+    housing.notes = `Two-bedroom HUD Fair Market Rent (FY${fmr.year ?? FMR_YEAR}) per metro area, the federal yardstick for typical metro rent.`;
     // asOf tracks the file's most recent refresh; leaving it frozen at the
     // authoring date made the HUD overlay look 15 months old (AD-041).
     cost.asOf = TODAY;

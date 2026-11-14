@@ -44,7 +44,7 @@
     "tier": "live",
     "fetchedAt": "2026-07-13",
     "license": "U.S. Government work, in the public domain in the United States",
-    "notes": "Average high/low temperature, annual precipitation, and days at or above 90\u00b0F are pulled live from NOAA's climate normals (CDO NORMAL_ANN product \u2014 the 1981\u20132010 normals vintage; the newer 1991\u20132020 set isn't served by this endpoint). The flood, wildfire, earthquake, and sea-level fields in each climate profile are hand-verified estimates, cross-checked against FEMA NFHL/NRI and USGS (modeled)."
+    "notes": "Average high/low temperature, annual precipitation, and days at or above 90\u00b0F are pulled live from NOAA's climate normals (CDO NORMAL_ANN product, the 1981\u20132010 normals vintage; the newer 1991\u20132020 set isn't served by this endpoint). The flood, wildfire, earthquake, and sea-level fields in each climate profile are hand-verified estimates, cross-checked against FEMA NFHL/NRI and USGS (modeled)."
   },
   {
     "id": "climate-modeled-2025",
@@ -58,10 +58,10 @@
   {
     "id": "air-quality-airnow-2026",
     "label": "EPA AirNow",
-    "provider": "U.S. Environmental Protection Agency \u2014 AirNow",
+    "provider": "U.S. Environmental Protection Agency, AirNow",
     "url": "https://www.airnow.gov/",
     "tier": "live",
-    "notes": "Current air-quality observation for the city's reporting area \u2014 a point-in-time reading stamped with its local observation time, not a rolling average.",
+    "notes": "Current air-quality observation for the city's reporting area: a point-in-time reading stamped with its local observation time, not a rolling average.",
     "fetchedAt": "2026-07-13"
   },
   {
@@ -85,7 +85,7 @@
   {
     "id": "walkability-epa-2026",
     "label": "EPA National Walkability Index",
-    "provider": "U.S. Environmental Protection Agency \u2014 Smart Location Database",
+    "provider": "U.S. Environmental Protection Agency, Smart Location Database",
     "url": "https://www.epa.gov/smartgrowth/smart-location-mapping",
     "tier": "live",
     "fetchedAt": "2026-05-31",

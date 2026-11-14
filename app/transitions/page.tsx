@@ -22,7 +22,7 @@ import {
 export const metadata: Metadata = {
   title: "Transitions",
   description:
-    "Track utility cutovers and address updates side by side — origin shutoffs, destination turn-ons, and who needs your new address.",
+    "Track utility cutovers and address updates side by side: origin shutoffs, destination turn-ons, and who needs your new address.",
 };
 
 export const dynamic = "force-dynamic";

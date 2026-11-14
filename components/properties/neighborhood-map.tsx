@@ -201,7 +201,7 @@ export function NeighborhoodMap({
         {activeLabel && <li>Active destination: {activeLabel}.</li>}
         {summaries.map((s) => (
           <li key={key(s)}>
-            {s.name} — {s.listingCount}{" "}
+            {s.name}: {s.listingCount}{" "}
             {s.listingCount === 1 ? "listing" : "listings"}, {rentLabel(s)},{" "}
             {bedLabel(s.bedRange.min, s.bedRange.max)}, {seaLabel(s.avgSeaProximityKm)}.
           </li>

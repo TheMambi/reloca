@@ -117,7 +117,7 @@ export function RelocationManageDialog({
           </DialogTitle>
           <DialogDescription>
             Compare any two cities. Pick where you&apos;re coming from and where
-            you&apos;re headed — both can be swapped.
+            you&apos;re headed. Both can be swapped.
           </DialogDescription>
         </DialogHeader>
 

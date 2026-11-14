@@ -6,7 +6,7 @@ import { MoveCostView } from "@/components/moving-cost/move-cost-view";
 export const metadata: Metadata = {
   title: "Moving cost",
   description:
-    "Estimate the move side by side — DIY truck rental, professional movers, hybrid — and lock in the option that fits your budget.",
+    "Estimate the move side by side (DIY truck rental, professional movers, or a mix) and lock in the option that fits your budget.",
 };
 
 export const dynamic = "force-dynamic";

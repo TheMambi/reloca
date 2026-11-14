@@ -295,7 +295,7 @@ function ComplianceTableRow({
       <tr className="border-b border-border last:border-b-0">
         <td className="py-3 text-sm text-foreground">{scopeLabel}</td>
         <td colSpan={5} className="py-3 text-xs text-muted-foreground">
-          — not yet added —
+          Not added yet
         </td>
         <td className="py-3 text-right">
           <InsurancePolicyDialogTrigger

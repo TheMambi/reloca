@@ -142,6 +142,35 @@ async function main() {
   await refused(lease.updateLeaseTerms(id, { target_move_out_date: "2020-01-01" }), /before the lease starts/);
   assert.equal((await events(id)).lease_end, "2027-11-30", "a refused patch changes nothing");
 
+  // ---- text fields have a longest length ----
+  const { LEASE_TEXT_LIMITS: limits } = await import("@/schemas/lease");
+  await refused(lease.updateLeaseTerms(id, { property_name: "x".repeat(limits.name + 1) }));
+  await refused(lease.updateLeaseTerms(id, { late_fee_rules: "x".repeat(limits.rules + 1) }));
+  await refused(lease.updateLeaseTerms(id, { included_utilities: ["x".repeat(limits.item + 1)] }));
+  await refused(lease.updateLeaseTerms(id, {
+    residents: [{ name: "x".repeat(limits.name + 1), isPrimary: true }],
+  }));
+  ok(await lease.updateLeaseTerms(id, { late_fee_rules: "x".repeat(limits.rules) }));
+  await refused(lease.createLeaseTerms({ ...input, unit_address: "x".repeat(limits.name + 1) }));
+  const policy = {
+    scope: "origin" as const,
+    property_label: "Home",
+    carrier: null,
+    policy_number: null,
+    liability_amount: 100000,
+    personal_property_amount: 20000,
+    monthly_cost: null,
+    effective_from: "2027-01-01",
+    effective_to: null,
+    interested_party_name: null,
+    document_url: null,
+  };
+  await refused(lease.addInsurancePolicy({ ...policy, carrier: "x".repeat(limits.name + 1) }));
+  await refused(lease.addInsurancePolicy({ ...policy, policy_number: "x".repeat(limits.item + 1) }));
+  const { id: policyId } = ok(await lease.addInsurancePolicy(policy));
+  await refused(lease.updateInsurancePolicy(policyId, { property_label: "x".repeat(limits.name + 1) }));
+  await refused(lease.updateInsurancePolicy(policyId, { effective_to: "2026-12-31" }), /end after it starts/);
+
   // ---- a failed write between two steps is repaired by calling again ----
   const { row: draft } = ok(await lease.createNoticeDraft(id, {
     body_markdown: "Notice",

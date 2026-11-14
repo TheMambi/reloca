@@ -44,7 +44,7 @@ export async function upsertMoveEstimate(rawPatch: {
   // would make every subsequent Zod-parsed read throw — reject it here.
   const parsedPatch = MoveEstimatePatchSchema.safeParse(rawPatch);
   if (!parsedPatch.success) {
-    return { ok: false, error: "Those estimate details don't look right — try again." };
+    return { ok: false, error: "Those estimate details don't look right. Try again." };
   }
   const patch = parsedPatch.data;
 
@@ -168,7 +168,7 @@ export async function updateScenarioLineItems(
   // Same jsonb-write gate as upsertMoveEstimate (AD-039).
   const parsedItems = LineItemSchema.array().safeParse(rawLineItems);
   if (!parsedItems.success) {
-    return { ok: false, error: "Those line items don't look right — try again." };
+    return { ok: false, error: "Those line items don't look right. Try again." };
   }
   const lineItems = parsedItems.data;
 

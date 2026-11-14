@@ -27,7 +27,7 @@ export function MoveCostView({ estimate }: Props) {
       : estimate.scenarios.reduce((m, s) => (s.total < m.total ? s : m), estimate.scenarios[0]);
 
   const headlineTotal = chosen?.total ?? cheapest?.total ?? 0;
-  const headlineLabel = chosen?.label ?? (cheapest ? `${cheapest.label} — cheapest` : "—");
+  const headlineLabel = chosen?.label ?? (cheapest ? `${cheapest.label} (cheapest)` : "—");
 
   return (
     <div className="flex flex-col gap-5">

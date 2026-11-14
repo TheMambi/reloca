@@ -86,7 +86,7 @@ export function DataSourcesPanel() {
             <li
               key={src.id}
               className="flex items-center gap-3 rounded-[var(--radius-md)] border border-border/70 bg-background/40 px-3 py-2.5"
-              title={src.notes ? `${src.provider} — ${src.notes}` : src.provider}
+              title={src.notes ? `${src.provider}: ${src.notes}` : src.provider}
             >
               <span
                 aria-hidden="true"

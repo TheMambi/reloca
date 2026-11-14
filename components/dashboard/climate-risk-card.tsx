@@ -95,7 +95,7 @@ function metricsFor(c: ClimateProfile, includeSea: boolean): Metric[] {
       title:
         c.seaLevelRise.projection2050cm !== null
           ? `+${c.seaLevelRise.projection2050cm} cm projected by 2050`
-          : "Inland — no coastal exposure",
+          : "Inland, no coastal exposure",
     });
   }
   return rows;

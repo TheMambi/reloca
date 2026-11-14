@@ -48,7 +48,7 @@ export function Sidebar() {
       {/* Brand */}
       <Link
         href="/"
-        aria-label="Reloca — go to dashboard"
+        aria-label="Reloca, go to dashboard"
         className={cn(
           "flex items-center gap-2.5 py-1",
           collapsed ? "justify-center" : "px-2",

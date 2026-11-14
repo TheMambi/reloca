@@ -115,7 +115,7 @@ export function PenaltyForecaster({
             <span className="mono-num not-italic text-foreground">
               {usdFormat.format(Math.abs(stayBar.deltaVsCurrentPath))}
             </span>{" "}
-            cheaper over that period. The case for moving is non-financial — flag
+            cheaper over that period. The case for moving is non-financial, so flag
             this trade-off before sending notice.
           </p>
         )}
@@ -171,7 +171,7 @@ function SettledSummary({
       <div className="px-6 py-6">
         <p className="text-sm leading-relaxed text-foreground">{pathLabel}.</p>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          Move-out date: {moveOutDate}. Final rent stops with the lease — what&rsquo;s
+          Move-out date: {moveOutDate}. Final rent stops with the lease. What&rsquo;s
           left now is the deposit, tracked in the Walkthrough tab.
         </p>
       </div>
@@ -322,7 +322,7 @@ function formatTotal(bar: ForecastBar): string {
 function formatDelta(bar: ForecastBar, isReference: boolean): React.ReactNode {
   if (isReference) {
     return (
-      <span className="text-muted-foreground">— current path</span>
+      <span className="text-muted-foreground">(current path)</span>
     );
   }
   const delta = bar.deltaVsCurrentPath;

@@ -35,7 +35,7 @@ export async function generateMetadata({
   const prop = findNeighborhood(neighborhood);
   if (!prop) notFound();
   return {
-    title: `${prop.neighborhood} — Risk`,
+    title: `${prop.neighborhood} risk`,
     description: `Climate, crime, and environmental risk drill-down for the ${prop.neighborhood} neighborhood.`,
   };
 }

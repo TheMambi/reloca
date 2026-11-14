@@ -133,7 +133,7 @@ function CustomUtilityDialog({
         <DialogHeader>
           <DialogTitle>Add a custom utility</DialogTitle>
           <DialogDescription>
-            Anything not in the standard list — e.g. solar lease, HOA, security
+            Anything not in the standard list, such as a solar lease, HOA, security
             monitoring.
           </DialogDescription>
         </DialogHeader>

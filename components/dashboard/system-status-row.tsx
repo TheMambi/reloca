@@ -18,8 +18,8 @@ export function AllSystemsGo({
     title = "Almost there";
     body =
       alertCount === 1
-        ? "One thing still needs a look — check the alert at the top of the page."
-        : `${alertCount} things still need a look — check the alerts at the top of the page.`;
+        ? "One thing still needs a look. Check the alert at the top of the page."
+        : `${alertCount} things still need a look. Check the alerts at the top of the page.`;
   } else if (arrived) {
     title = "You made it";
     body = "The move is behind you. Wrap up the last details at your own pace.";

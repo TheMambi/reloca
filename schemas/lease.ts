@@ -151,6 +151,23 @@ export type InsurancePolicy = z.infer<typeof InsurancePolicySchema>;
 // schema built from a shape with defaults resets fields the caller never sent.
 // Defaults are added on create only, and the patch schemas reject unknown keys.
 
+// Longest text a form may save. The row schemas above stay open so a row
+// written before these limits still loads.
+export const LEASE_TEXT_LIMITS = {
+  name: 200,
+  city: 100,
+  email: 254,
+  item: 100,
+  residents: 10,
+  utilities: 30,
+  rules: 2000,
+} as const;
+
+const ResidentInput = ResidentSchema.extend({
+  name: z.string().min(1).max(LEASE_TEXT_LIMITS.name),
+  email: z.email().max(LEASE_TEXT_LIMITS.email).optional(),
+});
+
 const LeaseTermsFields = LeaseTermsSchema.pick({
   property_name: true,
   unit_address: true,
@@ -172,6 +189,15 @@ const LeaseTermsFields = LeaseTermsSchema.pick({
   included_utilities: true,
   late_fee_rules: true,
   decision: true,
+}).extend({
+  property_name: z.string().min(1).max(LEASE_TEXT_LIMITS.name),
+  unit_address: z.string().min(1).max(LEASE_TEXT_LIMITS.name),
+  city: z.string().min(1).max(LEASE_TEXT_LIMITS.city),
+  landlord_email: z.email().max(LEASE_TEXT_LIMITS.email),
+  landlord_display_name: z.string().max(LEASE_TEXT_LIMITS.name).nullable(),
+  residents: z.array(ResidentInput).min(1).max(LEASE_TEXT_LIMITS.residents),
+  included_utilities: z.array(z.string().max(LEASE_TEXT_LIMITS.item)).max(LEASE_TEXT_LIMITS.utilities),
+  late_fee_rules: z.string().max(LEASE_TEXT_LIMITS.rules).nullable(),
 });
 
 // These refinements run on create. A patch holds only the changed fields, so
@@ -196,7 +222,7 @@ export const CreateLeaseTermsInput = LeaseTermsFields.extend({
 // Residents are replaced whole, so a patch that sends them must say who is
 // primary instead of having the row schema's default filled in.
 export const UpdateLeaseTermsPatch = LeaseTermsFields.extend({
-  residents: z.array(ResidentSchema.extend({ isPrimary: z.boolean() })).min(1),
+  residents: z.array(ResidentInput.extend({ isPrimary: z.boolean() })).min(1).max(LEASE_TEXT_LIMITS.residents),
 })
   .partial()
   .strict();
@@ -215,6 +241,10 @@ const InsurancePolicyFields = InsurancePolicySchema.pick({
   interested_party_name: true,
   document_url: true,
 }).extend({
+  property_label: z.string().min(1).max(LEASE_TEXT_LIMITS.name),
+  carrier: z.string().max(LEASE_TEXT_LIMITS.name).nullable(),
+  policy_number: z.string().max(LEASE_TEXT_LIMITS.item).nullable(),
+  interested_party_name: z.string().max(LEASE_TEXT_LIMITS.name).nullable(),
   document_url: WebLinkSchema.nullable(),
 });
 

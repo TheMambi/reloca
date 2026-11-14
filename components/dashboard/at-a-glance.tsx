@@ -99,7 +99,7 @@ export async function AtAGlance({
   const phrase = countdownPhrase(days);
   const moveDaySub = moveDateIso
     ? [phrase.lead, phrase.count, phrase.trail].filter((p) => p !== null && p !== "").join(" ")
-    : "— —";
+    : "Not set";
   const moveDayTone = countdownTone(days);
 
   // Row 2: lease-aware cell when a lease exists, otherwise the original Risks row.

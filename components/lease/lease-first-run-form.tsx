@@ -18,6 +18,7 @@ import {
 } from "./lease-first-run-defaults";
 import { cn } from "@/lib/utils";
 import { formatDate, isoToPickerDate, pickerDateToIso } from "@/lib/dates";
+import { LEASE_TEXT_LIMITS } from "@/schemas/lease";
 
 function formatTriggerDate(iso: string): string {
   if (!iso) return "Pick a date";
@@ -154,7 +155,7 @@ export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
     if (!city.trim()) errors.city = "Required.";
     if (!landlordEmail.trim()) {
       errors.landlord_email =
-        "Required — copy this from your renewal email.";
+        "Required. Copy this from your renewal email.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(landlordEmail)) {
       errors.landlord_email = "Must be a valid email address.";
     }
@@ -318,6 +319,7 @@ export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
           >
             <Input
               value={propertyName}
+              maxLength={LEASE_TEXT_LIMITS.name}
               onChange={(e) => setPropertyName(e.target.value)}
               placeholder={example(FIRST_RUN_DEFAULTS.property_name)}
               aria-invalid={Boolean(fieldErrors.property_name)}
@@ -327,6 +329,7 @@ export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
           <Field label="City" error={fieldErrors.city}>
             <Input
               value={city}
+              maxLength={LEASE_TEXT_LIMITS.city}
               onChange={(e) => setCity(e.target.value)}
               placeholder={example(FIRST_RUN_DEFAULTS.city)}
               aria-invalid={Boolean(fieldErrors.city)}
@@ -340,6 +343,7 @@ export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
           >
             <Input
               value={unitAddress}
+              maxLength={LEASE_TEXT_LIMITS.name}
               onChange={(e) => setUnitAddress(e.target.value)}
               placeholder={example(FIRST_RUN_DEFAULTS.unit_address)}
               aria-invalid={Boolean(fieldErrors.unit_address)}
@@ -348,12 +352,13 @@ export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
           </Field>
           <Field
             label="Landlord email"
-            hint="Required — copy from the renewal email thread."
+            hint="Required. Copy it from the renewal email thread."
             error={fieldErrors.landlord_email}
           >
             <Input
               type="email"
               value={landlordEmail}
+              maxLength={LEASE_TEXT_LIMITS.email}
               onChange={(e) => setLandlordEmail(e.target.value)}
               placeholder="management@example.com"
               aria-invalid={Boolean(fieldErrors.landlord_email)}
@@ -363,6 +368,7 @@ export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
           <Field label="Landlord display name (optional)">
             <Input
               value={landlordDisplayName}
+              maxLength={LEASE_TEXT_LIMITS.name}
               onChange={(e) => setLandlordDisplayName(e.target.value)}
               placeholder={example(FIRST_RUN_DEFAULTS.landlord_display_name)}
             />
@@ -382,6 +388,7 @@ export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
                 <Field label={`Resident ${idx + 1} name`}>
                   <Input
                     value={r.name}
+                    maxLength={LEASE_TEXT_LIMITS.name}
                     onChange={(e) => updateResident(idx, { name: e.target.value })}
                   />
                 </Field>
@@ -389,6 +396,7 @@ export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
                   <Input
                     type="email"
                     value={r.email}
+                    maxLength={LEASE_TEXT_LIMITS.email}
                     onChange={(e) => updateResident(idx, { email: e.target.value })}
                   />
                 </Field>
@@ -650,6 +658,7 @@ export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
           >
             <textarea
               value={lateFeeRules}
+              maxLength={LEASE_TEXT_LIMITS.rules}
               onChange={(e) => setLateFeeRules(e.target.value)}
               rows={3}
               className="min-h-[5rem] w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-xs leading-relaxed text-foreground transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"

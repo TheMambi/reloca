@@ -390,7 +390,7 @@ export function AddDestinationDialog({ destination, trigger }: Props) {
               </Banner>
             ) : missing.length > 0 && !editing ? (
               <Banner tone="info">
-                We couldn&apos;t read these from the page —{" "}
+                We couldn&apos;t read these from the page:{" "}
                 {missing.map(prettyFieldName).join(", ")}. Please add them.
               </Banner>
             ) : null}
@@ -432,7 +432,7 @@ export function AddDestinationDialog({ destination, trigger }: Props) {
                     <option value="">—</option>
                     {US_STATES.map((s) => (
                       <option key={s.code} value={s.code}>
-                        {s.code} — {s.name}
+                        {s.code}, {s.name}
                       </option>
                     ))}
                   </select>
@@ -698,7 +698,7 @@ function PhaseUrl({
       {error ? <Banner tone="danger">{error}</Banner> : null}
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onSkip} disabled={isFetching}>
-          Skip — type it in
+          Skip and type it in
         </Button>
         <Button
           type="button"

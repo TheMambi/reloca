@@ -46,7 +46,7 @@ const AddressPatchSchema = AddressChangeTargetSchema.pick({
   .partial()
   .strict();
 
-const INVALID_INPUT = "Those details don't look right — try again.";
+const INVALID_INPUT = "Those details don't look right. Try again.";
 
 async function computeAddressDueDate(
   kind: AddressChangeTarget["kind"],

@@ -25,7 +25,7 @@ import { DepositSection } from "@/components/lease/deposit-section";
 export const metadata: Metadata = {
   title: "Lease",
   description:
-    "Decide whether to renew, vacate, or go month-to-month — track notice deadlines, draft the notice, forecast costs, manage insurance, and document the move-out walkthrough.",
+    "Decide whether to renew, vacate, or go month-to-month, then track notice deadlines, draft the notice, forecast costs, manage insurance, and document the move-out walkthrough.",
 };
 
 export const dynamic = "force-dynamic";

@@ -14,11 +14,11 @@ import "./globals.css";
 export function generateMetadata(): Metadata {
   return {
     title: {
-      default: "Reloca — your relocation cockpit",
+      default: "Reloca: your relocation cockpit",
       template: "%s · Reloca",
     },
     description:
-      "A personal relocation dashboard: cost of living, properties, community, checklist, lease — everything for the move in one place.",
+      "A personal relocation dashboard: cost of living, properties, community, checklist and lease. Everything for the move in one place.",
     // A private copy shows a real address and lease. Only the demo may be indexed.
     ...(allowsIndexing(appMode()) ? {} : { robots: { index: false, follow: false } }),
   };

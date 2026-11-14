@@ -55,6 +55,7 @@ export function WalkthroughForm({ walkthrough, rooms }: Props) {
   // Debounced auto-save for walkthrough header (date + notes). Per-room edits
   // get their own debounced saves below.
   const headerSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   function queueHeaderSave(next: {
     walkthrough_date?: string | null;
@@ -62,8 +63,8 @@ export function WalkthroughForm({ walkthrough, rooms }: Props) {
   }) {
     if (headerSaveTimer.current) clearTimeout(headerSaveTimer.current);
     headerSaveTimer.current = setTimeout(() => {
-      void updateWalkthrough(walkthrough.id, next).catch(() => {
-        // Quiet failure — revalidatePath on next read brings us back.
+      void settle(updateWalkthrough(walkthrough.id, next)).then((res) => {
+        setSaveError(res.ok ? null : `Your last change wasn't saved. ${res.error}`);
       });
     }, 400);
   }
@@ -155,12 +156,17 @@ export function WalkthroughForm({ walkthrough, rooms }: Props) {
             id="walkthrough-notes"
             value={overallNotes}
             onChange={(e) => handleNotesChange(e.target.value)}
-            placeholder="Anything that applies across rooms — utilities turned off, keys returned, walkthrough partner present, etc."
+            placeholder="Anything that applies across rooms: utilities turned off, keys returned, walkthrough partner present, etc."
             rows={2}
             className="min-h-[3.5rem] w-full resize-none rounded-[var(--radius-sm)] border border-border bg-background/40 px-3 py-2 text-xs leading-relaxed text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           />
         </div>
       </div>
+      {saveError && (
+        <p role="alert" className="text-xs text-[var(--danger)]">
+          {saveError}
+        </p>
+      )}
 
       {/* Per-room cards */}
       <div className="flex flex-col gap-3">
@@ -267,12 +273,13 @@ function RoomCard({
   const [notes, setNotes] = useState(room.notes ?? "");
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   function queueSave(patch: Parameters<typeof updateRoomRecord>[1]) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      void updateRoomRecord(room.id, patch).catch(() => {
-        // Quiet — revalidatePath will reset on the next read if anything diverged.
+      void settle(updateRoomRecord(room.id, patch)).then((res) => {
+        setSaveError(res.ok ? null : `Your last change to this room wasn't saved. ${res.error}`);
       });
     }, 400);
   }
@@ -384,10 +391,15 @@ function RoomCard({
             queueSave({ notes: strOrNull(e.target.value) });
           }}
           rows={2}
-          placeholder="Anything specific about this room — pre-existing damage, cleaning done, replaced bulbs, etc."
+          placeholder="Anything specific about this room: pre-existing damage, cleaning done, replaced bulbs, etc."
           className="min-h-[3rem] w-full resize-none rounded-[var(--radius-sm)] border border-border bg-background/40 px-3 py-2 text-xs leading-relaxed text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
+      {saveError && (
+        <p role="alert" className="mt-2 text-xs text-[var(--danger)]">
+          {saveError}
+        </p>
+      )}
     </article>
   );
 }
@@ -506,7 +518,7 @@ function AddRoomDialog({
         <DialogHeader>
           <DialogTitle>Add a room</DialogTitle>
           <DialogDescription>
-            Anything beyond the four defaults — office, garage, balcony,
+            Anything beyond the four defaults: office, garage, balcony,
             laundry, hallway, etc.
           </DialogDescription>
         </DialogHeader>
