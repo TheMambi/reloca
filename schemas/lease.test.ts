@@ -8,6 +8,7 @@ import {
   InsurancePolicyPatchInput,
   UpdateLeaseTermsPatch,
 } from "./lease";
+import { WebLinkSchema, safeHref } from "./web-link";
 
 // ---- patches carry only the keys they were given ----------------------------
 // A one-field edit used to come back with every defaulted field filled in, and
@@ -123,5 +124,24 @@ assert.equal(destination.fetch_status, "manual");
 assert.deepEqual(destination.amenities, []);
 assert.equal(destination.insurance_required, true);
 assert.equal(destination.is_active_target, false);
+
+// ---- saved links are web links only ----
+const notWebLinks = ["javascript:alert(document.domain)", "data:text/html,<p>x</p>", "file:///etc/passwd", "vbscript:x", "ms-msdt:x"];
+for (const link of notWebLinks) {
+  assert.equal(DestinationCreateInput.safeParse({ ...destination, source_url: link }).success, false, `source_url ${link}`);
+  assert.equal(DestinationPatchInput.safeParse({ source_url: link }).success, false, `source_url patch ${link}`);
+  assert.equal(InsurancePolicyCreateInput.safeParse({ ...policy, document_url: link }).success, false, `document_url ${link}`);
+  assert.equal(InsurancePolicyPatchInput.safeParse({ document_url: link }).success, false, `document_url patch ${link}`);
+  assert.equal(WebLinkSchema.safeParse(link).success, false, link);
+  // A row saved before the rule existed is drawn as text, never as a link.
+  assert.equal(safeHref(link), undefined, `href ${link}`);
+}
+for (const link of ["https://example.test/listing/42", "http://example.test/"]) {
+  assert.equal(DestinationPatchInput.safeParse({ source_url: link }).success, true, link);
+  assert.equal(InsurancePolicyPatchInput.safeParse({ document_url: link }).success, true, link);
+  assert.equal(safeHref(link), link);
+}
+assert.equal(safeHref(null), undefined);
+assert.equal(safeHref("not a link"), undefined);
 
 console.log("schemas/lease.test.ts passed");

@@ -8,6 +8,7 @@ import { Pencil, Trash2 } from "lucide-react";
 
 import { AddDestinationDialog } from "./add-destination-dialog";
 import { deleteDestination } from "@/app/lease/actions";
+import { settle } from "@/lib/settle-action";
 
 import type { Destination } from "@/schemas/lease";
 
@@ -24,13 +25,8 @@ export function DestinationColumnControls({ destination }: Props) {
     );
     if (!ok) return;
     startDelete(async () => {
-      try {
-        await deleteDestination(destination.id);
-      } catch (err) {
-        console.error("deleteDestination:", err);
-        const msg = err instanceof Error ? err.message : "Delete failed";
-        window.alert(msg);
-      }
+      const res = await settle(deleteDestination(destination.id));
+      if (!res.ok) window.alert(res.error);
     });
   }
 

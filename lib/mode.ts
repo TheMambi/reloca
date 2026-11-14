@@ -16,10 +16,15 @@ const ModeEnv = z.object({
 // The anon key is not on the list: nothing reads it any more.
 const PrivateEnv = z.object({
   RELOCA_ACCESS_GATE: z.string().trim().min(1),
-  SUPABASE_URL: z.string().min(1),
+  SUPABASE_URL: z.url({ protocol: /^https?$/ }),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  RELOCA_SINGLE_USER_ID: z.string().min(1),
+  // Any id Postgres takes as a uuid, not only a random (version 4) one.
+  RELOCA_SINGLE_USER_ID: z.guid(),
 });
+const SHAPES: Record<string, string> = {
+  SUPABASE_URL: "a web address that starts with https:// or http://",
+  RELOCA_SINGLE_USER_ID: "a UUID",
+};
 
 type Env = Record<string, string | undefined>;
 
@@ -54,11 +59,19 @@ export function resolveMode(env: Env): AppMode {
   if (legacyDemo) {
     throw new Error(`${REFUSED} RELOCA_MODE=private and RELOCA_DEMO_MODE=1 disagree. Remove one of them.`);
   }
-  const required = PrivateEnv.safeParse({ ...env, SUPABASE_URL: supabaseUrl(env) });
+  const given: Env = { ...env, SUPABASE_URL: supabaseUrl(env) };
+  const required = PrivateEnv.safeParse(given);
   if (!required.success) {
     const names = [...new Set(required.error.issues.map((issue) => String(issue.path[0])))];
+    const missing = names.filter((name) => !given[name]?.trim());
+    if (missing.length > 0) {
+      throw new Error(
+        `${REFUSED} private mode is missing ${missing.join(", ")}. See .env.template for what each one is.`,
+      );
+    }
     throw new Error(
-      `${REFUSED} private mode is missing ${names.join(", ")}. See .env.template for what each one is.`,
+      `${REFUSED} ${names.map((name) => `${name} is set but is not ${SHAPES[name]}`).join(", and ")}. ` +
+        `See .env.template for what each one is.`,
     );
   }
   return "private";

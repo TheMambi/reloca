@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import {
   Select,
   SelectContent,
@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { updateLeaseDecision } from "@/app/lease/actions";
+import { settle } from "@/lib/settle-action";
 import type { LeaseTerms } from "@/schemas/lease";
 
 type Decision = LeaseTerms["decision"];
@@ -33,40 +34,50 @@ export function DecisionDropdown({
   disabled = false,
 }: DecisionDropdownProps) {
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   function onValueChange(next: string) {
     if (next === current) return;
+    setError(null);
     startTransition(async () => {
-      await updateLeaseDecision(leaseId, next as Decision);
+      const res = await settle(updateLeaseDecision(leaseId, next as Decision));
+      if (!res.ok) setError(res.error);
     });
   }
 
   return (
-    <Select
-      value={current}
-      onValueChange={onValueChange}
-      disabled={disabled || isPending}
-    >
-      <SelectTrigger
-        size="sm"
-        aria-label="Lease decision"
-        className={`label-cap h-7 w-full justify-between border-border bg-transparent px-2 text-[10px] text-foreground tracking-wider ${
-          isPending ? "opacity-60" : ""
-        }`}
+    <>
+      <Select
+        value={current}
+        onValueChange={onValueChange}
+        disabled={disabled || isPending}
       >
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent align="start">
-        {OPTIONS.map((opt) => (
-          <SelectItem
-            key={opt.value}
-            value={opt.value}
-            className="label-cap text-[10px] tracking-wider"
-          >
-            {opt.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+        <SelectTrigger
+          size="sm"
+          aria-label="Lease decision"
+          className={`label-cap h-7 w-full justify-between border-border bg-transparent px-2 text-[10px] text-foreground tracking-wider ${
+            isPending ? "opacity-60" : ""
+          }`}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent align="start">
+          {OPTIONS.map((opt) => (
+            <SelectItem
+              key={opt.value}
+              value={opt.value}
+              className="label-cap text-[10px] tracking-wider"
+            >
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {error ? (
+        <p role="alert" className="mt-1 text-[11px] text-[var(--danger)]">
+          {error}
+        </p>
+      ) : null}
+    </>
   );
 }

@@ -30,6 +30,7 @@ import {
   updateInsurancePolicy,
   deleteInsurancePolicy,
 } from "@/app/lease/actions";
+import { settle } from "@/lib/settle-action";
 import type { InsurancePolicy, InsuranceScopeEnum } from "@/schemas/lease";
 import type { z } from "zod";
 import { isoToPickerDate, pickerDateToIso, todayInZoneIso } from "@/lib/dates";
@@ -170,18 +171,11 @@ export function InsurancePolicyForm({
     };
 
     startSubmit(async () => {
-      try {
-        if (editing && policy) {
-          await updateInsurancePolicy(policy.id, payload);
-        } else {
-          await addInsurancePolicy(payload);
-        }
-        handleOpenChange(false);
-      } catch (err) {
-        setErrorMsg(
-          err instanceof Error ? err.message : "Failed to save policy.",
-        );
-      }
+      const res = await settle(
+        editing && policy ? updateInsurancePolicy(policy.id, payload) : addInsurancePolicy(payload),
+      );
+      if (res.ok) handleOpenChange(false);
+      else setErrorMsg(res.error);
     });
   }
 
@@ -189,15 +183,13 @@ export function InsurancePolicyForm({
     if (!policy) return;
     setErrorMsg(null);
     startDelete(async () => {
-      try {
-        await deleteInsurancePolicy(policy.id);
-        setConfirmDeleteOpen(false);
-        handleOpenChange(false);
-      } catch (err) {
-        setErrorMsg(
-          err instanceof Error ? err.message : "Failed to delete policy.",
-        );
+      const res = await settle(deleteInsurancePolicy(policy.id));
+      if (!res.ok) {
+        setErrorMsg(res.error);
+        return;
       }
+      setConfirmDeleteOpen(false);
+      handleOpenChange(false);
     });
   }
 

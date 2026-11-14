@@ -128,8 +128,8 @@ export async function fetchDestinationFromUrl(
   }
 
   try {
-    const { html, finalUrl } = await safeFetch(parsed, transport);
-    const data = extractFromHtml(html, finalUrl);
+    const { html } = await safeFetch(parsed, transport);
+    const data = extractFromHtml(html, parsed.toString());
     const missing = getMissingRequired(data);
     return { status: "needs_review", data, missing };
   } catch (err) {
@@ -144,11 +144,13 @@ export function extractFromHtml(
   sourceUrl?: string,
 ): Partial<DestinationInput> {
   const $ = cheerio.load(structuredMarkup(html));
-  const ld = parseJsonLd($, sourceUrl);
-  const og = parseOgMeta($, sourceUrl);
+  const ld = parseJsonLd($);
+  const og = parseOgMeta($);
   // JSON-LD wins over Open Graph. Later spread wins.
   const merged: Partial<DestinationInput> = { ...og, ...ld };
-  if (sourceUrl && !merged.source_url) merged.source_url = sourceUrl;
+  // The saved link is the address the person asked for. A page that could
+  // name its own (og:url, JSON-LD url, a redirect) could point it anywhere.
+  if (sourceUrl) merged.source_url = sourceUrl;
   // A page can declare text of any length. Trim it to what the form accepts.
   const L = DESTINATION_TEXT_LIMITS;
   if (merged.building_name) merged.building_name = merged.building_name.slice(0, L.name);
@@ -240,7 +242,7 @@ export function getMissingRequired(
 
 // ---------- parsers ----------
 
-export function parseJsonLd($: CheerioRoot, pageUrl?: string): Partial<DestinationInput> {
+export function parseJsonLd($: CheerioRoot): Partial<DestinationInput> {
   const out: Partial<DestinationInput> = {};
   const scripts = $('script[type="application/ld+json"]');
   scripts.each((_, el) => {
@@ -253,13 +255,13 @@ export function parseJsonLd($: CheerioRoot, pageUrl?: string): Partial<Destinati
       return;
     }
     for (const item of flattenLd(parsed)) {
-      mergeFromLdItem(out, item, pageUrl);
+      mergeFromLdItem(out, item);
     }
   });
   return out;
 }
 
-export function parseOgMeta($: CheerioRoot, pageUrl?: string): Partial<DestinationInput> {
+export function parseOgMeta($: CheerioRoot): Partial<DestinationInput> {
   const out: Partial<DestinationInput> = {};
 
   const title = $('meta[property="og:title"]').attr("content");
@@ -267,10 +269,6 @@ export function parseOgMeta($: CheerioRoot, pageUrl?: string): Partial<Destinati
 
   const desc = $('meta[property="og:description"]').attr("content");
   if (desc && desc.trim()) out.notes = desc.trim();
-
-  const ogUrl = $('meta[property="og:url"]').attr("content");
-  const ogLink = ogUrl ? absoluteHttpUrl(ogUrl, pageUrl) : null;
-  if (ogLink) out.source_url = ogLink;
 
   const street = $(
     'meta[property="business:contact_data:street_address"]',
@@ -316,7 +314,6 @@ function flattenLd(v: unknown): Record<string, unknown>[] {
 function mergeFromLdItem(
   out: Partial<DestinationInput>,
   item: Record<string, unknown>,
-  pageUrl?: string,
 ): void {
   const rawType = item["@type"];
   const types: string[] = Array.isArray(rawType)
@@ -328,10 +325,6 @@ function mergeFromLdItem(
 
   if (typeof item.name === "string" && !out.building_name) {
     out.building_name = item.name;
-  }
-  if (typeof item.url === "string" && !out.source_url) {
-    const link = absoluteHttpUrl(item.url, pageUrl);
-    if (link) out.source_url = link;
   }
 
   const addr = item.address;
@@ -409,16 +402,6 @@ function mergeFromLdItem(
 }
 
 // ---------- small utils ----------
-
-/** A link from the page as an absolute http(s) URL, or null. Relative links resolve against the page. */
-function absoluteHttpUrl(raw: string, pageUrl?: string): string | null {
-  try {
-    const u = new URL(raw.trim(), pageUrl);
-    return u.protocol === "http:" || u.protocol === "https:" ? u.toString() : null;
-  } catch {
-    return null;
-  }
-}
 
 function coerceNumber(v: unknown): number | null {
   if (typeof v === "number" && Number.isFinite(v)) return v;

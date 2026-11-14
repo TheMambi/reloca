@@ -25,6 +25,7 @@ import {
   updateWalkthrough,
   generateWalkthroughReport,
 } from "@/app/lease/move-out-actions";
+import { settle } from "@/lib/settle-action";
 import type {
   MoveOutWalkthrough,
   MoveOutRoomRecord,
@@ -80,7 +81,7 @@ export function WalkthroughForm({ walkthrough, rooms }: Props) {
   function handleGenerate() {
     setReportError(null);
     startReport(async () => {
-      const result = await generateWalkthroughReport(walkthrough.id);
+      const result = await settle(generateWalkthroughReport(walkthrough.id));
       if (!result.ok) {
         setReportError(result.error);
         return;
@@ -480,13 +481,13 @@ function AddRoomDialog({
       return;
     }
     startAdd(async () => {
-      try {
-        await addRoom(walkthroughId, trimmed);
-        setName("");
-        onOpenChange(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to add room.");
+      const res = await settle(addRoom(walkthroughId, trimmed));
+      if (!res.ok) {
+        setError(res.error);
+        return;
       }
+      setName("");
+      onOpenChange(false);
     });
   }
 
@@ -568,12 +569,9 @@ function DeleteRoomDialog({
     if (!roomId) return;
     setError(null);
     startDelete(async () => {
-      try {
-        await deleteRoom(roomId);
-        onClose();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to delete.");
-      }
+      const res = await settle(deleteRoom(roomId));
+      if (res.ok) onClose();
+      else setError(res.error);
     });
   }
 

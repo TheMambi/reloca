@@ -76,7 +76,7 @@ function loadFixture(name: string): string {
   const og = parseOgMeta($);
   assert.equal(og.building_name, "Wave & Wire", "og decodes &amp; entity");
   assert.match(og.notes ?? "", /East Village Arts District/, "og notes pulled from description");
-  assert.equal(og.source_url, "https://example.test/wave-and-wire/", "og source_url");
+  assert.equal(og.source_url, undefined, "the page's own og:url is not taken as the link");
   assert.equal(og.street_address, "300 Demo Street", "og business street_address");
   assert.equal(og.city, "Long Beach", "og business locality");
 
@@ -109,20 +109,20 @@ function loadFixture(name: string): string {
   const listing = { "@type": "Apartment", name: "LD Name", numberOfBedrooms: 2, numberOfRooms: 5, url: "/listing/42" };
   const merged = extractFromHtml(page(listing), "https://example.test/buildings/pier");
   assert.equal(merged.beds, 2, "bedrooms, not total rooms");
-  assert.equal(merged.source_url, "https://example.test/listing/42", "a relative link is resolved against the page");
+  assert.equal(merged.source_url, "https://example.test/buildings/pier", "the link saved is the address that was read, not one the page names");
   assert.equal(extractFromHtml(page({ ...listing, numberOfBedrooms: undefined })).beds, 5, "total rooms only as a fallback");
-  assert.equal(extractFromHtml(page(listing)).source_url, undefined, "a relative link with no page address is dropped");
-  assert.equal(
-    extractFromHtml(page({ ...listing, url: "javascript:alert(1)" }), "https://example.test/a").source_url,
-    "https://example.test/a",
-    "a link that is not http(s) is dropped",
-  );
-  const og = extractFromHtml(
-    page({ "@type": "Apartment", name: "LD Name" }, '<meta property="og:title" content="OG Name" /><meta property="og:url" content="../x" />'),
-    "https://example.test/a/b",
-  );
-  assert.equal(og.building_name, "LD Name", "JSON-LD wins over Open Graph");
-  assert.equal(og.source_url, "https://example.test/x", "og:url is resolved too");
+  assert.equal(extractFromHtml(page(listing)).source_url, undefined, "no link without the address that was read");
+  for (const hostile of ["javascript:alert(1)", "https://look-alike.test/sign-in"]) {
+    const og = extractFromHtml(
+      page(
+        { "@type": "Apartment", name: "LD Name", url: hostile },
+        `<meta property="og:title" content="OG Name" /><meta property="og:url" content="${hostile}" />`,
+      ),
+      "https://example.test/a/b",
+    );
+    assert.equal(og.building_name, "LD Name", "JSON-LD wins over Open Graph");
+    assert.equal(og.source_url, "https://example.test/a/b", `a page cannot choose the saved link (${hostile})`);
+  }
 }
 
 // ---------- 5. Hostile pages finish quickly ----------

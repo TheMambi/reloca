@@ -14,6 +14,7 @@
 // just starts populating those cells.
 
 import type { Destination } from "@/schemas/lease";
+import { safeHref } from "@/schemas/web-link";
 import { DestinationColumnControls } from "./destination-column-controls";
 
 interface DestinationsCompareTableProps {
@@ -132,9 +133,11 @@ function renderSourceUrl(d: Destination): React.ReactNode {
   } catch {
     host = d.source_url;
   }
+  const href = safeHref(d.source_url);
+  if (!href) return host;
   return (
     <a
-      href={d.source_url}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       className="text-foreground underline-offset-2 hover:underline"

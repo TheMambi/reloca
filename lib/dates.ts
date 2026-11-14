@@ -18,8 +18,11 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS = 86_400_000;
 
 export function isValidIsoDate(value: string | null | undefined): value is string {
-  if (!value || !DATE_RE.test(value)) return false;
-  return !Number.isNaN(new Date(`${value}T00:00:00.000Z`).getTime());
+  if (typeof value !== "string" || !DATE_RE.test(value)) return false;
+  // The engine rolls a day that does not exist into the next month
+  // (2027-02-30 becomes March 2), so the value must survive the round trip.
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 
 /**

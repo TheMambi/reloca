@@ -19,6 +19,12 @@ import {
 
 assert.equal(isValidIsoDate("2027-10-27"), true);
 assert.equal(isValidIsoDate("2026-7-15"), false);
+// Days that do not exist are refused, not rolled into the next month.
+assert.equal(isValidIsoDate("2027-02-30"), false);
+assert.equal(isValidIsoDate("2027-02-31"), false);
+assert.equal(isValidIsoDate("2027-02-29"), false);
+assert.equal(isValidIsoDate("2028-02-29"), true);
+assert.equal(isValidIsoDate("2027-13-01"), false);
 assert.equal(isValidIsoDate("not-a-date"), false);
 assert.equal(isValidIsoDate(null), false);
 assert.equal(isValidIsoDate(undefined), false);

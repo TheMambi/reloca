@@ -14,16 +14,18 @@ import {
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const NAME_MAX = 100;
+
 export async function saveNeighborhood(
   neighborhood: string,
   city: string,
 ): Promise<
   { ok: true; row: SavedNeighborhood } | { ok: false; error: string }
 > {
-  if (typeof neighborhood !== "string" || neighborhood.trim().length === 0) {
+  if (typeof neighborhood !== "string" || neighborhood.trim().length === 0 || neighborhood.length > NAME_MAX) {
     return { ok: false, error: "Pick a neighborhood first." };
   }
-  if (typeof city !== "string" || city.trim().length === 0) {
+  if (typeof city !== "string" || city.trim().length === 0 || city.length > NAME_MAX) {
     return { ok: false, error: "Pick a city first." };
   }
 

@@ -35,6 +35,7 @@ import {
   fetchDestinationPreview,
   updateDestination,
 } from "@/app/lease/actions";
+import { settle } from "@/lib/settle-action";
 import { AMENITY_CATALOG, CATALOG_ITEM_SET } from "@/lib/lease/amenities";
 import { US_STATES } from "@/lib/lease/us-states";
 
@@ -284,10 +285,8 @@ export function AddDestinationDialog({ destination, trigger }: Props) {
         setFetchStatus("needs_review");
         setMissing(result.missing);
         setPhase("review");
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Unknown fetch error";
-        setFetchError(message);
+      } catch {
+        setFetchError("Couldn't read that link. Wait a moment and try again, or fill in the details by hand.");
       }
     });
   }
@@ -332,19 +331,12 @@ export function AddDestinationDialog({ destination, trigger }: Props) {
     e.preventDefault();
     setSubmitError(null);
     startSubmit(async () => {
-      try {
-        const payload = buildPayload();
-        if (editing && destination) {
-          await updateDestination(destination.id, payload);
-        } else {
-          await createDestination(payload);
-        }
-        handleOpenChange(false);
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Couldn't save this property.";
-        setSubmitError(message);
-      }
+      const payload = buildPayload();
+      const res = await settle(
+        editing && destination ? updateDestination(destination.id, payload) : createDestination(payload),
+      );
+      if (res.ok) handleOpenChange(false);
+      else setSubmitError(res.error);
     });
   }
 

@@ -22,6 +22,7 @@ import {
   updateNoticeDraft,
   markNoticeSent,
 } from "@/app/lease/actions";
+import { settle } from "@/lib/settle-action";
 import { renderNoticeTemplate } from "./notice-template";
 import { noticeTerm } from "@/lib/lease/notice-term";
 import { addDaysIso, isoDateInZone, isoToPickerDate, pickerDateToIso, todayInZoneIso } from "@/lib/dates";
@@ -132,21 +133,16 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
   function onCreate() {
     setErrorMsg(null);
     startCreate(async () => {
-      try {
-        await createNoticeDraft(lease.id, {
+      const res = await settle(
+        createNoticeDraft(lease.id, {
           subject_line: subject,
           body_markdown: body,
           body_plaintext: body,
           recipient_email: lease.landlord_email,
           move_out_date: moveOut,
-        });
-      } catch (err) {
-        setErrorMsg(
-          err instanceof Error
-            ? err.message
-            : "We couldn't create your notice. Please try again.",
-        );
-      }
+        }),
+      );
+      if (!res.ok) setErrorMsg(res.error);
     });
   }
 
@@ -154,17 +150,15 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
     if (!draft) return;
     setErrorMsg(null);
     startSave(async () => {
-      const res = await updateNoticeDraft(draft.id, {
-        subject_line: subject,
-        body_markdown: body,
-        body_plaintext: body,
-        move_out_date: moveOut,
-      });
-      if (!res.ok) {
-        setErrorMsg(
-          "This notice was already sent and can't be edited. Start a new one if something needs to change.",
-        );
-      }
+      const res = await settle(
+        updateNoticeDraft(draft.id, {
+          subject_line: subject,
+          body_markdown: body,
+          body_plaintext: body,
+          move_out_date: moveOut,
+        }),
+      );
+      if (!res.ok) setErrorMsg(res.error);
     });
   }
 
@@ -172,16 +166,9 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
     if (!draft) return;
     setSendError(null);
     startSend(async () => {
-      try {
-        await markNoticeSent(draft.id);
-        setConfirmOpen(false);
-      } catch (err) {
-        setSendError(
-          err instanceof Error
-            ? err.message
-            : "We couldn't mark it sent. Please try again.",
-        );
-      }
+      const res = await settle(markNoticeSent(draft.id));
+      if (res.ok) setConfirmOpen(false);
+      else setSendError(res.error);
     });
   }
 

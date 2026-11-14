@@ -87,7 +87,9 @@ export async function geocodeAddress(
     remember(key, result);
     return result;
   } catch (err) {
-    console.error("geocodeAddress failed", err);
+    // The name only. An error's text can carry the request, and the request
+    // carries a home address.
+    console.error("geocodeAddress failed:", err instanceof Error ? err.name : "unknown error");
     return null;
   }
 }

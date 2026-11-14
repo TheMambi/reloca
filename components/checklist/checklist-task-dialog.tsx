@@ -22,6 +22,7 @@ import {
   createChecklistItem,
   updateChecklistItem,
 } from "@/app/checklist/actions";
+import { settle } from "@/lib/settle-action";
 import type { ChecklistCategory, ChecklistItem, ChecklistPhase } from "@/schemas";
 import { cn } from "@/lib/utils";
 import { isoToPickerDate, pickerDateToIso } from "@/lib/dates";
@@ -108,31 +109,26 @@ export function ChecklistTaskDialog({
     const descPayload = description.trim() === "" ? null : description.trim();
 
     startTransition(async () => {
-      try {
-        if (mode === "create") {
-          await createChecklistItem({
-            category,
-            title: trimmed,
-            description: descPayload,
-            due_date: dueDate,
-          });
-        } else if (mode === "edit" && itemId) {
-          await updateChecklistItem(itemId, {
-            // Only send category in the patch when it actually changed —
-            // keeps the server-side order_index recompute scoped to true
-            // moves between phases.
-            ...(categoryDraft !== category ? { category: categoryDraft } : {}),
-            title: trimmed,
-            description: descPayload,
-            due_date: dueDate,
-          });
-        }
-        handleOpenChange(false);
-      } catch (err) {
-        setErrorMsg(
-          err instanceof Error ? err.message : "Failed to save task.",
-        );
-      }
+      const res = await settle(
+        mode === "edit" && itemId
+          ? updateChecklistItem(itemId, {
+              // Only send category in the patch when it actually changed —
+              // keeps the server-side order_index recompute scoped to true
+              // moves between phases.
+              ...(categoryDraft !== category ? { category: categoryDraft } : {}),
+              title: trimmed,
+              description: descPayload,
+              due_date: dueDate,
+            })
+          : createChecklistItem({
+              category,
+              title: trimmed,
+              description: descPayload,
+              due_date: dueDate,
+            }),
+      );
+      if (res.ok) handleOpenChange(false);
+      else setErrorMsg(res.error);
     });
   }
 

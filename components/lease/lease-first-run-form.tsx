@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { createLeaseTerms } from "@/app/lease/actions";
+import { settle } from "@/lib/settle-action";
 import {
   FIRST_RUN_DEFAULTS,
   UTILITY_OPTIONS,
@@ -259,17 +260,10 @@ export function LeaseFirstRunForm() {
     setFieldErrors({});
 
     startTransition(async () => {
-      try {
-        await createLeaseTerms(result.payload);
-        // On success, revalidatePath("/lease") in the action triggers a
-        // server-component re-render and this form unmounts. No nav needed.
-      } catch (err) {
-        setServerError(
-          err instanceof Error
-            ? err.message
-            : "We couldn't save your lease. Please try again.",
-        );
-      }
+      // On success, revalidatePath("/lease") in the action triggers a
+      // server-component re-render and this form unmounts. No nav needed.
+      const res = await settle(createLeaseTerms(result.payload));
+      if (!res.ok) setServerError(res.error);
     });
   }
 

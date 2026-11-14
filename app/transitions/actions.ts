@@ -15,6 +15,7 @@ import {
   type UtilityTransition,
   type AddressChangeTarget,
 } from "@/schemas/transitions";
+import { WebLinkSchema } from "@/schemas/web-link";
 
 // Runtime gates (Wave 2, AD-040): server actions are network-reachable
 // endpoints; TS types are erased. Patches are Zod-parsed against the row
@@ -30,6 +31,7 @@ const UtilityPatchSchema = UtilityTransitionSchema.pick({
   status: true,
   custom_label: true,
 })
+  .extend({ login_url: WebLinkSchema.nullable() })
   .partial()
   .strict();
 
@@ -63,7 +65,7 @@ export async function createUtilityTransition(
   if (
     !UtilityTransitionSchema.shape.kind.safeParse(kind).success ||
     !UtilityTransitionSchema.shape.side.safeParse(side).success ||
-    !z.string().optional().safeParse(customLabel).success
+    !z.string().max(200).optional().safeParse(customLabel).success
   ) {
     return { ok: false, error: INVALID_INPUT };
   }
@@ -182,7 +184,7 @@ export async function createAddressTarget(
   }
   // Server-side guard: DB column is text NOT NULL but Postgres accepts empty
   // strings. Reject here so the UI can't insert blank rows.
-  if (typeof name !== "string" || name.trim().length === 0) {
+  if (typeof name !== "string" || name.trim().length === 0 || name.length > 200) {
     return { ok: false, error: "Give this one a name first." };
   }
 

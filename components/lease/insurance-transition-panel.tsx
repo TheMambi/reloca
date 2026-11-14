@@ -6,6 +6,7 @@ import type {
   Destination,
 } from "@/schemas/lease";
 import type { ChecklistItem } from "@/schemas";
+import { safeHref } from "@/schemas/web-link";
 import { InsuranceCoverageTimeline } from "./insurance-coverage-timeline";
 import { InsurancePolicyDialogTrigger } from "./insurance-policy-form";
 
@@ -511,10 +512,11 @@ function InterestedPartyCell({
 }
 
 function DocCell({ url }: { url: string | null }) {
-  if (!url) return <span className="text-xs text-muted-foreground">—</span>;
+  const href = safeHref(url);
+  if (!href) return <span className="text-xs text-muted-foreground">—</span>;
   return (
     <a
-      href={url}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       className="inline-flex items-center gap-1 text-xs text-[var(--info)] underline-offset-2 hover:underline"

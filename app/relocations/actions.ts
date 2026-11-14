@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import { z } from "zod";
 import {
   createClient,
   friendlyDbError,
@@ -15,9 +16,6 @@ import { ADDRESS_LEAD_DAYS, shiftedDueDates } from "@/lib/data/move-seeds";
 import type { AddressChangeTarget } from "@/schemas/transitions";
 import { RelocationSchema, type Relocation } from "@/schemas";
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 // 180 days — long enough that a viewing choice survives realistic gaps between
 // sessions, short enough that a forgotten comparison eventually self-clears.
 const VIEWING_COOKIE_MAX_AGE = 60 * 60 * 24 * 180;
@@ -29,8 +27,9 @@ const VIEWING_COOKIE_MAX_AGE = 60 * 60 * 24 * 180;
  */
 export async function setViewingRelocation(id: string | null): Promise<void> {
   const store = await cookies();
-  if (id && UUID_RE.test(id)) {
-    store.set(VIEWING_COOKIE, id, {
+  const parsed = z.uuid().safeParse(id);
+  if (parsed.success) {
+    store.set(VIEWING_COOKIE, parsed.data, {
       path: "/",
       maxAge: VIEWING_COOKIE_MAX_AGE,
       sameSite: "lax",
@@ -115,37 +114,49 @@ export interface RelocationInput {
   move_date: string | null;
 }
 
+const GONE = "That relocation no longer exists.";
+
 type ActionResult<T> = { ok: true; row: T } | { ok: false; error: string };
 
-/** Shared validation for create + update — slugs must exist in the registry. */
-function validateInput(input: RelocationInput): string | null {
-  if (typeof input.label !== "string" || input.label.trim().length === 0) {
-    return "Give this relocation a name.";
-  }
-  if (!getCity(input.origin_slug)) {
-    return "Pick an origin city.";
-  }
-  if (!getCity(input.destination_slug)) {
-    return "Pick a destination city.";
-  }
-  if (input.origin_slug === input.destination_slug) {
-    return "Origin and destination must be different cities.";
-  }
-  if (
-    input.move_date !== null &&
-    !/^\d{4}-\d{2}-\d{2}$/.test(input.move_date)
-  ) {
-    return "Move date must be a calendar date.";
-  }
-  return null;
+const LABEL_MAX = 100;
+const NOT_A_DATE = "Move date must be a calendar date.";
+// z.iso.date() refuses days that do not exist, such as 2027-02-31.
+const MoveDateInput = z.iso.date(NOT_A_DATE).nullable();
+
+/**
+ * Shared validation for create + update. Slugs must exist in the registry.
+ * Every rule carries its own sentence, because the first one that fails is
+ * shown to the person as it is.
+ */
+const RelocationInputSchema = z
+  .object(
+    {
+      label: z
+        .string("Give this relocation a name.")
+        .trim()
+        .min(1, "Give this relocation a name.")
+        .max(LABEL_MAX, `Keep the name under ${LABEL_MAX} characters.`),
+      origin_slug: z.string("Pick an origin city.").refine((slug) => !!getCity(slug), "Pick an origin city."),
+      destination_slug: z
+        .string("Pick a destination city.")
+        .refine((slug) => !!getCity(slug), "Pick a destination city."),
+      move_date: MoveDateInput,
+    },
+    "Those details don't look right. Check them and try again.",
+  )
+  .refine((v) => v.origin_slug !== v.destination_slug, "Origin and destination must be different cities.");
+
+function firstProblem(error: z.ZodError): string {
+  return error.issues[0].message;
 }
 
 /** Create a new relocation. Never active by default — promote it explicitly. */
 export async function createRelocation(
   input: RelocationInput,
 ): Promise<ActionResult<Relocation>> {
-  const invalid = validateInput(input);
-  if (invalid) return { ok: false, error: invalid };
+  const checked = RelocationInputSchema.safeParse(input);
+  if (!checked.success) return { ok: false, error: firstProblem(checked.error) };
+  const fields = checked.data;
 
   const sb = await createClient();
   const { data: earlier, error: countErr } = await sb
@@ -158,10 +169,10 @@ export async function createRelocation(
     .from("relocations")
     .insert({
       user_id: requireUserId(),
-      label: input.label.trim(),
-      origin_slug: input.origin_slug,
-      destination_slug: input.destination_slug,
-      move_date: input.move_date,
+      label: fields.label,
+      origin_slug: fields.origin_slug,
+      destination_slug: fields.destination_slug,
+      move_date: fields.move_date,
       is_active_move: false,
     })
     .select("*")
@@ -188,9 +199,10 @@ export async function updateRelocation(
   id: string,
   input: RelocationInput,
 ): Promise<ActionResult<Relocation>> {
-  if (!UUID_RE.test(id)) return { ok: false, error: "That relocation no longer exists." };
-  const invalid = validateInput(input);
-  if (invalid) return { ok: false, error: invalid };
+  if (!z.uuid().safeParse(id).success) return { ok: false, error: GONE };
+  const checked = RelocationInputSchema.safeParse(input);
+  if (!checked.success) return { ok: false, error: firstProblem(checked.error) };
+  const fields = checked.data;
 
   const sb = await createClient();
   const { data: before, error: readErr } = await sb
@@ -204,10 +216,10 @@ export async function updateRelocation(
   const { data, error } = await sb
     .from("relocations")
     .update({
-      label: input.label.trim(),
-      origin_slug: input.origin_slug,
-      destination_slug: input.destination_slug,
-      move_date: input.move_date,
+      label: fields.label,
+      origin_slug: fields.origin_slug,
+      destination_slug: fields.destination_slug,
+      move_date: fields.move_date,
     })
     .eq("id", id)
     .eq("user_id", requireUserId())
@@ -217,7 +229,7 @@ export async function updateRelocation(
 
   if (before?.is_active_move) {
     try {
-      await shiftMoveDependentDates(before.move_date, input.move_date);
+      await shiftMoveDependentDates(before.move_date, fields.move_date);
     } catch (err) {
       return { ok: false, error: friendlyDbError("updateRelocation.dates", err as Error) };
     }
@@ -231,7 +243,7 @@ export async function updateRelocation(
 export async function deleteRelocation(
   id: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (!UUID_RE.test(id)) return { ok: false, error: "That relocation no longer exists." };
+  if (!z.uuid().safeParse(id).success) return { ok: false, error: GONE };
 
   const sb = await createClient();
   const { data: row, error: readErr } = await sb
@@ -241,7 +253,7 @@ export async function deleteRelocation(
     .eq("user_id", requireUserId())
     .maybeSingle();
   if (readErr) return { ok: false, error: friendlyDbError("deleteRelocation.read", readErr) };
-  if (!row) return { ok: false, error: "That relocation no longer exists." };
+  if (!row) return { ok: false, error: GONE };
   if (row.is_active_move) {
     return {
       ok: false,
@@ -277,9 +289,7 @@ export async function deleteRelocation(
 export async function updateActiveMoveDate(
   moveDate: string | null,
 ): Promise<{ ok: true; moveDate: string | null } | { ok: false; error: string }> {
-  if (moveDate !== null && !/^\d{4}-\d{2}-\d{2}$/.test(moveDate)) {
-    return { ok: false, error: "Move date must be a calendar date." };
-  }
+  if (!MoveDateInput.safeParse(moveDate).success) return { ok: false, error: NOT_A_DATE };
 
   const sb = await createClient();
   const { data: before, error: readErr } = await sb
@@ -321,7 +331,7 @@ export async function updateActiveMoveDate(
 export async function setActiveMove(
   id: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (!UUID_RE.test(id)) return { ok: false, error: "That relocation no longer exists." };
+  if (!z.uuid().safeParse(id).success) return { ok: false, error: GONE };
 
   const sb = await createClient();
   const { error: clearErr } = await sb

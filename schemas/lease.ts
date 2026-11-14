@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { WEB_LINK_MAX, WebLinkSchema } from "./web-link";
 
 export const ResidentSchema = z.object({
   name: z.string().min(1),
@@ -212,6 +213,8 @@ const InsurancePolicyFields = InsurancePolicySchema.pick({
   interested_party_listed: true,
   interested_party_name: true,
   document_url: true,
+}).extend({
+  document_url: WebLinkSchema.nullable(),
 });
 
 // Refines apply on create only; partial patches re-load and re-validate via the row's full state when needed.
@@ -227,7 +230,7 @@ export const InsurancePolicyPatchInput = InsurancePolicyFields.partial().strict(
 export const DESTINATION_TEXT_LIMITS = {
   name: 200,
   city: 100,
-  url: 2000,
+  url: WEB_LINK_MAX,
   amenity: 100,
   amenities: 50,
   notes: 2000,
@@ -265,7 +268,7 @@ const DestinationFields = DestinationSchema.pick({
   building_name: z.string().min(1).max(DESTINATION_TEXT_LIMITS.name),
   street_address: z.string().min(1).max(DESTINATION_TEXT_LIMITS.name),
   city: z.string().min(1).max(DESTINATION_TEXT_LIMITS.city),
-  source_url: z.url().max(DESTINATION_TEXT_LIMITS.url).nullable(),
+  source_url: WebLinkSchema.nullable(),
   amenities: z.array(z.string().max(DESTINATION_TEXT_LIMITS.amenity)).max(DESTINATION_TEXT_LIMITS.amenities),
   notes: z.string().max(DESTINATION_TEXT_LIMITS.notes).nullable(),
 });

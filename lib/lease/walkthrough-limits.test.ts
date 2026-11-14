@@ -24,28 +24,41 @@ standIn("next/headers", {
   headers: async () => new Headers({ "x-forwarded-for": caller }),
 });
 
+/** The success branch of an action's answer. A reported failure fails the test. */
+function ok<T extends { ok: boolean }>(result: T): Extract<T, { ok: true }> {
+  assert.ok(result.ok, `the action reported a failure: ${JSON.stringify(result)}`);
+  return result as Extract<T, { ok: true }>;
+}
+/** The action must answer with a failure and a plain sentence, not throw. */
+async function refused(call: Promise<{ ok: boolean; error?: string }>, sentence?: RegExp): Promise<void> {
+  const result = await call;
+  assert.equal(result.ok, false);
+  assert.doesNotMatch(result.error ?? "", /[a-z]_[a-z]|\b(?:row|column|constraint|relation|uuid|null)\b/i, "no database wording");
+  if (sentence) assert.match(result.error ?? "", sentence);
+}
+
 async function main() {
   const moveOut = await import("@/app/lease/move-out-actions");
   const lease = await import("@/app/lease/actions");
-  const { walkthrough, rooms } = await moveOut.createWalkthrough();
+  const { walkthrough, rooms } = ok(await moveOut.createWalkthrough());
 
   // ---- field lengths ----
-  await assert.rejects(moveOut.updateWalkthrough(walkthrough.id, { overall_notes: "n".repeat(400_000) }), "a 400 KB note is refused");
-  await assert.rejects(moveOut.updateWalkthrough(walkthrough.id, { overall_notes: "n".repeat(2001) }));
-  await moveOut.updateWalkthrough(walkthrough.id, { overall_notes: "n".repeat(2000) });
+  await refused(moveOut.updateWalkthrough(walkthrough.id, { overall_notes: "n".repeat(400_000) })); // a 400 KB note
+  await refused(moveOut.updateWalkthrough(walkthrough.id, { overall_notes: "n".repeat(2001) }));
+  ok(await moveOut.updateWalkthrough(walkthrough.id, { overall_notes: "n".repeat(2000) }));
   for (const field of ["walls_status", "floors_status", "appliances_status", "fixtures_status", "notes"] as const) {
-    await assert.rejects(moveOut.updateRoomRecord(rooms[0].id, { [field]: "n".repeat(2001) }), `${field} is capped`);
+    await refused(moveOut.updateRoomRecord(rooms[0].id, { [field]: "n".repeat(2001) }));
   }
-  await assert.rejects(moveOut.updateRoomRecord(rooms[0].id, { room_name: "n".repeat(81) }));
-  await assert.rejects(moveOut.addRoom(walkthrough.id, "n".repeat(81)));
+  await refused(moveOut.updateRoomRecord(rooms[0].id, { room_name: "n".repeat(81) }));
+  await refused(moveOut.addRoom(walkthrough.id, "n".repeat(81)));
 
   // ---- number of rooms ----
-  for (let i = rooms.length; i < 30; i++) await moveOut.addRoom(walkthrough.id, `Room ${i}`);
-  await assert.rejects(moveOut.addRoom(walkthrough.id, "One too many"), /up to 30 rooms/);
+  for (let i = rooms.length; i < 30; i++) ok(await moveOut.addRoom(walkthrough.id, `Room ${i}`));
+  await refused(moveOut.addRoom(walkthrough.id, "One too many"), /up to 30 rooms/);
 
   // ---- the report refuses more text than it can draw quickly ----
-  const all = (await moveOut.createWalkthrough()).rooms;
-  for (const room of all.slice(0, 12)) await moveOut.updateRoomRecord(room.id, { notes: "word ".repeat(400) });
+  const all = ok(await moveOut.createWalkthrough()).rooms;
+  for (const room of all.slice(0, 12)) ok(await moveOut.updateRoomRecord(room.id, { notes: "word ".repeat(400) }));
   const tooMuch = await moveOut.generateWalkthroughReport(walkthrough.id);
   assert.deepEqual(tooMuch, {
     ok: false,

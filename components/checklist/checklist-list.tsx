@@ -56,6 +56,7 @@ import {
   deleteChecklistItem,
   reorderChecklistItem,
 } from "@/app/checklist/actions";
+import { settle } from "@/lib/settle-action";
 import {
   reorderItems,
   applyMove,
@@ -131,7 +132,7 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
     serverItems.current = items;
     setLocalItems(pendingMoves.current.reduce(applyMove, items));
   }, [items]);
-  const [reorderError, setReorderError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const router = useRouter();
 
   const [optimisticItems, applyOptimistic] = useOptimistic(
@@ -177,9 +178,11 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
 
   const handleToggle = (id: string, current: boolean) => {
     const next = !current;
+    setSaveError(null);
     startTransition(async () => {
       applyOptimistic({ kind: "toggle", id, completed: next });
-      await toggleChecklistItem({ id, completed: next });
+      const res = await settle(toggleChecklistItem({ id, completed: next }));
+      if (!res.ok) setSaveError("That tick wasn't saved. Try again.");
     });
   };
 
@@ -207,17 +210,12 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
     const id = confirmDelete.id;
     setDeleteError(null);
     startDeleteTransition(async () => {
-      try {
-        startTransition(() => {
-          applyOptimistic({ kind: "delete", id });
-        });
-        await deleteChecklistItem(id);
-        setConfirmDelete(null);
-      } catch (err) {
-        setDeleteError(
-          err instanceof Error ? err.message : "Failed to delete task.",
-        );
-      }
+      startTransition(() => {
+        applyOptimistic({ kind: "delete", id });
+      });
+      const res = await settle(deleteChecklistItem(id));
+      if (res.ok) setConfirmDelete(null);
+      else setDeleteError(res.error);
     });
   };
 
@@ -235,20 +233,23 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
     const move = result.moved;
     pendingMoves.current = [...pendingMoves.current, move];
     setLocalItems(result.items);
-    setReorderError(null);
-    const settle = () => {
+    setSaveError(null);
+    const done = () => {
       pendingMoves.current = pendingMoves.current.filter((m) => m !== move);
     };
-    reorderChecklistItem({
-      id: move.id,
-      targetCategory: move.category,
-      targetIndex: move.order_index,
-    }).then(settle, () => {
+    void settle(
+      reorderChecklistItem({
+        id: move.id,
+        targetCategory: move.category,
+        targetIndex: move.order_index,
+      }),
+    ).then((res) => {
+      done();
+      if (res.ok) return;
       // Show what the server has, plus any later move still being saved, and
       // ask for fresh rows. An older snapshot would undo those later moves.
-      settle();
       setLocalItems(pendingMoves.current.reduce(applyMove, serverItems.current));
-      setReorderError("That move wasn't saved. The list is back in its saved order. Try again.");
+      setSaveError("That move wasn't saved. The list is back in its saved order. Try again.");
       router.refresh();
     });
   }
@@ -292,12 +293,12 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
         </p>
       </div>
 
-      {reorderError && (
+      {saveError && (
         <p
           role="alert"
           className="rounded-[var(--radius-sm)] border border-[oklch(var(--danger-raw)/0.3)] bg-[oklch(var(--danger-raw)/0.1)] px-3 py-2 text-xs text-[var(--danger)]"
         >
-          {reorderError}
+          {saveError}
         </p>
       )}
 

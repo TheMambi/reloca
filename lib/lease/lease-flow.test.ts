@@ -29,6 +29,19 @@ standIn("next/headers", {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
+/** The success branch of an action's answer. A reported failure fails the test. */
+function ok<T extends { ok: boolean }>(result: T): Extract<T, { ok: true }> {
+  assert.ok(result.ok, `the action reported a failure: ${JSON.stringify(result)}`);
+  return result as Extract<T, { ok: true }>;
+}
+/** The action must answer with a failure and a plain sentence, not throw. */
+async function refused(call: Promise<{ ok: boolean; error?: string }>, sentence?: RegExp): Promise<void> {
+  const result = await call;
+  assert.equal(result.ok, false);
+  assert.doesNotMatch(result.error ?? "", /[a-z]_[a-z]|\b(?:row|column|constraint|relation|uuid|null)\b/i, "no database wording");
+  if (sentence) assert.match(result.error ?? "", sentence);
+}
+
 async function main() {
   const { createDemoClient } = await import("@/lib/supabase/demo-client");
   const { DEMO_USER_ID } = await import("@/lib/supabase/demo-seed");
@@ -78,7 +91,7 @@ async function main() {
   await db.from("lease_events").delete().eq("user_id", DEMO_USER_ID);
   await db.from("notice_drafts").delete().eq("user_id", DEMO_USER_ID);
 
-  const { id } = await lease.createLeaseTerms(input);
+  const { id } = ok(await lease.createLeaseTerms(input));
   let tasks = await leaseTasks();
   assert.equal(tasks.length, 7);
   assert.equal(tasks[0].title, "Send 60-day notice to vacate");
@@ -87,11 +100,11 @@ async function main() {
     ["2027-09-01", "2027-10-17", "2027-10-24", "2027-11-07", "2027-10-28", "2027-10-31", "2027-12-30"],
   );
 
-  await lease.updateLeaseTerms(id, {
+  ok(await lease.updateLeaseTerms(id, {
     lease_end_date: "2027-11-30",
     target_move_out_date: "2027-11-15",
     notice_days_required: 30,
-  });
+  }));
   tasks = await leaseTasks();
   assert.equal(tasks[0].title, "Send 30-day notice to vacate", "the task title follows the notice period");
   assert.equal(tasks[0].due_date, "2027-10-31", "the notice task follows the lease");
@@ -111,48 +124,48 @@ async function main() {
   // An edit that touches no date leaves a task the user's own way alone, and a
   // row that is not one of the seven is never rewritten.
   await db.from("checklist_items").insert({ user_id: DEMO_USER_ID, category: "lease", title: "Ask about the bike room", order_index: 7 });
-  await lease.updateLeaseDecision(id, "vacate");
-  await lease.updateLeaseTerms(id, { lease_end_date: "2027-11-30" });
+  ok(await lease.updateLeaseDecision(id, "vacate"));
+  ok(await lease.updateLeaseTerms(id, { lease_end_date: "2027-11-30" }));
   assert.equal((await leaseTasks())[7].title, "Ask about the bike room");
   assert.equal((await leaseTasks())[7].due_date, null);
 
   // ---- a failed write between two steps is repaired by calling again ----
-  const draft = await lease.createNoticeDraft(id, {
+  const { row: draft } = ok(await lease.createNoticeDraft(id, {
     body_markdown: "Notice",
     body_plaintext: "Notice",
     subject_line: "Notice",
     recipient_email: input.landlord_email,
     move_out_date: "2027-11-15",
-  });
+  }));
   const eventFiller = { lease_id: id, kind: "walkthrough", occurs_on: "2027-01-01", status: "pending" };
   let unfill = await fill("lease_events", eventFiller);
-  await assert.rejects(lease.markNoticeSent(draft.id), /markNoticeSent\.event/, "the event insert fails");
+  await refused(lease.markNoticeSent(draft.id)); // the event insert fails
   await unfill();
   assert.ok((await rows("notice_drafts"))[0].sent_at, "the draft was already marked sent");
-  await lease.markNoticeSent(draft.id);
-  await lease.markNoticeSent(draft.id);
+  ok(await lease.markNoticeSent(draft.id));
+  ok(await lease.markNoticeSent(draft.id));
   const sent = (await rows("lease_events")).filter((e) => e.kind === "notice_sent");
   assert.equal(sent.length, 1, "exactly one notice-sent event after the retry");
 
   // A failed recompute keeps the deadlines it could not replace.
   unfill = await fill("lease_events", eventFiller);
-  await assert.rejects(lease.recomputeLeaseEvents(id), /recomputeLeaseEvents\.insert/);
+  await refused(lease.recomputeLeaseEvents(id));
   await unfill();
   assert.equal((await events(id)).notice_send_by, "2027-10-31", "the send-by date survives a failed recompute");
-  await lease.recomputeLeaseEvents(id);
+  ok(await lease.recomputeLeaseEvents(id));
   assert.equal((await rows("lease_events")).filter((e) => e.kind === "notice_send_by").length, 1, "and is not duplicated after the next one");
 
   // A lease whose follow-up steps fail is removed again, so a retry cannot leave two.
   await db.from("checklist_items").delete().eq("user_id", DEMO_USER_ID).eq("category", "lease");
   await db.from("lease_terms").delete().eq("user_id", DEMO_USER_ID);
   unfill = await fill("lease_events", { ...eventFiller, lease_id: "88888888-8888-4888-8888-888888888888" });
-  await assert.rejects(lease.createLeaseTerms(input));
+  await refused(lease.createLeaseTerms(input));
   await unfill();
   assert.equal((await rows("lease_terms")).length, 0, "the half-made lease is gone");
 
   // ---- a 30-day California lease: 30-day letter and task, no Colorado deposit date ----
   const sacramento = { ...input, city: "Sacramento, CA 95800", notice_days_required: 30, target_move_out_date: "2027-10-31" };
-  const made = await lease.createLeaseTerms(sacramento);
+  const made = ok(await lease.createLeaseTerms(sacramento));
   tasks = await leaseTasks();
   assert.equal(tasks[0].title, "Send 30-day notice to vacate");
   assert.equal(tasks[0].due_date, "2027-10-01");

@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
-import { createClient, friendlyDbError, requireUserId } from "@/lib/supabase/server";
+import { createClient, requireUserId } from "@/lib/supabase/server";
+import { ActionFailure, dbFailure, runAction, type ActionResult } from "@/lib/action-result";
 import {
   MoveOutWalkthroughSchema,
   MoveOutRoomRecordSchema,
@@ -30,122 +31,126 @@ const DEFAULT_ROOMS = [
 // Idempotent. Returns the latest walkthrough for the user, or creates a new
 // one + seeds the 4 default rooms (Living room / Kitchen / Bedroom / Bathroom)
 // if none exists. Caller renders an inspection form against the result.
-export async function createWalkthrough(): Promise<{
-  walkthrough: MoveOutWalkthrough;
-  rooms: MoveOutRoomRecord[];
-}> {
-  const sb = await createClient();
-  const userId = requireUserId();
+export async function createWalkthrough(): Promise<
+  ActionResult<{ walkthrough: MoveOutWalkthrough; rooms: MoveOutRoomRecord[] }>
+> {
+  return runAction("createWalkthrough", async () => {
+    const sb = await createClient();
+    const userId = requireUserId();
 
-  // Fast path: already started.
-  const { data: existing, error: readErr } = await sb
-    .from("move_out_walkthroughs")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (readErr) throw new Error(`createWalkthrough.read: ${readErr.message}`);
-
-  if (existing) {
-    const walkthrough = MoveOutWalkthroughSchema.parse(existing);
-    const { data: rooms, error: roomsErr } = await sb
-      .from("move_out_room_records")
+    // Fast path: already started.
+    const { data: existing, error: readErr } = await sb
+      .from("move_out_walkthroughs")
       .select("*")
       .eq("user_id", userId)
-      .eq("walkthrough_id", walkthrough.id)
-      .order("order_index", { ascending: true });
-    if (roomsErr)
-      throw new Error(`createWalkthrough.readRooms: ${roomsErr.message}`);
-    return {
-      walkthrough,
-      rooms: (rooms ?? []).map((r) => MoveOutRoomRecordSchema.parse(r)),
-    };
-  }
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (readErr) throw dbFailure("createWalkthrough.read", readErr);
 
-  // Create new walkthrough + seed default rooms.
-  const { data: created, error: createErr } = await sb
-    .from("move_out_walkthroughs")
-    .insert({
+    if (existing) {
+      const walkthrough = MoveOutWalkthroughSchema.parse(existing);
+      const { data: rooms, error: roomsErr } = await sb
+        .from("move_out_room_records")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("walkthrough_id", walkthrough.id)
+        .order("order_index", { ascending: true });
+      if (roomsErr)
+        throw dbFailure("createWalkthrough.readRooms", roomsErr);
+      return {
+        walkthrough,
+        rooms: (rooms ?? []).map((r) => MoveOutRoomRecordSchema.parse(r)),
+      };
+    }
+
+    // Create new walkthrough + seed default rooms.
+    const { data: created, error: createErr } = await sb
+      .from("move_out_walkthroughs")
+      .insert({
+        user_id: userId,
+        walkthrough_date: todayInZoneIso(),
+      })
+      .select("*")
+      .single();
+    if (createErr)
+      throw dbFailure("createWalkthrough.create", createErr);
+
+    const walkthrough = MoveOutWalkthroughSchema.parse(created);
+
+    const seedRows = DEFAULT_ROOMS.map((name, idx) => ({
+      walkthrough_id: walkthrough.id,
       user_id: userId,
-      walkthrough_date: todayInZoneIso(),
-    })
-    .select("*")
-    .single();
-  if (createErr)
-    throw new Error(`createWalkthrough.create: ${createErr.message}`);
+      room_name: name,
+      order_index: idx,
+    }));
+    const { data: insertedRooms, error: seedErr } = await sb
+      .from("move_out_room_records")
+      .insert(seedRows)
+      .select("*")
+      .order("order_index", { ascending: true });
+    if (seedErr)
+      throw dbFailure("createWalkthrough.seedRooms", seedErr);
 
-  const walkthrough = MoveOutWalkthroughSchema.parse(created);
+    const rooms = (insertedRooms ?? []).map((r) =>
+      MoveOutRoomRecordSchema.parse(r),
+    );
 
-  const seedRows = DEFAULT_ROOMS.map((name, idx) => ({
-    walkthrough_id: walkthrough.id,
-    user_id: userId,
-    room_name: name,
-    order_index: idx,
-  }));
-  const { data: insertedRooms, error: seedErr } = await sb
-    .from("move_out_room_records")
-    .insert(seedRows)
-    .select("*")
-    .order("order_index", { ascending: true });
-  if (seedErr)
-    throw new Error(`createWalkthrough.seedRooms: ${seedErr.message}`);
-
-  const rooms = (insertedRooms ?? []).map((r) =>
-    MoveOutRoomRecordSchema.parse(r),
-  );
-
-  revalidatePath("/lease");
-  revalidatePath("/");
-  return { walkthrough, rooms };
+    revalidatePath("/lease");
+    revalidatePath("/");
+    return { walkthrough, rooms };
+  });
 }
 
 export async function addRoom(
   walkthroughId: string,
   roomName: string,
-): Promise<MoveOutRoomRecord> {
-  const trimmed = roomName.trim();
-  if (trimmed.length === 0) throw new Error("Room name required");
-  if (trimmed.length > ROOM_NAME_MAX) throw new Error(`Keep the room name under ${ROOM_NAME_MAX} characters.`);
+): Promise<ActionResult<{ row: MoveOutRoomRecord }>> {
+  return runAction("addRoom", async () => {
+    z.uuid().parse(walkthroughId);
+    const trimmed = z.string().parse(roomName).trim();
+    if (trimmed.length === 0) throw new ActionFailure("Give the room a name.");
+    if (trimmed.length > ROOM_NAME_MAX) throw new ActionFailure(`Keep the room name under ${ROOM_NAME_MAX} characters.`);
 
-  const sb = await createClient();
-  const userId = requireUserId();
+    const sb = await createClient();
+    const userId = requireUserId();
 
-  const { data: existingRooms, error: countErr } = await sb
-    .from("move_out_room_records")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("walkthrough_id", walkthroughId);
-  if (countErr) throw new Error(`addRoom.count: ${countErr.message}`);
-  if ((existingRooms?.length ?? 0) >= MAX_ROOMS) throw new Error(`A walkthrough holds up to ${MAX_ROOMS} rooms.`);
+    const { data: existingRooms, error: countErr } = await sb
+      .from("move_out_room_records")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("walkthrough_id", walkthroughId);
+    if (countErr) throw dbFailure("addRoom.count", countErr);
+    if ((existingRooms?.length ?? 0) >= MAX_ROOMS) throw new ActionFailure(`A walkthrough holds up to ${MAX_ROOMS} rooms.`);
 
-  // Compute order_index = max(existing) + 1 within this walkthrough.
-  const { data: maxRow, error: maxErr } = await sb
-    .from("move_out_room_records")
-    .select("order_index")
-    .eq("user_id", userId)
-    .eq("walkthrough_id", walkthroughId)
-    .order("order_index", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (maxErr) throw new Error(`addRoom.maxOrder: ${maxErr.message}`);
-  const nextOrder = (maxRow?.order_index ?? -1) + 1;
+    // Compute order_index = max(existing) + 1 within this walkthrough.
+    const { data: maxRow, error: maxErr } = await sb
+      .from("move_out_room_records")
+      .select("order_index")
+      .eq("user_id", userId)
+      .eq("walkthrough_id", walkthroughId)
+      .order("order_index", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (maxErr) throw dbFailure("addRoom.maxOrder", maxErr);
+    const nextOrder = (maxRow?.order_index ?? -1) + 1;
 
-  const { data, error } = await sb
-    .from("move_out_room_records")
-    .insert({
-      walkthrough_id: walkthroughId,
-      user_id: userId,
-      room_name: trimmed,
-      order_index: nextOrder,
-    })
-    .select("*")
-    .single();
-  if (error) throw new Error(`addRoom.insert: ${error.message}`);
+    const { data, error } = await sb
+      .from("move_out_room_records")
+      .insert({
+        walkthrough_id: walkthroughId,
+        user_id: userId,
+        room_name: trimmed,
+        order_index: nextOrder,
+      })
+      .select("*")
+      .single();
+    if (error) throw dbFailure("addRoom.insert", error);
 
-  revalidatePath("/lease");
-  revalidatePath("/");
-  return MoveOutRoomRecordSchema.parse(data);
+    revalidatePath("/lease");
+    revalidatePath("/");
+    return { row: MoveOutRoomRecordSchema.parse(data) };
+  });
 }
 
 // The report is drawn on the server, and drawing time grows much faster than
@@ -172,29 +177,35 @@ const RoomPatchSchema = z.object({
 export async function updateRoomRecord(
   id: string,
   patch: z.input<typeof RoomPatchSchema>,
-): Promise<void> {
-  const parsed = RoomPatchSchema.parse(patch);
-  const sb = await createClient();
-  const { error } = await sb
-    .from("move_out_room_records")
-    .update(parsed)
-    .eq("id", id)
-    .eq("user_id", requireUserId());
-  if (error) throw new Error(`updateRoomRecord: ${error.message}`);
-  revalidatePath("/lease");
-  revalidatePath("/");
+): Promise<ActionResult> {
+  return runAction("updateRoomRecord", async () => {
+    z.uuid().parse(id);
+    const parsed = RoomPatchSchema.parse(patch);
+    const sb = await createClient();
+    const { error } = await sb
+      .from("move_out_room_records")
+      .update(parsed)
+      .eq("id", id)
+      .eq("user_id", requireUserId());
+    if (error) throw dbFailure("updateRoomRecord", error);
+    revalidatePath("/lease");
+    revalidatePath("/");
+  });
 }
 
-export async function deleteRoom(id: string): Promise<void> {
-  const sb = await createClient();
-  const { error } = await sb
-    .from("move_out_room_records")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", requireUserId());
-  if (error) throw new Error(`deleteRoom: ${error.message}`);
-  revalidatePath("/lease");
-  revalidatePath("/");
+export async function deleteRoom(id: string): Promise<ActionResult> {
+  return runAction("deleteRoom", async () => {
+    z.uuid().parse(id);
+    const sb = await createClient();
+    const { error } = await sb
+      .from("move_out_room_records")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", requireUserId());
+    if (error) throw dbFailure("deleteRoom", error);
+    revalidatePath("/lease");
+    revalidatePath("/");
+  });
 }
 
 const WalkthroughPatchSchema = z.object({
@@ -205,30 +216,39 @@ const WalkthroughPatchSchema = z.object({
 export async function updateWalkthrough(
   id: string,
   patch: z.input<typeof WalkthroughPatchSchema>,
-): Promise<void> {
-  const parsed = WalkthroughPatchSchema.parse(patch);
-  const sb = await createClient();
-  const { error } = await sb
-    .from("move_out_walkthroughs")
-    .update(parsed)
-    .eq("id", id)
-    .eq("user_id", requireUserId());
-  if (error) throw new Error(`updateWalkthrough: ${error.message}`);
-  revalidatePath("/lease");
-  revalidatePath("/");
+): Promise<ActionResult> {
+  return runAction("updateWalkthrough", async () => {
+    z.uuid().parse(id);
+    const parsed = WalkthroughPatchSchema.parse(patch);
+    const sb = await createClient();
+    const { error } = await sb
+      .from("move_out_walkthroughs")
+      .update(parsed)
+      .eq("id", id)
+      .eq("user_id", requireUserId());
+    if (error) throw dbFailure("updateWalkthrough", error);
+    revalidatePath("/lease");
+    revalidatePath("/");
+  });
 }
 
 // Stamps `pdf_generated_at = now()` after the PDF is successfully built. Used
 // by the dashboard tile to show "PDF ready" + by the readiness aggregator
 // (Wave A.3 stub: lib/data/move-readiness.ts:90) to flip `pdfGenerated: true`.
-export async function markPdfGenerated(walkthroughId: string): Promise<void> {
+export async function markPdfGenerated(walkthroughId: string): Promise<ActionResult> {
+  return runAction("markPdfGenerated", async () => {
+    await stampPdfGenerated(z.uuid().parse(walkthroughId));
+  });
+}
+
+async function stampPdfGenerated(walkthroughId: string): Promise<void> {
   const sb = await createClient();
   const { error } = await sb
     .from("move_out_walkthroughs")
     .update({ pdf_generated_at: new Date().toISOString() })
     .eq("id", walkthroughId)
     .eq("user_id", requireUserId());
-  if (error) throw new Error(`markPdfGenerated: ${error.message}`);
+  if (error) throw dbFailure("markPdfGenerated", error);
   revalidatePath("/lease");
   revalidatePath("/");
 }
@@ -246,104 +266,92 @@ const reportLimiter = createRateLimiter(5, 60_000);
 
 export async function generateWalkthroughReport(
   walkthroughId: string,
-): Promise<{
-  ok: true;
-  base64: string;
-  filename: string;
-} | {
-  ok: false;
-  error: string;
-}> {
-  if (!reportLimiter.allow(clientKey(await headers()))) {
-    return { ok: false, error: "That's a lot of reports in a short time. Wait a minute and try again." };
-  }
-  const sb = await createClient();
-  const userId = requireUserId();
+): Promise<ActionResult<{ base64: string; filename: string }>> {
+  return runAction("generateWalkthroughReport", async () => {
+    z.uuid().parse(walkthroughId);
+    if (!reportLimiter.allow(clientKey(await headers()))) {
+      throw new ActionFailure("That's a lot of reports in a short time. Wait a minute and try again.");
+    }
+    const sb = await createClient();
+    const userId = requireUserId();
 
-  const { data: walkRow, error: walkErr } = await sb
-    .from("move_out_walkthroughs")
-    .select("*")
-    .eq("id", walkthroughId)
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (walkErr)
-    return { ok: false, error: friendlyDbError("report.read", walkErr) };
-  if (!walkRow)
-    return { ok: false, error: "Walkthrough not found" };
-  const walkthrough = MoveOutWalkthroughSchema.parse(walkRow);
+    const { data: walkRow, error: walkErr } = await sb
+      .from("move_out_walkthroughs")
+      .select("*")
+      .eq("id", walkthroughId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (walkErr) throw dbFailure("report.read", walkErr);
+    if (!walkRow) throw new ActionFailure("That walkthrough no longer exists.");
+    const walkthrough = MoveOutWalkthroughSchema.parse(walkRow);
 
-  const { data: roomRows, error: roomsErr } = await sb
-    .from("move_out_room_records")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("walkthrough_id", walkthroughId)
-    .order("order_index", { ascending: true });
-  if (roomsErr)
-    return { ok: false, error: friendlyDbError("report.readRooms", roomsErr) };
-  const rooms = (roomRows ?? []).map((r) => MoveOutRoomRecordSchema.parse(r));
+    const { data: roomRows, error: roomsErr } = await sb
+      .from("move_out_room_records")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("walkthrough_id", walkthroughId)
+      .order("order_index", { ascending: true });
+    if (roomsErr) throw dbFailure("report.readRooms", roomsErr);
+    const rooms = (roomRows ?? []).map((r) => MoveOutRoomRecordSchema.parse(r));
 
-  // Rows saved before the limits existed, or written another way, can still be large.
-  const textLength =
-    (walkthrough.overall_notes?.length ?? 0) +
-    rooms.reduce(
-      (sum, r) =>
-        sum +
-        [r.room_name, r.walls_status, r.floors_status, r.appliances_status, r.fixtures_status, r.notes].reduce(
-          (n, text) => n + (text?.length ?? 0),
-          0,
-        ),
-      0,
+    // Rows saved before the limits existed, or written another way, can still be large.
+    const textLength =
+      (walkthrough.overall_notes?.length ?? 0) +
+      rooms.reduce(
+        (sum, r) =>
+          sum +
+          [r.room_name, r.walls_status, r.floors_status, r.appliances_status, r.fixtures_status, r.notes].reduce(
+            (n, text) => n + (text?.length ?? 0),
+            0,
+          ),
+        0,
+      );
+    if (rooms.length > MAX_ROOMS || textLength > REPORT_TEXT_BUDGET) {
+      throw new ActionFailure(
+        "This walkthrough has too much text for one report. Shorten the notes and try again.",
+      );
+    }
+
+    // Lease is optional — the walkthrough is usable for either move-out
+    // (deposit defense) or move-in inspection, with or without a linked lease.
+    const lease = await getActiveLease().catch((err) => {
+      console.error("[action] generateWalkthroughReport.lease:", err);
+      return null;
+    });
+
+    const householdName =
+      lease?.residents.find((r) => r.isPrimary)?.name ??
+      lease?.residents[0]?.name ??
+      "Resident";
+
+    let buffer: Buffer;
+    try {
+      const [{ renderToBuffer }, { WalkthroughReport }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("@/lib/pdf/walkthrough-report"),
+      ]);
+      buffer = await renderToBuffer(
+        <WalkthroughReport
+          walkthrough={walkthrough}
+          rooms={rooms}
+          lease={lease}
+          household={{ name: householdName }}
+        />,
+      );
+    } catch (err) {
+      console.error("[action] generateWalkthroughReport.render:", err);
+      throw new ActionFailure("Couldn't put the report together. Try again in a moment.");
+    }
+
+    await stampPdfGenerated(walkthroughId);
+
+    const datePart = (walkthrough.walkthrough_date ?? todayInZoneIso()).replace(
+      /-/g,
+      "",
     );
-  if (rooms.length > MAX_ROOMS || textLength > REPORT_TEXT_BUDGET) {
     return {
-      ok: false,
-      error: "This walkthrough has too much text for one report. Shorten the notes and try again.",
+      base64: buffer.toString("base64"),
+      filename: `walkthrough-${datePart}.pdf`,
     };
-  }
-
-  // Lease is optional — the walkthrough is usable for either move-out
-  // (deposit defense) or move-in inspection, with or without a linked lease.
-  const lease = await getActiveLease().catch((err) => {
-    console.error("[action] generateWalkthroughReport.lease:", err);
-    return null;
   });
-
-  const householdName =
-    lease?.residents.find((r) => r.isPrimary)?.name ??
-    lease?.residents[0]?.name ??
-    "Resident";
-
-  let buffer: Buffer;
-  try {
-    const [{ renderToBuffer }, { WalkthroughReport }] = await Promise.all([
-      import("@react-pdf/renderer"),
-      import("@/lib/pdf/walkthrough-report"),
-    ]);
-    buffer = await renderToBuffer(
-      <WalkthroughReport
-        walkthrough={walkthrough}
-        rooms={rooms}
-        lease={lease}
-        household={{ name: householdName }}
-      />,
-    );
-  } catch (err) {
-    console.error("[action] generateWalkthroughReport.render:", err);
-    return {
-      ok: false,
-      error: "Couldn't put the report together — try again in a moment.",
-    };
-  }
-
-  await markPdfGenerated(walkthroughId);
-
-  const datePart = (walkthrough.walkthrough_date ?? todayInZoneIso()).replace(
-    /-/g,
-    "",
-  );
-  return {
-    ok: true,
-    base64: buffer.toString("base64"),
-    filename: `walkthrough-${datePart}.pdf`,
-  };
 }

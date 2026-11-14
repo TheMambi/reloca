@@ -198,6 +198,9 @@ async function run<T>(name: string, call: () => Promise<T>, mustSucceed = true):
   return result as T;
 }
 
+/** The success branch of an action's answer, for reading the row it made. */
+const made = <T extends { ok: boolean }>(result: T) => result as Extract<T, { ok: true }>;
+
 async function strangerRows(): Promise<Row[]> {
   const all: Row[] = [];
   for (const table of tables) {
@@ -268,11 +271,11 @@ async function main() {
   const task = await run("checklist:createChecklistItem", () =>
     checklist.createChecklistItem({ category: "post-move", title: "Scope test", description: null, due_date: null }),
   );
-  await run("checklist:updateChecklistItem", () => checklist.updateChecklistItem(task?.id, { category: "move-week", title: "Moved" }));
+  await run("checklist:updateChecklistItem", () => checklist.updateChecklistItem(made(task)?.id, { category: "move-week", title: "Moved" }));
   await run("checklist:reorderChecklistItem", () =>
-    checklist.reorderChecklistItem({ id: task?.id, targetCategory: "pre-move", targetIndex: 0 }),
+    checklist.reorderChecklistItem({ id: made(task)?.id, targetCategory: "pre-move", targetIndex: 0 }),
   );
-  await run("checklist:deleteChecklistItem", () => checklist.deleteChecklistItem(task?.id));
+  await run("checklist:deleteChecklistItem", () => checklist.deleteChecklistItem(made(task)?.id));
   // With no tasks left, both seeders go all the way to their inserts.
   await db.from("checklist_items").delete().eq("user_id", USER);
   await run("checklist-db:seedChecklistIfEmpty", () => checklistDb.seedChecklistIfEmpty(relocationDb.moveContextFor(null)));
@@ -297,12 +300,12 @@ async function main() {
     }),
   );
   await db.from("checklist_items").delete().eq("user_id", USER).eq("category", "lease");
-  await run("lease:seedLeaseChecklistTasks", () => lease.seedLeaseChecklistTasks(newLease?.id));
-  await run("lease:recomputeLeaseEvents", () => lease.recomputeLeaseEvents(newLease?.id));
-  await run("lease:updateLeaseTerms", () => lease.updateLeaseTerms(newLease?.id, { notice_days_required: 30 }));
-  await run("lease:updateLeaseDecision", () => lease.updateLeaseDecision(newLease?.id, "vacate"));
+  await run("lease:seedLeaseChecklistTasks", () => lease.seedLeaseChecklistTasks(made(newLease)?.id));
+  await run("lease:recomputeLeaseEvents", () => lease.recomputeLeaseEvents(made(newLease)?.id));
+  await run("lease:updateLeaseTerms", () => lease.updateLeaseTerms(made(newLease)?.id, { notice_days_required: 30 }));
+  await run("lease:updateLeaseDecision", () => lease.updateLeaseDecision(made(newLease)?.id, "vacate"));
   const draft = await run("lease:createNoticeDraft", () =>
-    lease.createNoticeDraft(newLease?.id, {
+    lease.createNoticeDraft(made(newLease)?.id, {
       body_markdown: "Notice",
       body_plaintext: "Notice",
       subject_line: "Notice to vacate",
@@ -310,8 +313,8 @@ async function main() {
       move_out_date: "2026-12-31",
     }),
   );
-  await run("lease:updateNoticeDraft", () => lease.updateNoticeDraft(draft?.id, { subject_line: "Notice" }));
-  await run("lease:markNoticeSent", () => lease.markNoticeSent(draft?.id));
+  await run("lease:updateNoticeDraft", () => lease.updateNoticeDraft(made(draft)?.row.id, { subject_line: "Notice" }));
+  await run("lease:markNoticeSent", () => lease.markNoticeSent(made(draft)?.row.id));
   const policy = await run("lease:addInsurancePolicy", () =>
     lease.addInsurancePolicy({
       scope: "origin",
@@ -327,8 +330,8 @@ async function main() {
       document_url: null,
     }),
   );
-  await run("lease:updateInsurancePolicy", () => lease.updateInsurancePolicy(policy?.id, { carrier: "Test Mutual" }));
-  await run("lease:deleteInsurancePolicy", () => lease.deleteInsurancePolicy(policy?.id));
+  await run("lease:updateInsurancePolicy", () => lease.updateInsurancePolicy(made(policy)?.id, { carrier: "Test Mutual" }));
+  await run("lease:deleteInsurancePolicy", () => lease.deleteInsurancePolicy(made(policy)?.id));
   const destination = await run("lease:createDestination", () =>
     lease.createDestination({
       building_name: "Scope Tower",
@@ -355,19 +358,19 @@ async function main() {
     }),
   );
   await run("lease:setActiveDestination", () => lease.setActiveDestination(seedDestination));
-  await run("lease:updateDestination", () => lease.updateDestination(destination?.id, { is_active_target: true, city: "Elsewhere" }));
-  await run("lease:deleteDestination", () => lease.deleteDestination(destination?.id));
+  await run("lease:updateDestination", () => lease.updateDestination(made(destination)?.id, { is_active_target: true, city: "Elsewhere" }));
+  await run("lease:deleteDestination", () => lease.deleteDestination(made(destination)?.id));
 
   // ---- move-out walkthrough ----
   // The user has none yet. An unscoped read would return the second user's.
   const created = await run("move-out:createWalkthrough", () => moveOut.createWalkthrough());
   await run("move-out:createWalkthrough", () => moveOut.createWalkthrough());
-  const walkthrough = created?.walkthrough.id;
+  const walkthrough = made(created)?.walkthrough.id;
   await run("move-out-db:getActiveWalkthrough", () => moveOutDb.getActiveWalkthrough());
   await run("move-out-db:getRoomRecords", () => moveOutDb.getRoomRecords(walkthrough));
   await run("move-out-db:getActiveWalkthroughWithRooms", () => moveOutDb.getActiveWalkthroughWithRooms());
   const room = await run("move-out:addRoom", () => moveOut.addRoom(walkthrough, "Balcony"));
-  await run("move-out:updateRoomRecord", () => moveOut.updateRoomRecord(room?.id, { notes: "Clean" }));
+  await run("move-out:updateRoomRecord", () => moveOut.updateRoomRecord(made(room)?.row.id, { notes: "Clean" }));
   await run("move-out:updateWalkthrough", () => moveOut.updateWalkthrough(walkthrough, { overall_notes: "Done" }));
   await run("move-out:markPdfGenerated", () => moveOut.markPdfGenerated(walkthrough));
   // Its three reads run before the PDF is drawn. Drawing needs Next's compiler
@@ -376,7 +379,7 @@ async function main() {
   console.error = () => {};
   await run("move-out:generateWalkthroughReport", () => moveOut.generateWalkthroughReport(walkthrough), false);
   console.error = logError;
-  await run("move-out:deleteRoom", () => moveOut.deleteRoom(room?.id));
+  await run("move-out:deleteRoom", () => moveOut.deleteRoom(made(room)?.row.id));
 
   // ---- saved neighborhoods ----
   const saved = await run("properties:saveNeighborhood", () => properties.saveNeighborhood("Scope Heights", "Testville"));

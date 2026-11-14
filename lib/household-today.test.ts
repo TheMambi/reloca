@@ -44,6 +44,12 @@ standIn("next/headers", {
 // The real module needs a browser build of React. Outside a Next render there is no signal to pass on.
 standIn("next/navigation", { unstable_rethrow() {} });
 
+/** The success branch of an action's answer. A reported failure fails the test. */
+function ok<T extends { ok: boolean }>(result: T): Extract<T, { ok: true }> {
+  assert.ok(result.ok, `the action reported a failure: ${JSON.stringify(result)}`);
+  return result as Extract<T, { ok: true }>;
+}
+
 async function main() {
   const dates = await import("@/lib/dates");
   const { daysUntil } = await import("@/lib/use-move-date");
@@ -89,7 +95,7 @@ async function main() {
   await db.from("lease_terms").delete().eq("user_id", DEMO_USER_ID);
   await db.from("lease_events").delete().eq("user_id", DEMO_USER_ID);
   await db.from("notice_drafts").delete().eq("user_id", DEMO_USER_ID);
-  const { id } = await lease.createLeaseTerms({
+  const { id } = ok(await lease.createLeaseTerms({
     property_name: "Juniper Court",
     unit_address: "100 Sample Street, Unit 204",
     city: "Denver, CO 80000",
@@ -105,20 +111,20 @@ async function main() {
     renewal_monthly_rent: null,
     security_deposit: null,
     late_fee_rules: null,
-  });
+  }));
   const status = await getLeaseStatus();
   assert.equal(status.noticeSendByDate, "2027-10-24");
   assert.equal(status.daysUntilSendBy, 0, "on the evening of the deadline day the deadline is today");
   assert.deepEqual(computeTMinus(status.daysUntilSendBy, false, null, status.noticeSendByDate), { headline: "0d", sub: "TODAY" });
 
-  const draft = await lease.createNoticeDraft(id, {
+  const { row: draft } = ok(await lease.createNoticeDraft(id, {
     body_markdown: "Notice",
     body_plaintext: "Notice",
     subject_line: "Notice",
     recipient_email: ["leasing", "example.test"].join("@"),
     move_out_date: "2027-12-23",
-  });
-  await lease.markNoticeSent(draft.id);
+  }));
+  ok(await lease.markNoticeSent(draft.id));
   const sent = (await getLeaseEvents(id)).find((e) => e.kind === "notice_sent");
   assert.equal(sent?.occurs_on, "2027-10-24", "a notice sent that evening is recorded on that day");
   assert.deepEqual(computeTMinus(null, false, sent!.occurs_on, status.noticeSendByDate), { headline: "Sent", sub: "ON TIME" });

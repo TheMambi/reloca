@@ -1,5 +1,6 @@
 // Run: npx tsx lib/mode.test.ts
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { resolveMode, supabaseUrl } from "./mode";
 
 // Stand-in values built at run time, so nothing here looks like a real key.
@@ -9,7 +10,7 @@ const privateEnv = {
   RELOCA_ACCESS_GATE: "vercel-authentication",
   SUPABASE_URL: "http://127.0.0.1:54321",
   SUPABASE_SERVICE_ROLE_KEY: filler("service"),
-  RELOCA_SINGLE_USER_ID: filler("user"),
+  RELOCA_SINGLE_USER_ID: randomUUID(),
 };
 
 function refusal(env: Record<string, string | undefined>): string {
@@ -69,6 +70,21 @@ for (const name of [
   assert.match(refusal({ ...privateEnv, [name]: undefined }), new RegExp(`private mode is missing ${name}\\.`));
   assert.match(refusal({ ...privateEnv, [name]: "" }), new RegExp(`private mode is missing ${name}\\.`));
 }
+
+// A value of the wrong shape is refused at startup, by name and without the
+// value, instead of failing later as a request on some page.
+for (const [name, value] of [
+  ["SUPABASE_URL", "project.example.test"],
+  ["SUPABASE_URL", "ftp://project.example.test"],
+  ["RELOCA_SINGLE_USER_ID", filler("user")],
+  ["RELOCA_SINGLE_USER_ID", "1234"],
+] as const) {
+  const message = refusal({ ...privateEnv, [name]: value });
+  assert.match(message, new RegExp(`${name} is set but`), `${name}=${value}`);
+  assert.ok(!message.includes(value), "a refusal must not contain a value");
+}
+// An id Postgres accepts is enough: it need not be a random (version 4) one.
+assert.equal(resolveMode({ ...privateEnv, RELOCA_SINGLE_USER_ID: "00000000-0000-0000-0000-000000000001" }), "private");
 
 // Everything missing is listed in one message.
 assert.match(

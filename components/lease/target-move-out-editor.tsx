@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { updateLeaseTerms } from "@/app/lease/actions";
+import { settle } from "@/lib/settle-action";
 import { isoToPickerDate, pickerDateToIso, todayInZoneIso } from "@/lib/dates";
 
 interface TargetMoveOutEditorProps {
@@ -28,6 +29,7 @@ export function TargetMoveOutEditor({
 }: TargetMoveOutEditorProps) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   // The earliest date we'll accept: whichever is later between today and the
   // lease start. Past-dated targets are nonsensical for a forecaster.
@@ -42,9 +44,11 @@ export function TargetMoveOutEditor({
       setOpen(false);
       return;
     }
+    setError(null);
     startTransition(async () => {
-      await updateLeaseTerms(leaseId, { target_move_out_date: iso });
-      setOpen(false);
+      const res = await settle(updateLeaseTerms(leaseId, { target_move_out_date: iso }));
+      if (res.ok) setOpen(false);
+      else setError(res.error);
     });
   }
 
@@ -68,6 +72,11 @@ export function TargetMoveOutEditor({
           defaultMonth={isoToPickerDate(current)}
           disabled={(d) => d < minDate}
         />
+        {error ? (
+          <p role="alert" className="max-w-[16rem] px-3 pb-3 text-[11px] text-[var(--danger)]">
+            {error}
+          </p>
+        ) : null}
       </PopoverContent>
     </Popover>
   );

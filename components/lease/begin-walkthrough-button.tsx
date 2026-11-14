@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createWalkthrough } from "@/app/lease/move-out-actions";
+import { settle } from "@/lib/settle-action";
 
 export function BeginWalkthroughButton() {
   const [pending, startBegin] = useTransition();
@@ -12,12 +13,9 @@ export function BeginWalkthroughButton() {
   function handleClick() {
     setError(null);
     startBegin(async () => {
-      try {
-        await createWalkthrough();
-        // No need to navigate — the parent RSC re-renders via revalidatePath.
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Couldn't start.");
-      }
+      // No need to navigate — the parent RSC re-renders via revalidatePath.
+      const res = await settle(createWalkthrough());
+      if (!res.ok) setError(res.error);
     });
   }
 
