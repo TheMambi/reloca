@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import {
   ShieldAlert,
   ArrowLeft,
@@ -20,6 +21,7 @@ import {
   cityName as resolveCityName,
 } from "@/lib/data";
 import { getActiveMoveContext } from "@/lib/data/relocation-db";
+import { toSlug } from "@/lib/data/neighborhoods";
 import { Badge } from "@/components/ui/badge";
 import { SourceTagList } from "@/components/shared/source-tag";
 
@@ -29,11 +31,19 @@ export async function generateMetadata({
   params: Promise<{ neighborhood: string }>;
 }): Promise<Metadata> {
   const { neighborhood } = await params;
-  const decoded = decodeURIComponent(neighborhood).replace(/-/g, " ");
+  const prop = findNeighborhood(neighborhood);
+  if (!prop) notFound();
   return {
-    title: `${decoded} — Risk`,
-    description: `Climate, crime, and environmental risk drill-down for the ${decoded} neighborhood.`,
+    title: `${prop.neighborhood} — Risk`,
+    description: `Climate, crime, and environmental risk drill-down for the ${prop.neighborhood} neighborhood.`,
   };
+}
+
+// Only neighborhoods in the listings data have a page. The name shown comes
+// from the data, never from the address the visitor typed. The middleware
+// answers 404 for the rest; this check covers any address it does not see.
+function findNeighborhood(segment: string) {
+  return getProperties().find((p) => toSlug(p.neighborhood) === segment);
 }
 
 /* ── Helpers ── */
@@ -62,20 +72,15 @@ export default async function RiskPage({
   params: Promise<{ neighborhood: string }>;
 }) {
   const { neighborhood } = await params;
-  const decoded = decodeURIComponent(neighborhood).replace(/-/g, " ");
+  const prop = findNeighborhood(neighborhood);
+  if (!prop) notFound();
 
-  const [properties, moveCtx] = await Promise.all([
-    Promise.resolve(getProperties()),
-    getActiveMoveContext(),
-  ]);
+  const moveCtx = await getActiveMoveContext();
 
   // The neighborhood's own city is the "current" side; the other side is the
   // active move's other endpoint (origin if this is the destination, and vice
   // versa) — so a Sacramento neighborhood compares against Denver, etc.
-  const prop = properties.find(
-    (p) => p.neighborhood.toLowerCase() === decoded.toLowerCase(),
-  );
-  const currentSlug = prop?.city ?? moveCtx.destinationSlug;
+  const currentSlug = prop.city;
   const otherSlug =
     currentSlug === moveCtx.originSlug
       ? moveCtx.destinationSlug
@@ -106,11 +111,12 @@ export default async function RiskPage({
           <ShieldAlert className="size-5 text-[var(--danger)]" strokeWidth={1.75} />
         </span>
         <div>
-          <h1 className="text-lg font-semibold capitalize tracking-[var(--tracking-headline)]">
-            {decoded}
+          <h1 className="text-lg font-semibold tracking-[var(--tracking-headline)]">
+            {prop.neighborhood}
           </h1>
           <p className="text-xs text-muted-foreground">
-            Risk drill-down · {cityName}
+            Risk drill-down · {cityName}. These figures cover the whole city,
+            not this neighborhood alone.
           </p>
         </div>
       </div>

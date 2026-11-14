@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import {
-  Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { UrlTabs } from "@/components/shared/url-tabs";
 import { LifecycleTracker } from "@/components/transitions/lifecycle-tracker";
 import { utilityConfig } from "@/components/transitions/utility-config";
 import { addressConfig } from "@/components/transitions/address-config";
@@ -56,7 +56,7 @@ export default async function TransitionsPage({
         </p>
       </header>
 
-      <Tabs defaultValue={initialTab} className="gap-4">
+      <UrlTabs values={["utilities", "address-updates"]} defaultValue={initialTab} className="gap-4">
         <TabsList>
           <TabsTrigger value="utilities">Utilities</TabsTrigger>
           <TabsTrigger value="address-updates">Address updates</TabsTrigger>
@@ -83,7 +83,7 @@ export default async function TransitionsPage({
             emptyHint="Pick a recipient above so we can keep the deadline."
           />
         </TabsContent>
-      </Tabs>
+      </UrlTabs>
     </div>
   );
 }

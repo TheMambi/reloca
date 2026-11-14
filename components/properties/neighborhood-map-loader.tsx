@@ -21,6 +21,7 @@ interface NeighborhoodMapLoaderProps {
   savedIdMap: Map<string, string>;
   activeLatLng: { lat: number; lng: number } | null;
   activeLabel: string | null;
+  fallbackCenter: { lat: number; lng: number };
 }
 
 export function NeighborhoodMapLoader(props: NeighborhoodMapLoaderProps) {

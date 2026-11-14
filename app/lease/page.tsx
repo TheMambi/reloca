@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import {
-  Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { UrlTabs } from "@/components/shared/url-tabs";
 import {
   getActiveLease,
   getLeaseEvents,
@@ -90,7 +90,7 @@ export default async function LeasePage({
         </p>
       </header>
 
-      <Tabs defaultValue={initialTab} className="gap-4">
+      <UrlTabs values={[...TABS]} defaultValue={initialTab} className="gap-4">
         <TabsList>
           <TabsTrigger value="notice">Notice</TabsTrigger>
           <TabsTrigger value="letter">Letter</TabsTrigger>
@@ -132,7 +132,7 @@ export default async function LeasePage({
         <TabsContent value="walkthrough" className="mt-2">
           <DepositSection />
         </TabsContent>
-      </Tabs>
+      </UrlTabs>
     </div>
   );
 }

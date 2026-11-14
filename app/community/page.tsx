@@ -11,7 +11,8 @@ import {
   getViewingRelocation,
   moveContextFor,
 } from "@/lib/data/relocation-db";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UrlTabs } from "@/components/shared/url-tabs";
 import { Badge } from "@/components/ui/badge";
 import { SourceTag } from "@/components/shared/source-tag";
 
@@ -70,7 +71,7 @@ export default async function CommunityPage({
       </div>
 
       {/* ─── City Tabs ─── */}
-      <Tabs defaultValue={destinationSlug} className="flex-1">
+      <UrlTabs values={[originSlug, destinationSlug, "compare"]} defaultValue={destinationSlug} className="flex-1">
         <TabsList className="w-fit">
           <TabsTrigger value={originSlug}>{originName}</TabsTrigger>
           <TabsTrigger value={destinationSlug}>{destinationName}</TabsTrigger>
@@ -93,7 +94,7 @@ export default async function CommunityPage({
             destName={destinationName}
           />
         </TabsContent>
-      </Tabs>
+      </UrlTabs>
 
       <SourceTag id={dest.source} />
     </div>

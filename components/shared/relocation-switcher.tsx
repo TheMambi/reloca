@@ -31,10 +31,13 @@ type ManageState =
 export function RelocationSwitcher({
   options,
   activeId,
+  viewingId,
   cities,
 }: {
   options: RelocationOption[];
   activeId: string | null;
+  /** What the pages show when the URL names no relocation (the saved choice, else the active move). */
+  viewingId: string | null;
   cities: CityChoice[];
 }) {
   const router = useRouter();
@@ -43,10 +46,12 @@ export function RelocationSwitcher({
   const [open, setOpen] = useState(false);
   const [manage, setManage] = useState<ManageState>(null);
   const [pending, startTransition] = useTransition();
+  const [promoteError, setPromoteError] = useState<string | null>(null);
 
   const param = searchParams.get("relocation");
   const viewing =
     options.find((o) => o.id === param) ??
+    options.find((o) => o.id === viewingId) ??
     options.find((o) => o.id === activeId) ??
     options[0] ??
     null;
@@ -72,8 +77,10 @@ export function RelocationSwitcher({
   }
 
   function promote(id: string) {
+    setPromoteError(null);
     startTransition(async () => {
       const res = await setActiveMove(id);
+      if (!res.ok) setPromoteError(res.error);
       if (res.ok) {
         // The promoted relocation becomes the default — drop the explicit param.
         const next = new URLSearchParams(searchParams.toString());
@@ -206,6 +213,11 @@ export function RelocationSwitcher({
               >
                 {pending ? "Setting…" : "Set as active move"}
               </button>
+              {promoteError && (
+                <p role="alert" className="mt-1.5 text-[10px] leading-snug text-[var(--danger)]">
+                  {promoteError}
+                </p>
+              )}
               <p className="mt-1.5 text-[10px] leading-snug text-muted-foreground">
                 Your checklist, lease, and move tasks track the active move.
               </p>

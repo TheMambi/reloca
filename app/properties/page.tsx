@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Building2, Heart } from "lucide-react";
 import {
-  Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { UrlTabs } from "@/components/shared/url-tabs";
 import { getProperties } from "@/lib/data";
+import { getCity } from "@/lib/data/cities";
 import { aggregateNeighborhoods } from "@/lib/data/neighborhoods";
 import { getDestinations } from "@/lib/data/lease-db";
 import {
@@ -68,6 +69,9 @@ export default async function PropertiesPage({
   // compare below is the cross-relocation reference view).
   const moveCtx = await getActiveMoveContext();
   const destCityName = moveCtx.destinationName;
+  const destCity = getCity(moveCtx.destinationSlug);
+  if (!destCity) throw new Error(`No city in the registry for "${moveCtx.destinationSlug}"`);
+  const destinationCenter = { lat: destCity.lat, lng: destCity.lng };
 
   const properties = getProperties();
   const summaries = aggregateNeighborhoods(properties, moveCtx.destinationSlug);
@@ -132,7 +136,7 @@ export default async function PropertiesPage({
         </div>
       </header>
 
-      <Tabs defaultValue={initialTab} className="gap-4">
+      <UrlTabs values={[...TABS]} defaultValue={initialTab} className="gap-4">
         <TabsList>
           <TabsTrigger value="neighborhoods">Neighborhoods</TabsTrigger>
           <TabsTrigger value="compare">Compare</TabsTrigger>
@@ -156,6 +160,7 @@ export default async function PropertiesPage({
               savedIdMap={savedIdMap}
               activeLatLng={activeLatLng}
               activeLabel={activeLabel}
+              fallbackCenter={destinationCenter}
             />
           </section>
 
@@ -246,7 +251,7 @@ export default async function PropertiesPage({
             <DestinationsCompareBlock destinations={destinations} />
           )}
         </TabsContent>
-      </Tabs>
+      </UrlTabs>
     </div>
   );
 }

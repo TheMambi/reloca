@@ -3,6 +3,7 @@ import { cityName, cityCode } from "./cities";
 import { getCostOfLiving, costValueFor } from "./cost";
 import { getCrimeRecord } from "./crime";
 import { getClimateProfile } from "./climate";
+import { orNullIfMissing } from "./missing-city-data";
 import { getAirQualityProfile } from "./air-quality";
 import { getWalkabilityProfile } from "./walkability";
 import { getCommunityInsights } from "./community";
@@ -45,16 +46,6 @@ export interface RelocationCompareColumn {
   sources: string[];
 }
 
-// Loaders throw when a city lacks a data file; a relocation can point at any
-// registry city, so guard each domain and degrade to null on absence.
-function safe<T>(fn: () => T): T | null {
-  try {
-    return fn();
-  } catch {
-    return null;
-  }
-}
-
 function columnFor(r: Relocation): RelocationCompareColumn {
   const destSlug = r.destination_slug;
   const originSlug = r.origin_slug;
@@ -74,8 +65,10 @@ function columnFor(r: Relocation): RelocationCompareColumn {
       ? Math.round(((destTotal - originTotal) / originTotal) * 100 * 10) / 10
       : null;
 
-  const crime = safe(() => getCrimeRecord(destSlug));
-  const climate = safe(() => getClimateProfile(destSlug));
+  // A relocation can point at any registry city, and not every city has
+  // crime and climate files. Those columns show a dash; a broken file throws.
+  const crime = orNullIfMissing(() => getCrimeRecord(destSlug));
+  const climate = orNullIfMissing(() => getClimateProfile(destSlug));
   const air = getAirQualityProfile(destSlug);
   const walk = getWalkabilityProfile(destSlug);
   const community = getCommunityInsights().find((c) => c.city === destSlug);

@@ -57,7 +57,10 @@ async function computeDashboardData(ctx: MoveContext) {
     getChecklistItems(),
     getActiveLease(),
     getMoveReadiness(),
-    getMoveEstimate().catch(() => null),
+    getMoveEstimate().catch((err) => {
+      console.error("[dashboard] move estimate could not be read:", err);
+      return null;
+    }),
   ]);
   const events = lease ? await getLeaseEvents(lease.id) : [];
 

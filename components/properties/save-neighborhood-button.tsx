@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useTransition, startTransition } from "react";
+import { useOptimistic, useState, useTransition, startTransition } from "react";
 import { Heart } from "lucide-react";
 import {
   saveNeighborhood,
@@ -24,6 +24,7 @@ export function SaveNeighborhoodButton({
     (_current, next: boolean) => next,
   );
   const [, startServerTransition] = useTransition();
+  const [failed, setFailed] = useState(false);
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     // Heart sits inside the card's <Link>. Stop the click from navigating.
@@ -35,24 +36,29 @@ export function SaveNeighborhoodButton({
       applyOptimistic(next);
     });
 
+    setFailed(false);
     startServerTransition(async () => {
+      // The optimistic flip rolls back by itself when the action ends without
+      // a change, so a failure only needs to be shown.
       try {
-        if (next) {
-          await saveNeighborhood(neighborhood, city);
-        } else if (savedId) {
-          await unsaveNeighborhood(savedId);
-        }
+        const result = next
+          ? await saveNeighborhood(neighborhood, city)
+          : savedId
+            ? await unsaveNeighborhood(savedId)
+            : null;
+        if (result && !result.ok) setFailed(true);
       } catch (err) {
-        // Why: the parent RSC re-renders after the action's revalidatePath, so
-        // the optimistic flip rolls back automatically — just log and move on.
         console.error("save-neighborhood toggle failed", err);
+        setFailed(true);
       }
     });
   };
 
-  const label = optimisticSaved
-    ? "Saved — click to remove"
-    : "Save neighborhood";
+  const label = failed
+    ? "That wasn't saved. Click to try again"
+    : optimisticSaved
+      ? "Saved — click to remove"
+      : "Save neighborhood";
 
   return (
     <button
@@ -61,7 +67,7 @@ export function SaveNeighborhoodButton({
       aria-label={label}
       aria-pressed={optimisticSaved}
       title={label}
-      className="grid size-8 place-items-center rounded-[var(--radius-sm)] text-muted-foreground transition-colors hover:bg-card/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      className={`grid size-8 place-items-center rounded-[var(--radius-sm)] text-muted-foreground transition-colors hover:bg-card/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${failed ? "ring-1 ring-[var(--danger)]" : ""}`}
     >
       <Heart
         className={
@@ -72,6 +78,11 @@ export function SaveNeighborhoodButton({
         fill={optimisticSaved ? "currentColor" : "none"}
         strokeWidth={1.75}
       />
+      {failed && (
+        <span role="alert" className="sr-only">
+          The neighborhood wasn&apos;t saved. Try again.
+        </span>
+      )}
     </button>
   );
 }

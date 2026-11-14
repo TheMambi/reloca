@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { getChecklistItems } from "@/lib/data/checklist-db";
 import { getCostOfLiving, costValueFor } from "@/lib/data/cost";
 import {
@@ -39,7 +40,9 @@ export async function getStatusAlerts(): Promise<StatusAlert[]> {
       const graceEnd = addDaysIso(moveDate, 14);
       windDown = todayInZoneIso() > graceEnd;
     }
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error("[status-alerts] move context could not be read:", err);
     // Status row must never throw; without a context, keep loud behavior.
   }
 
@@ -75,7 +78,9 @@ async function computeChecklistAlert(
   let items: ChecklistItem[];
   try {
     items = await getChecklistItems();
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error("[status-alerts] checklist could not be read:", err);
     // Status row must never throw — checklist seeding errors shouldn't crash
     // every page. Silently drop the alert; checklist page itself will surface
     // the error.
@@ -131,7 +136,9 @@ async function computeUtilityAlert(
   let rows: UtilityTransition[];
   try {
     rows = await getUtilityTransitions();
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error("[status-alerts] utilities could not be read:", err);
     return null;
   }
 
@@ -183,7 +190,9 @@ async function computeAddressAlert(
   let rows: AddressChangeTarget[];
   try {
     rows = await getAddressTargets();
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error("[status-alerts] address updates could not be read:", err);
     return null;
   }
 
@@ -228,7 +237,9 @@ async function computeCostAlert(): Promise<StatusAlert | null> {
     originSlug = ctx.originSlug;
     destSlug = ctx.destinationSlug;
     destName = ctx.destinationName;
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error("[status-alerts] cost could not be read:", err);
     return null; // status row must never throw
   }
 

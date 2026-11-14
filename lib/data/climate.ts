@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "fs";
+import { MissingCityDataError } from "./missing-city-data";
 import { join } from "path";
 import { ClimateProfileSchema } from "@/schemas";
 import type { ClimateProfile } from "@/schemas";
@@ -15,7 +16,7 @@ export function getClimateProfile(slug: string): ClimateProfile {
   if (existing) return existing;
   const path = join(process.cwd(), `data/climate/${slug}.json`);
   if (!existsSync(path)) {
-    throw new Error(`No climate data for city "${slug}" (expected ${path})`);
+    throw new MissingCityDataError(`No climate data for city "${slug}" (expected ${path})`);
   }
   const parsed = ClimateProfileSchema.parse(JSON.parse(readFileSync(path, "utf-8")));
   cache.set(slug, parsed);

@@ -41,9 +41,11 @@ interface NeighborhoodMapProps {
   savedIdMap: Map<string, string>;
   activeLatLng: { lat: number; lng: number } | null;
   activeLabel: string | null;
+  /** Where the map opens when there is nothing to pin: the destination city. */
+  fallbackCenter: { lat: number; lng: number };
 }
 
-// Long Beach-zoomed neighborhood map. One marker per neighborhood centroid;
+// Destination-zoomed neighborhood map. One marker per neighborhood centroid;
 // click reveals a popup with name + save-heart + headline metrics + view link.
 // The active destination (if any) gets a coral pin laid on top — different
 // concept (a building being signed for) so it stays a separate visual layer.
@@ -52,6 +54,7 @@ export function NeighborhoodMap({
   savedIdMap,
   activeLatLng,
   activeLabel,
+  fallbackCenter,
 }: NeighborhoodMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -62,17 +65,32 @@ export function NeighborhoodMap({
   const popupContainersRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const [openKey, setOpenKey] = useState<string | null>(null);
 
+  // Every server refresh hands this component new arrays and objects, even
+  // when nothing on the map changed (saving a neighborhood does exactly that).
+  // The map is built from this string instead, so it is rebuilt only when a
+  // pin, the active destination or the fallback really differs, and an open
+  // popup, the zoom and the position survive a save.
+  const mapKey = JSON.stringify({
+    pins: summaries.map((s) => ({ k: key(s), lng: s.centroid.lng, lat: s.centroid.lat })),
+    active: activeLatLng && activeLabel ? { ...activeLatLng, label: activeLabel } : null,
+    activePoint: activeLatLng,
+    fallback: [fallbackCenter.lng, fallbackCenter.lat],
+  });
+
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
+    const { pins, active, activePoint, fallback } = JSON.parse(mapKey) as {
+      pins: { k: string; lng: number; lat: number }[];
+      active: { lat: number; lng: number; label: string } | null;
+      activePoint: { lat: number; lng: number } | null;
+      fallback: [number, number];
+    };
 
     // Why: capture the ref's current Map at effect-start so cleanup uses the
     // same object the setup populated -- React eslint warns when cleanup
     // dereferences ref.current directly because the ref can be reassigned
     // before the cleanup runs (esp. across StrictMode double-invokes in dev).
     const popupContainers = popupContainersRef.current;
-
-    // Long Beach metro centroid as a sane fallback if there are no pins.
-    const fallbackCenter: [number, number] = [-118.1937, 33.7701];
 
     const map = new maplibregl.Map({
       container: containerRef.current,
@@ -81,19 +99,16 @@ export function NeighborhoodMap({
         sources: { carto: CARTO_DARK_SOURCE },
         layers: [{ id: "carto-tiles", type: "raster", source: "carto" }],
       },
-      center: fallbackCenter,
+      center: fallback,
       zoom: 11,
     });
     mapRef.current = map;
 
     // Fit bounds across all neighborhood centroids + the active destination
     // if present. Centroid math already lives in `aggregateNeighborhoods`.
-    const allPoints: [number, number][] = summaries.map((s) => [
-      s.centroid.lng,
-      s.centroid.lat,
-    ]);
-    if (activeLatLng) {
-      allPoints.push([activeLatLng.lng, activeLatLng.lat]);
+    const allPoints: [number, number][] = pins.map((p) => [p.lng, p.lat]);
+    if (activePoint) {
+      allPoints.push([activePoint.lng, activePoint.lat]);
     }
     if (allPoints.length >= 2) {
       const lngs = allPoints.map((p) => p[0]);
@@ -112,20 +127,19 @@ export function NeighborhoodMap({
 
     // Active destination — coral pin, sits on top. Its popup is plain text
     // (label only); a building isn't a neighborhood, so no save-heart.
-    if (activeLatLng && activeLabel) {
+    if (active) {
       // Marker pins are inline SVG in the DOM, so CSS variables resolve —
       // keeps pin colors on the design tokens (AD-004; no off-token hex).
       new maplibregl.Marker({ color: "var(--brand-secondary)" })
-        .setLngLat([activeLatLng.lng, activeLatLng.lat])
-        .setPopup(new maplibregl.Popup({ offset: 16 }).setText(activeLabel))
+        .setLngLat([active.lng, active.lat])
+        .setPopup(new maplibregl.Popup({ offset: 16 }).setText(active.label))
         .addTo(map);
     }
 
     // Neighborhood markers — neutral pins. Each gets a fresh container we
     // own; maplibre slots it into its popup chrome and React portals into
     // it. Save-state lives in the popup heart, not the pin color.
-    summaries.forEach((s) => {
-      const k = key(s);
+    pins.forEach(({ k, lng, lat }) => {
       const container = document.createElement("div");
       popupContainers.set(k, container);
 
@@ -141,7 +155,7 @@ export function NeighborhoodMap({
       });
 
       new maplibregl.Marker({ color: "var(--muted-foreground)" })
-        .setLngLat([s.centroid.lng, s.centroid.lat])
+        .setLngLat([lng, lat])
         .setPopup(popup)
         .addTo(map);
     });
@@ -152,7 +166,7 @@ export function NeighborhoodMap({
       popupContainers.clear();
       setOpenKey(null);
     };
-  }, [summaries, activeLatLng, activeLabel]);
+  }, [mapKey]);
 
   const ariaLabel = activeLabel
     ? `Map of ${summaries.length} neighborhoods around ${activeLabel}.`

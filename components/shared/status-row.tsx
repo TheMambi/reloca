@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_rethrow } from "next/navigation";
 import { Bell, Circle } from "lucide-react";
 import { MoveDateEditor } from "@/components/shared/move-date-editor";
 import { MobileNavDrawer } from "@/components/shared/mobile-nav-drawer";
@@ -7,21 +8,45 @@ import { getStatusAlerts } from "@/lib/data/status-alerts";
 import {
   getActiveMoveContext,
   getRelocations,
+  getViewingRelocation,
   toRelocationOption,
 } from "@/lib/data/relocation-db";
 import { getCities } from "@/lib/data/cities";
 import { RelocationSwitcher } from "@/components/shared/relocation-switcher";
 import { computeDeadlinePill, PILL_TONE_CLASSES } from "@/lib/lease/pill";
 
+// The header sits in the root layout. If its data cannot be read, it shows a
+// reduced bar instead of failing, so the page below still gets its own error
+// screen with the navigation around it.
 export async function StatusRow() {
+  try {
+    return await LoadedStatusRow();
+  } catch (err) {
+    // Next signals "render this at request time" by throwing. That must pass.
+    unstable_rethrow(err);
+    console.error("[status-row] could not load:", err);
+    return (
+      <header
+        role="banner"
+        className="flex h-12 items-center gap-2 border-b border-border bg-background/95 px-4 text-xs text-muted-foreground sm:gap-6"
+      >
+        <MobileNavDrawer />
+        <span role="status">Move details couldn&apos;t be loaded.</span>
+      </header>
+    );
+  }
+}
+
+async function LoadedStatusRow() {
   // Single indexed lookup against `lease_terms` (+ events). Adds one DB roundtrip
   // per page load; keeps the global pill in sync with the /lease tracker without
   // duplicating computeDeadlinePill logic.
-  const [leaseStatus, alerts, moveContext, relocations] = await Promise.all([
+  const [leaseStatus, alerts, moveContext, relocations, { viewing }] = await Promise.all([
     getLeaseStatus(),
     getStatusAlerts(),
     getActiveMoveContext(),
     getRelocations(),
+    getViewingRelocation(null),
   ]);
 
   const relocationOptions = relocations.map(toRelocationOption);
@@ -69,6 +94,7 @@ export async function StatusRow() {
       <RelocationSwitcher
         options={relocationOptions}
         activeId={activeId}
+        viewingId={viewing?.id ?? null}
         cities={cityChoices}
       />
 

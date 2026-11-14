@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "fs";
+import { MissingCityDataError } from "./missing-city-data";
 import { join } from "path";
 import { CrimeRecordSchema } from "@/schemas";
 import type { CrimeRecord } from "@/schemas";
@@ -15,7 +16,7 @@ export function getCrimeRecord(slug: string): CrimeRecord {
   if (existing) return existing;
   const path = join(process.cwd(), `data/crime/${slug}.json`);
   if (!existsSync(path)) {
-    throw new Error(`No crime data for city "${slug}" (expected ${path})`);
+    throw new MissingCityDataError(`No crime data for city "${slug}" (expected ${path})`);
   }
   const parsed = CrimeRecordSchema.parse(JSON.parse(readFileSync(path, "utf-8")));
   cache.set(slug, parsed);

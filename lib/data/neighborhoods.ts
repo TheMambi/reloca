@@ -1,5 +1,6 @@
 import type { Property } from "@/schemas";
 import { cityName, cityCode } from "./cities";
+import { toSlug } from "./neighborhood-slug";
 
 export interface NeighborhoodSummary {
   slug: string;
@@ -19,12 +20,9 @@ export interface NeighborhoodSummary {
   centroid: { lat: number; lng: number };
 }
 
-// Why: slug must round-trip with `app/properties/[neighborhood]/page.tsx`,
-// which decodes `-` back to ` ` and lowercase-compares against
-// `property.neighborhood`. Keep this rule in lockstep with that page.
-export function toSlug(name: string): string {
-  return name.toLowerCase().replace(/\s+/g, "-");
-}
+// `app/properties/[neighborhood]/page.tsx` and the middleware find a
+// neighborhood by comparing this slug with the address segment.
+export { toSlug };
 
 export function aggregateNeighborhoods(
   properties: Property[],

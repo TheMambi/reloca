@@ -13,7 +13,6 @@ import {
   useMoveDate,
   daysUntil,
   moveProgressPct,
-  clearStoredMoveDate,
 } from "@/lib/use-move-date";
 import {
   countdownPhrase,
@@ -54,18 +53,25 @@ export function MoveDateEditor({
   const [, startTransition] = useTransition();
   const router = useRouter();
 
-  // Optimistic local write (instant strip update) + DB persistence. On success
-  // the localStorage override is cleared so `relocations.move_date` — which
-  // every other surface reads — is the single source of truth again. On
-  // failure (e.g. no active relocation yet) the override stays, preserving the
-  // pre-Wave-1 local-only behavior instead of losing the user's pick.
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // The strip shows the new date at once while it is saved. If the save fails
+  // the saved date comes back and the popover reopens with the reason, so the
+  // header never shows a date the database does not have.
   const persistMoveDate = (next: string | null) => {
     setMoveDate(next);
+    setSaveError(null);
     startTransition(async () => {
-      const result = await updateActiveMoveDate(next);
+      const result = await updateActiveMoveDate(next).catch(() => ({
+        ok: false as const,
+        error: "The move date wasn't saved. Try again.",
+      }));
       if (result.ok) {
-        clearStoredMoveDate();
         router.refresh();
+      } else {
+        setMoveDate(initialMoveDate);
+        setSaveError(result.error);
+        setOpen(true);
       }
     });
   };
@@ -137,6 +143,11 @@ export function MoveDateEditor({
           <p className="mt-1 font-mono text-xs text-foreground">
             {moveDate ?? "Not set yet"}
           </p>
+          {saveError && (
+            <p role="alert" className="mt-1 max-w-56 font-sans text-xs text-[var(--danger)]">
+              {saveError}
+            </p>
+          )}
         </div>
         <Calendar
           mode="single"

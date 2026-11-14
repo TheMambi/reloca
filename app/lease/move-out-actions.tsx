@@ -258,7 +258,10 @@ export async function generateWalkthroughReport(
 
   // Lease is optional — the walkthrough is usable for either move-out
   // (deposit defense) or move-in inspection, with or without a linked lease.
-  const lease = await getActiveLease().catch(() => null);
+  const lease = await getActiveLease().catch((err) => {
+    console.error("[action] generateWalkthroughReport.lease:", err);
+    return null;
+  });
 
   const householdName =
     lease?.residents.find((r) => r.isPrimary)?.name ??

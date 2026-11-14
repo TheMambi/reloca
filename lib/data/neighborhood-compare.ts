@@ -10,6 +10,7 @@ import type { SavedNeighborhood } from "@/schemas/saved-neighborhood";
 import { cityName, cityCode, citySlugFromName } from "./cities";
 import { getCrimeRecord } from "./crime";
 import { getClimateProfile } from "./climate";
+import { orNullIfMissing } from "./missing-city-data";
 import { toSlug } from "./neighborhoods";
 
 export type ClimateConcern =
@@ -43,23 +44,6 @@ function bedRangeLabel(min: number, max: number): string {
   if (min === max) return min === 0 ? "Studio" : `${min} bed`;
   if (min === 0) return `Studio–${max} bed`;
   return `${min}–${max} bed`;
-}
-
-// Crime/climate live at the city grain, keyed by slug. Resolve safely so a
-// saved city without a data file degrades to null rather than throwing.
-function safeCrime(slug: string): CrimeRecord | null {
-  try {
-    return getCrimeRecord(slug);
-  } catch {
-    return null;
-  }
-}
-function safeClimate(slug: string): ClimateProfile | null {
-  try {
-    return getClimateProfile(slug);
-  } catch {
-    return null;
-  }
 }
 
 // Why: crime data lives at the city grain (one record per city), not the
@@ -139,8 +123,8 @@ export function buildNeighborhoodCompareRows(
     // cities that aren't in the registry (no reference data to compare).
     const slug = citySlugFromName(saved.city);
     if (!slug) continue;
-    const cityCrime = safeCrime(slug);
-    const cityClimate = safeClimate(slug);
+    const cityCrime = orNullIfMissing(() => getCrimeRecord(slug));
+    const cityClimate = orNullIfMissing(() => getClimateProfile(slug));
     if (!cityCrime || !cityClimate) continue;
 
     // properties carry a city slug; saved rows carry a display name. Resolve
