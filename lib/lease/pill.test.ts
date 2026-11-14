@@ -40,9 +40,9 @@ assert.deepEqual(computeTMinus(-16, false, "2028-02-05", "2028-02-03"), { headli
 assert.deepEqual(computeTMinus(-16, false, "2028-02-04", "2028-02-03"), { headline: "Sent", sub: "1 DAY LATE" });
 assert.deepEqual(computeTMinus(null, false, "2028-02-04", null), { headline: "Sent", sub: "" });
 // Without a sent notice the countdown behaves as before.
-assert.deepEqual(computeTMinus(11, false, null, "2028-02-03"), { headline: "11d", sub: "11 DAYS" });
-assert.deepEqual(computeTMinus(1, false, null, "2028-02-03"), { headline: "1d", sub: "1 DAY" });
-assert.deepEqual(computeTMinus(0, false, null, "2028-02-03"), { headline: "0d", sub: "TODAY" });
+assert.deepEqual(computeTMinus(11, false, null, "2028-02-03"), { headline: "11", sub: "DAYS LEFT" });
+assert.deepEqual(computeTMinus(1, false, null, "2028-02-03"), { headline: "1", sub: "DAY LEFT" });
+assert.deepEqual(computeTMinus(0, false, null, "2028-02-03"), { headline: "Today", sub: "LAST DAY TO SEND" });
 assert.deepEqual(computeTMinus(-3, false, null, "2028-02-03"), { headline: "Overdue", sub: "3 DAYS PAST" });
 assert.deepEqual(computeTMinus(null, false, null, null), { headline: "—", sub: "" });
 // Moved out wins over everything.

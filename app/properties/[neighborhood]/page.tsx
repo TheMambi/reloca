@@ -22,7 +22,8 @@ import {
 } from "@/lib/data";
 import { getActiveMoveContext } from "@/lib/data/relocation-db";
 import { toSlug } from "@/lib/data/neighborhoods";
-import { Badge } from "@/components/ui/badge";
+import { formatMonth } from "@/lib/dates";
+import { crimeSubcategoryLabel } from "@/schemas/crime";
 import { SourceTagList } from "@/components/shared/source-tag";
 
 export async function generateMetadata({
@@ -111,9 +112,10 @@ export default async function RiskPage({
           <ShieldAlert className="size-5 text-[var(--danger)]" strokeWidth={1.75} />
         </span>
         <div>
-          <h1 className="text-lg font-semibold tracking-[var(--tracking-headline)]">
+          {/* h2: the page's h1 is "Properties", in app/properties/layout.tsx. */}
+          <h2 className="text-lg font-semibold tracking-[var(--tracking-headline)]">
             {prop.neighborhood}
-          </h1>
+          </h2>
           <p className="text-xs text-muted-foreground">
             Risk drill-down · {cityName}. These figures cover the whole city,
             not this neighborhood alone.
@@ -168,7 +170,7 @@ export default async function RiskPage({
 
         {/* Category breakdown */}
         <div className="rounded-[var(--radius-lg)] border border-border bg-card p-6">
-          <span className="label-cap text-[10px] text-muted-foreground">
+          <span className="label-cap text-[11px] text-muted-foreground">
             CATEGORY BREAKDOWN
           </span>
           <div className="mt-3 space-y-2.5">
@@ -187,8 +189,8 @@ export default async function RiskPage({
 
               return (
                 <div key={cat.subcategory} className="flex items-center gap-3">
-                  <span className="w-28 shrink-0 text-xs text-muted-foreground truncate">
-                    {cat.subcategory}
+                  <span className="w-32 shrink-0 text-xs text-muted-foreground">
+                    {crimeSubcategoryLabel(cat.subcategory)}
                   </span>
                   <div className="relative h-3 flex-1 overflow-hidden rounded-[2px] bg-border/30">
                     <div
@@ -209,7 +211,7 @@ export default async function RiskPage({
         <div className="rounded-[var(--radius-lg)] border border-border bg-card p-6">
           <div className="flex items-center gap-2">
             <Clock className="size-4 text-muted-foreground" strokeWidth={1.75} />
-            <span className="label-cap text-[10px] text-muted-foreground">
+            <span className="label-cap text-[11px] text-muted-foreground">
               INCIDENTS BY HOUR OF DAY
             </span>
           </div>
@@ -218,7 +220,7 @@ export default async function RiskPage({
 
         {/* 12-month trend */}
         <div className="rounded-[var(--radius-lg)] border border-border bg-card p-6">
-          <span className="label-cap text-[10px] text-muted-foreground">
+          <span className="label-cap text-[11px] text-muted-foreground">
             12-MONTH TREND
           </span>
           <MonthlyTrend months={crime.byMonth} />
@@ -313,15 +315,10 @@ function SummaryCard({
   return (
     <div className={`rounded-[var(--radius-lg)] border bg-card p-6 ${isCurrent ? "border-[var(--brand)]/40" : "border-border"}`}>
       <div className="flex items-center gap-2">
-        <span className="label-cap text-[10px] text-muted-foreground">
-          {isCurrent ? "CURRENT" : "COMPARED TO"}
+        <span className="label-cap text-[11px] text-muted-foreground">
+          {isCurrent ? "This city" : "Compared with"}
         </span>
         <span className="text-sm font-semibold text-foreground">{city}</span>
-        {isCurrent && (
-          <Badge variant="secondary" className="ml-auto text-[9px]">
-            TARGET
-          </Badge>
-        )}
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <MiniStat label="Total Crime" value={`${crime.totalPer1k.toFixed(1)}/1k`} />
@@ -336,7 +333,7 @@ function SummaryCard({
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="label-cap text-[9px] text-muted-foreground">{label}</p>
+      <p className="label-cap text-[11px] text-muted-foreground">{label}</p>
       <p className="mono-num mt-1 text-sm font-medium capitalize text-foreground">{value}</p>
     </div>
   );
@@ -357,10 +354,10 @@ function StatCard({
 }) {
   return (
     <div className="rounded-[var(--radius-md)] border border-border bg-card p-4">
-      <span className="label-cap text-[9px] text-muted-foreground">{label}</span>
+      <span className="label-cap text-[11px] text-muted-foreground">{label}</span>
       <p className={`mono-num mt-2 text-xl font-semibold ${toneClass(tone)}`}>{value}</p>
       {benchmark && (
-        <p className="mt-1 text-[10px] text-muted-foreground">{benchmark}</p>
+        <p className="mt-1 text-[11px] text-muted-foreground">{benchmark}</p>
       )}
     </div>
   );
@@ -385,12 +382,12 @@ function ClimateMetric({
     <div className="flex flex-col gap-2 rounded-[var(--radius-md)] border border-border bg-card p-4">
       <div className="flex items-center gap-2">
         <span className={`${toneClass(tone)}`}>{icon}</span>
-        <span className="label-cap text-[9px] text-muted-foreground">{label}</span>
+        <span className="label-cap text-[11px] text-muted-foreground">{label}</span>
       </div>
       <p className={`mono-num text-lg font-semibold capitalize ${toneClass(tone)}`}>
         {value}
       </p>
-      <p className="text-[10px] leading-relaxed text-muted-foreground">{sub}</p>
+      <p className="text-[11px] leading-relaxed text-muted-foreground">{sub}</p>
     </div>
   );
 }
@@ -409,8 +406,7 @@ function HourHeatmap({ buckets }: { buckets: { hour: number; count: number }[] }
         viewBox={`0 0 ${w} ${cellSize + 18}`}
         width={w}
         height={cellSize + 18}
-        aria-label="Crime incidents by hour of day"
-        role="img"
+        aria-hidden="true"
       >
         {buckets.map((b, i) => {
           const intensity = b.count / max;
@@ -452,8 +448,31 @@ function HourHeatmap({ buckets }: { buckets: { hour: number; count: number }[] }
           );
         })}
       </svg>
+      {/* The same numbers as a table, for anyone who cannot see the chart. */}
+      <table className="sr-only">
+        <caption>Crime incidents by hour of day</caption>
+        <thead>
+          <tr>
+            <th scope="col">Hour</th>
+            <th scope="col">Incidents</th>
+          </tr>
+        </thead>
+        <tbody>
+          {buckets.map((b) => (
+            <tr key={b.hour}>
+              <th scope="row">{hourLabel(b.hour)}</th>
+              <td>{b.count}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
+}
+
+// 0 → "12 AM", 13 → "1 PM".
+function hourLabel(hour: number): string {
+  return `${hour % 12 === 0 ? 12 : hour % 12} ${hour < 12 ? "AM" : "PM"}`;
 }
 
 /* ── Monthly Trend (inline SVG) ── */
@@ -467,7 +486,7 @@ function MonthlyTrend({ months }: { months: { month: string; total: number }[] }
 
   return (
     <div className="mt-3 overflow-x-auto">
-      <svg viewBox={`0 0 ${w} ${h + 18}`} width={w} height={h + 18} role="img" aria-label="Monthly crime trend">
+      <svg viewBox={`0 0 ${w} ${h + 18}`} width={w} height={h + 18} aria-hidden="true">
         {months.map((m, i) => {
           const barH = (m.total / max) * h;
           const x = i * (barW + gap);
@@ -500,12 +519,31 @@ function MonthlyTrend({ months }: { months: { month: string; total: number }[] }
                 fontSize="7"
                 fill="var(--muted-foreground)"
               >
-                {m.month.slice(5)}
+                {formatMonth(m.month)}
               </text>
             </g>
           );
         })}
       </svg>
+      <table className="sr-only">
+        <caption>Crime incidents by month</caption>
+        <thead>
+          <tr>
+            <th scope="col">Month</th>
+            <th scope="col">Incidents</th>
+          </tr>
+        </thead>
+        <tbody>
+          {months.map((m) => (
+            <tr key={m.month}>
+              <th scope="row">
+                {formatMonth(m.month)} {m.month.slice(0, 4)}
+              </th>
+              <td>{m.total}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

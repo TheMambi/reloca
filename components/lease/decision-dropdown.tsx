@@ -55,7 +55,7 @@ export function DecisionDropdown({
         <SelectTrigger
           size="sm"
           aria-label="Lease decision"
-          className={`label-cap h-7 w-full justify-between border-border bg-transparent px-2 text-[10px] text-foreground tracking-wider ${
+          className={`label-cap h-7 w-full justify-between border-border bg-transparent px-2 text-[11px] text-foreground tracking-wider ${
             isPending ? "opacity-60" : ""
           }`}
         >
@@ -66,7 +66,7 @@ export function DecisionDropdown({
             <SelectItem
               key={opt.value}
               value={opt.value}
-              className="label-cap text-[10px] tracking-wider"
+              className="label-cap text-[11px] tracking-wider"
             >
               {opt.label}
             </SelectItem>

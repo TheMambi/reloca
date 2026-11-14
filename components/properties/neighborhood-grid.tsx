@@ -80,13 +80,13 @@ function NeighborhoodCard({
                 {summary.name}
               </p>
               <div className="mt-0.5 flex items-center gap-2">
-                <p className="mono-num text-[10px] tracking-wider text-muted-foreground">
+                <p className="mono-num text-[11px] tracking-wider text-muted-foreground">
                   {cityCode}
                 </p>
                 {summary.hasBuyListing && (
                   <Badge
                     variant="secondary"
-                    className="border-0 bg-[var(--brand-secondary)]/14 text-[10px] font-semibold uppercase text-[var(--brand-secondary)]"
+                    className="border-0 bg-[var(--brand-secondary)]/14 text-[11px] font-semibold uppercase text-[var(--brand-secondary)]"
                   >
                     Buy
                   </Badge>
@@ -97,7 +97,7 @@ function NeighborhoodCard({
 
           <div className="grid grid-cols-3 divide-x divide-border/60 border-y border-border/60">
             <div className="px-3 py-2">
-              <p className="label-cap text-[9px] text-muted-foreground">
+              <p className="label-cap text-[11px] text-muted-foreground">
                 Listings
               </p>
               <p className="mono-num mt-1 text-sm font-medium text-foreground">
@@ -105,7 +105,7 @@ function NeighborhoodCard({
               </p>
             </div>
             <div className="px-3 py-2">
-              <p className="label-cap text-[9px] text-muted-foreground">
+              <p className="label-cap text-[11px] text-muted-foreground">
                 Rent range
               </p>
               <p className="mono-num mt-1 text-sm font-medium text-foreground">
@@ -117,7 +117,7 @@ function NeighborhoodCard({
               </p>
             </div>
             <div className="px-3 py-2">
-              <p className="label-cap text-[9px] text-muted-foreground">Beds</p>
+              <p className="label-cap text-[11px] text-muted-foreground">Beds</p>
               <p className="mono-num mt-1 text-sm font-medium text-foreground">
                 {bedLabel(summary.bedRange.min, summary.bedRange.max)}
               </p>

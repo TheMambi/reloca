@@ -7,7 +7,7 @@ import { getChecklistSeed } from "./checklist";
 
 // City names come from the relocation, never from the template.
 const names = { originName: "Sacramento", destinationName: "Denver" };
-assert.equal(fillSeedText("Pack + clean {origin} apartment", names), "Pack + clean Sacramento apartment");
+assert.equal(fillSeedText("Pack and clean the {origin} apartment", names), "Pack and clean the Sacramento apartment");
 assert.equal(fillSeedText("{origin} → {destination}, then {destination}", names), "Sacramento → Denver, then Denver");
 for (const item of getChecklistSeed()) {
   const text = `${item.title} ${item.description ?? ""}`;

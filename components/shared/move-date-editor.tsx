@@ -17,6 +17,7 @@ import {
 import {
   countdownPhrase,
   countdownTone,
+  formatDate,
   isValidIsoDate,
   isoToPickerDate,
   pickerDateToIso,
@@ -128,7 +129,7 @@ export function MoveDateEditor({
               />
             </span>
           )}
-          <span className="sr-only"> — edit move date</span>
+          <span className="sr-only">, edit move date</span>
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -137,11 +138,11 @@ export function MoveDateEditor({
         className="w-auto rounded-none border-border bg-popover p-0 font-mono"
       >
         <div className="border-b border-border px-3 py-2">
-          <p className="label-cap text-[10px] text-muted-foreground">
-            MOVE · DATE
+          <p className="label-cap text-[11px] text-muted-foreground">
+            MOVE DATE
           </p>
           <p className="mt-1 font-mono text-xs text-foreground">
-            {moveDate ?? "Not set yet"}
+            {moveDate ? formatDate(moveDate) : "Not set yet"}
           </p>
           {saveError && (
             <p role="alert" className="mt-1 max-w-56 font-sans text-xs text-[var(--danger)]">
@@ -167,14 +168,14 @@ export function MoveDateEditor({
               persistMoveDate(null);
               setOpen(false);
             }}
-            className="label-cap text-[10px] text-muted-foreground hover:text-[var(--danger)]"
+            className="label-cap text-[11px] text-muted-foreground hover:text-[var(--danger)]"
           >
             CLEAR
           </button>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="label-cap text-[10px] text-muted-foreground hover:text-foreground"
+            className="label-cap text-[11px] text-muted-foreground hover:text-foreground"
           >
             CLOSE
           </button>

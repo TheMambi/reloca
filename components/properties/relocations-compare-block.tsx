@@ -40,7 +40,7 @@ export function RelocationsCompareBlock({
             <RelocationsCompareTable columns={columns} />
           </div>
           <footer className="border-t border-border px-6 py-4">
-            <p className="label-cap mb-1.5 text-[9px] tracking-wider text-muted-foreground">
+            <p className="label-cap mb-1.5 text-[11px] tracking-wider text-muted-foreground">
               Where these numbers come from
             </p>
             <SourceTagList ids={columns.flatMap((c) => c.sources)} />

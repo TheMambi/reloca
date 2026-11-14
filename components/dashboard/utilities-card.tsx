@@ -1,6 +1,7 @@
 import { Zap } from "lucide-react";
 import { ModuleCard, MetaCell } from "./operations-grid";
 import { getUtilityTransitions } from "@/lib/data/transitions-db";
+import { formatDate } from "@/lib/dates";
 
 export async function UtilitiesCard() {
   const rows = await getUtilityTransitions();
@@ -54,7 +55,7 @@ export async function UtilitiesCard() {
             tone={confirmed > 0 ? "ok" : "muted"}
           />
           <MetaCell
-            value={soonestDate ?? "—"}
+            value={soonestDate ? formatDate(soonestDate) : "None"}
             label="Next"
             tone={soonestDate ? "default" : "muted"}
           />

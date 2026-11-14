@@ -29,6 +29,7 @@ import {
   useSensors,
   useDroppable,
   closestCorners,
+  type Announcements,
   type DragEndEvent,
 } from "@dnd-kit/core";
 import {
@@ -64,6 +65,7 @@ import {
   containerId,
   SORTABLE_PHASES,
 } from "@/lib/checklist/reorder";
+import { dragAnnouncements } from "@/lib/checklist/announcements";
 import { ChecklistTaskDialog } from "./checklist-task-dialog";
 
 const PHASE_CONFIG: Record<
@@ -74,27 +76,31 @@ const PHASE_CONFIG: Record<
     label: "Lease & Move-Out",
     icon: <FileText className="size-4" strokeWidth={1.75} />,
     color: "text-[var(--brand-secondary)]",
-    timeLabel: "LSE",
+    timeLabel: "Lease deadlines",
   },
   "pre-move": {
     label: "Pre-Move",
     icon: <CalendarDays className="size-4" strokeWidth={1.75} />,
     color: "text-[var(--info)]",
-    timeLabel: "PRE",
+    timeLabel: "Before the move",
   },
   "move-week": {
     label: "Move Week",
     icon: <AlertTriangle className="size-4" strokeWidth={1.75} />,
     color: "text-[var(--warn)]",
-    timeLabel: "T-7",
+    timeLabel: "Last 7 days",
   },
   "post-move": {
     label: "Post-Move",
     icon: <CheckCircle2 className="size-4" strokeWidth={1.75} />,
     color: "text-[var(--ok)]",
-    timeLabel: "T+",
+    timeLabel: "After move day",
   },
 };
+
+const GROUP_LABELS = Object.fromEntries(
+  Object.entries(PHASE_CONFIG).map(([phase, config]) => [phase, config.label]),
+) as Record<ChecklistCategory, string>;
 
 // Pre-Move comes first because it's where the user spends the most time
 // (planning lives here weeks-to-months out from move day). Lease & Move-Out
@@ -271,12 +277,20 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
     return acc;
   }, [optimisticItems]);
 
+  const say = dragAnnouncements(optimisticItems, GROUP_LABELS);
+  const announcements: Announcements = {
+    onDragStart: ({ active }) => say.start(String(active.id)),
+    onDragOver: ({ active, over }) => say.over(String(active.id), over ? String(over.id) : null),
+    onDragEnd: ({ active, over }) => say.end(String(active.id), over ? String(over.id) : null),
+    onDragCancel: ({ active }) => say.cancel(String(active.id)),
+  };
+
   return (
     <div className="flex flex-col gap-6">
       {/* Overall progress */}
       <div className="rounded-[var(--radius-lg)] border border-border bg-card p-6">
         <div className="flex items-center justify-between">
-          <span className="label-cap text-[10px] text-muted-foreground">
+          <span className="label-cap text-[11px] text-muted-foreground">
             OVERALL PROGRESS
           </span>
           <span className="mono-num text-xs text-muted-foreground">
@@ -288,7 +302,7 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
           aria-label="Overall checklist completion"
           className="mt-3 h-2"
         />
-        <p className="mt-2 text-[10px] text-muted-foreground">
+        <p className="mt-2 text-[11px] text-muted-foreground">
           {overallPct}% complete · saved automatically
         </p>
       </div>
@@ -306,6 +320,7 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragEnd={handleDragEnd}
+        accessibility={{ announcements }}
       >
         <div className="flex flex-col gap-4">
           {PHASE_ORDER.map((phase) => {
@@ -332,7 +347,7 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
                   <span className="text-sm font-semibold text-foreground">
                     {config.label}
                   </span>
-                  <Badge variant="outline" className="ml-auto text-[9px]">
+                  <Badge variant="outline" className="ml-auto text-[11px]">
                     {config.timeLabel}
                   </Badge>
                   <span className="mono-num text-xs text-muted-foreground">
@@ -387,7 +402,7 @@ export function ChecklistList({ items }: { items: ChecklistItem[] }) {
                     <button
                       type="button"
                       onClick={() => handleAdd(phase)}
-                      className="label-cap inline-flex w-full items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-dashed border-border/60 px-3 py-2 text-[10px] tracking-wider text-muted-foreground transition-colors hover:border-border hover:bg-accent/20 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                      className="label-cap inline-flex w-full items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-dashed border-border/60 px-3 py-2 text-[11px] tracking-wider text-muted-foreground transition-colors hover:border-border hover:bg-accent/20 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                     >
                       <Plus className="size-3" strokeWidth={1.75} />
                       ADD TASK
@@ -597,13 +612,11 @@ function ChecklistRow({
         type="button"
         onClick={onToggle}
         aria-pressed={item.completed}
-        aria-label={
-          item.completed
-            ? `Mark "${item.title}" incomplete`
-            : `Mark "${item.title}" complete`
-        }
-        className="flex flex-1 items-start gap-3 text-left focus-visible:outline-none"
+        className="flex flex-1 items-start gap-3 rounded-[var(--radius-sm)] text-left"
       >
+        {/* No aria-label: it would replace the title, description and due
+            date below, which are what a screen reader should read. */}
+        <span className="sr-only">Done:</span>
         {item.completed ? (
           <CheckCircle2
             className="mt-0.5 size-4 shrink-0 text-[var(--ok)]"
@@ -629,9 +642,9 @@ function ChecklistRow({
             {statutory && (
               <Badge
                 variant="destructive"
-                className="text-[8px] px-1.5 py-0 h-4"
+                className="text-[11px] px-1.5 py-0 h-4"
               >
-                STATUTORY
+                Legal deadline
               </Badge>
             )}
           </div>
@@ -641,13 +654,19 @@ function ChecklistRow({
             </p>
           )}
         </div>
-        <span className="mono-num shrink-0 text-[10px] text-muted-foreground">
+        <span className="mono-num shrink-0 text-[11px] text-muted-foreground">
+          {item.due_date && <span className="sr-only">Due </span>}
           {item.due_date
             ? new Date(`${item.due_date}T00:00:00.000Z`).toLocaleDateString(
                 "en-US",
                 { month: "short", day: "numeric", timeZone: "UTC" },
               )
-            : "—"}
+            : (
+              <>
+                <span aria-hidden="true">—</span>
+                <span className="sr-only">No due date</span>
+              </>
+            )}
         </span>
       </button>
 

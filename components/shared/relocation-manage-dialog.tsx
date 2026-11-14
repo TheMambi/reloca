@@ -176,7 +176,7 @@ export function RelocationManageDialog({
               type="button"
               onClick={remove}
               disabled={pending}
-              className="label-cap text-[10px] text-muted-foreground transition-colors hover:text-[var(--danger)] disabled:opacity-50"
+              className="label-cap text-[11px] text-muted-foreground transition-colors hover:text-[var(--danger)] disabled:opacity-50"
             >
               {confirmingDelete ? "Confirm delete" : "Delete"}
             </button>
@@ -218,7 +218,7 @@ function Field({
 }) {
   return (
     <label className="grid gap-1.5">
-      <span className="label-cap text-[10px] text-muted-foreground">
+      <span className="label-cap text-[11px] text-muted-foreground">
         {label}
       </span>
       {children}

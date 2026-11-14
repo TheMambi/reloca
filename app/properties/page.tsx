@@ -26,6 +26,7 @@ import { NeighborhoodMapLoader } from "@/components/properties/neighborhood-map-
 import { DestinationsCompareBlock } from "@/components/properties/destinations-compare-block";
 import { SavedCompareBlock } from "@/components/properties/saved-compare-block";
 import { RelocationsCompareBlock } from "@/components/properties/relocations-compare-block";
+import { pluralize } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Properties",
@@ -124,14 +125,14 @@ export default async function PropertiesPage({
           <Building2 className="size-5 text-[var(--brand)]" strokeWidth={1.75} />
         </span>
         <div>
-          <p className="label-cap text-[10px] tracking-wider text-muted-foreground">
+          <p className="label-cap text-[11px] tracking-wider text-muted-foreground">
             DESTINATION · PROPERTIES
           </p>
           <h2 className="mt-0.5 text-lg font-semibold tracking-[var(--tracking-headline)]">
             Neighborhoods & buildings
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            {destSummaries.length} neighborhoods in {destCityName}
+            {pluralize(destSummaries.length, "neighborhood", "neighborhoods")} in {destCityName}
           </p>
         </div>
       </header>
@@ -151,8 +152,8 @@ export default async function PropertiesPage({
               <h3 className="label-cap text-xs text-muted-foreground">
                 {destCityName} map
               </h3>
-              <span className="text-[10px] text-muted-foreground">
-                {destSummaries.length} neighborhoods · click for details
+              <span className="text-[11px] text-muted-foreground">
+                {pluralize(destSummaries.length, "neighborhood", "neighborhoods")} · click for details
               </span>
             </div>
             <NeighborhoodMapLoader
@@ -172,7 +173,7 @@ export default async function PropertiesPage({
                     ? "/properties?tab=neighborhoods"
                     : "/properties?tab=neighborhoods&saved=1"
                 }
-                aria-pressed={savedFilter}
+                aria-current={savedFilter ? "true" : undefined}
                 className={
                   savedFilter
                     ? "inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--brand-secondary)] bg-card px-2.5 py-1 text-[11px] font-medium text-[var(--brand-secondary)] transition-colors"
@@ -197,15 +198,13 @@ export default async function PropertiesPage({
         </TabsContent>
 
         <TabsContent value="compare" className="mt-2 flex flex-col gap-4">
-          <div
-            role="tablist"
+          <nav
             aria-label="Compare view"
             className="flex flex-wrap items-center gap-2"
           >
             <Link
               href={destinationsHref}
-              role="tab"
-              aria-selected={compareView === "destinations"}
+              aria-current={compareView === "destinations" ? "page" : undefined}
               className={
                 compareView === "destinations"
                   ? "inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--brand-secondary)] bg-card px-2.5 py-1 text-[11px] font-medium text-[var(--brand-secondary)] transition-colors"
@@ -216,8 +215,7 @@ export default async function PropertiesPage({
             </Link>
             <Link
               href={savedHref}
-              role="tab"
-              aria-selected={compareView === "saved"}
+              aria-current={compareView === "saved" ? "page" : undefined}
               className={
                 compareView === "saved"
                   ? "inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--brand-secondary)] bg-card px-2.5 py-1 text-[11px] font-medium text-[var(--brand-secondary)] transition-colors"
@@ -228,8 +226,7 @@ export default async function PropertiesPage({
             </Link>
             <Link
               href={relocationsHref}
-              role="tab"
-              aria-selected={compareView === "relocations"}
+              aria-current={compareView === "relocations" ? "page" : undefined}
               className={
                 compareView === "relocations"
                   ? "inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--brand-secondary)] bg-card px-2.5 py-1 text-[11px] font-medium text-[var(--brand-secondary)] transition-colors"
@@ -238,7 +235,7 @@ export default async function PropertiesPage({
             >
               Relocations
             </Link>
-          </div>
+          </nav>
 
           {compareView === "saved" ? (
             <SavedCompareBlock

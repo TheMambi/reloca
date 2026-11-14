@@ -20,7 +20,7 @@ export function SavedCompareBlock({ view, savedCount }: SavedCompareBlockProps) 
         <div className="flex items-baseline gap-3">
           <span
             id="saved-compare-heading"
-            className="label-cap text-[10px] text-muted-foreground"
+            className="label-cap text-[11px] text-muted-foreground"
           >
             SAVED · COMPARE
           </span>

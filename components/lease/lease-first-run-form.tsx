@@ -17,7 +17,7 @@ import {
   UTILITY_OPTIONS,
 } from "./lease-first-run-defaults";
 import { cn } from "@/lib/utils";
-import { isoToPickerDate, pickerDateToIso } from "@/lib/dates";
+import { formatDate, isoToPickerDate, pickerDateToIso } from "@/lib/dates";
 
 function formatTriggerDate(iso: string): string {
   if (!iso) return "Pick a date";
@@ -295,7 +295,7 @@ export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
       noValidate
     >
       <header className="flex flex-col gap-1">
-        <span className="label-cap text-[10px] text-muted-foreground">
+        <span className="label-cap text-[11px] text-muted-foreground">
           LEASE & MOVE-OUT
         </span>
         <h1 className="text-lg font-semibold tracking-[var(--tracking-headline)] text-foreground">
@@ -400,7 +400,7 @@ export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
                     onChange={() => setPrimaryResident(idx)}
                     className="h-3.5 w-3.5 accent-[var(--brand)]"
                   />
-                  <span className="label-cap text-[10px] text-muted-foreground">
+                  <span className="label-cap text-[11px] text-muted-foreground">
                     PRIMARY
                   </span>
                 </label>
@@ -418,7 +418,7 @@ export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
             );
           })}
           {fieldErrors.residents && (
-            <p className="label-cap text-[10px] text-[var(--danger)]">
+            <p className="label-cap text-[11px] text-[var(--danger)]">
               {fieldErrors.residents}
             </p>
           )}
@@ -632,7 +632,7 @@ export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
                     onClick={() => toggleUtility(u)}
                     aria-pressed={selected}
                     className={cn(
-                      "label-cap inline-flex items-center rounded-[var(--radius-sm)] border px-2.5 py-1 text-[10px] tracking-wider transition-colors",
+                      "label-cap inline-flex items-center rounded-[var(--radius-sm)] border px-2.5 py-1 text-[11px] tracking-wider transition-colors",
                       selected
                         ? "border-[oklch(var(--brand-raw)/0.5)] bg-[oklch(var(--brand-raw)/0.18)] text-foreground"
                         : "border-border bg-background/40 text-muted-foreground hover:text-foreground",
@@ -685,7 +685,7 @@ export function LeaseFirstRunForm({ sample }: { sample: boolean }) {
 function SectionHeader({ title }: { title: string }) {
   return (
     <div className="border-b border-border px-6 py-3 first:rounded-t-[var(--radius-md)] [&:not(:first-child)]:border-t">
-      <span className="label-cap text-[10px] text-muted-foreground">
+      <span className="label-cap text-[11px] text-muted-foreground">
         {title}
       </span>
     </div>
@@ -710,14 +710,14 @@ function Field({
   // wiring). Screen readers will announce the label on focus.
   return (
     <label className={cn("flex flex-col gap-1.5", className)}>
-      <span className="label-cap text-[10px] text-muted-foreground">
+      <span className="label-cap text-[11px] text-muted-foreground">
         {label}
       </span>
       {children}
       {error ? (
-        <p className="label-cap text-[10px] text-[var(--danger)]">{error}</p>
+        <p className="label-cap text-[11px] text-[var(--danger)]">{error}</p>
       ) : hint ? (
-        <p className="label-cap text-[9px] text-muted-foreground">{hint}</p>
+        <p className="label-cap text-[11px] text-muted-foreground">{hint}</p>
       ) : null}
     </label>
   );
@@ -758,8 +758,8 @@ function CalendarPickerButton({
             !value && "text-muted-foreground",
           )}
         >
-          <span>{value || placeholder || "Pick a date"}</span>
-          <span className="label-cap text-[9px] text-muted-foreground">
+          <span>{value ? formatDate(value) : placeholder || "Pick a date"}</span>
+          <span className="label-cap text-[11px] text-muted-foreground">
             {value ? formatTriggerDate(value) : ""}
           </span>
         </Button>

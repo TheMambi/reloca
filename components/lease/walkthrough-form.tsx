@@ -31,7 +31,7 @@ import type {
   MoveOutRoomRecord,
 } from "@/schemas/move-out";
 import { cn } from "@/lib/utils";
-import { isoToPickerDate, pickerDateToIso } from "@/lib/dates";
+import { formatDate, isoToPickerDate, pickerDateToIso } from "@/lib/dates";
 
 
 interface Props {
@@ -107,7 +107,7 @@ export function WalkthroughForm({ walkthrough, rooms }: Props) {
       {/* Header — date + overall notes */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[200px_1fr]">
         <div className="flex flex-col gap-1.5">
-          <span className="label-cap text-[10px] text-muted-foreground">
+          <span className="label-cap text-[11px] text-muted-foreground">
             WALKTHROUGH DATE
           </span>
           <Popover open={calOpen} onOpenChange={setCalOpen}>
@@ -121,7 +121,7 @@ export function WalkthroughForm({ walkthrough, rooms }: Props) {
                   !walkthroughDate && "text-muted-foreground",
                 )}
               >
-                <span>{walkthroughDate ?? "— pick a date"}</span>
+                <span>{walkthroughDate ? formatDate(walkthroughDate) : "Pick a date"}</span>
                 <CalendarIcon className="size-3.5" strokeWidth={1.75} />
               </Button>
             </PopoverTrigger>
@@ -147,7 +147,7 @@ export function WalkthroughForm({ walkthrough, rooms }: Props) {
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="walkthrough-notes"
-            className="label-cap text-[10px] text-muted-foreground"
+            className="label-cap text-[11px] text-muted-foreground"
           >
             OVERALL NOTES
           </label>
@@ -372,7 +372,7 @@ function RoomCard({
       <div className="mt-3 flex flex-col gap-1.5">
         <label
           htmlFor={`room-notes-${room.id}`}
-          className="label-cap text-[10px] text-muted-foreground"
+          className="label-cap text-[11px] text-muted-foreground"
         >
           NOTES
         </label>
@@ -403,7 +403,7 @@ function RatingRow({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="label-cap text-[10px] text-muted-foreground">
+      <span className="label-cap text-[11px] text-muted-foreground">
         {label.toUpperCase()}
       </span>
       <div role="radiogroup" aria-label={label} className="flex gap-1">
@@ -444,7 +444,7 @@ function StatusField({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="label-cap text-[10px] text-muted-foreground">
+      <label className="label-cap text-[11px] text-muted-foreground">
         {label.toUpperCase()}
         <Input
           value={value}
@@ -514,7 +514,7 @@ function AddRoomDialog({
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="add-room-name"
-              className="label-cap text-[10px] text-muted-foreground"
+              className="label-cap text-[11px] text-muted-foreground"
             >
               ROOM NAME
             </label>

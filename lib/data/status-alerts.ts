@@ -8,6 +8,7 @@ import {
 import { getActiveMoveContext } from "@/lib/data/relocation-db";
 import { addDaysIso, todayInZoneIso } from "@/lib/dates";
 import type { PillTone } from "@/lib/lease/pill";
+import { pluralize } from "@/lib/utils";
 import type { ChecklistItem } from "@/schemas";
 import type {
   UtilityTransition,
@@ -277,8 +278,4 @@ async function computeCostAlert(): Promise<StatusAlert | null> {
     href: "/cost-of-living",
     tone: "ok",
   };
-}
-
-function pluralize(n: number, singular: string, plural: string): string {
-  return `${n} ${n === 1 ? singular : plural}`;
 }

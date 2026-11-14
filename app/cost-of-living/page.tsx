@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DollarSign, ArrowLeftRight, Info, Car, Train, Bike, Footprints } from "lucide-react";
 import { getCostOfLiving, costValueFor } from "@/lib/data";
 import { getActiveLease } from "@/lib/data/lease-db";
+import { formatDate } from "@/lib/dates";
 import {
   getViewingRelocation,
   moveContextFor,
@@ -103,7 +104,7 @@ export default async function CostOfLivingPage({
             Cost &amp; Commute
           </h1>
           <p className="text-xs text-muted-foreground">
-            Monthly spend comparison · data as of {data.asOf}
+            Monthly spend comparison · figures from {formatDate(data.asOf)}
           </p>
         </div>
       </div>
@@ -116,11 +117,11 @@ export default async function CostOfLivingPage({
           <span className="mono-num text-foreground">{destCode}</span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="label-cap text-[10px]">{originName}</span>
+          <span className="label-cap text-[11px]">{originName}</span>
           <span className="mono-num text-sm font-medium text-foreground">{usd(originTotal)}</span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="label-cap text-[10px]">{destName}</span>
+          <span className="label-cap text-[11px]">{destName}</span>
           <span className="mono-num text-sm font-medium text-foreground">{usd(destTotal)}</span>
         </span>
         <span className={`mono-num text-sm font-semibold ${totalDelta.tone === "ok" ? "text-[var(--ok)]" : totalDelta.tone === "danger" ? "text-[var(--danger)]" : "text-muted-foreground"}`}>
@@ -137,14 +138,16 @@ export default async function CostOfLivingPage({
 
         {/* ─── Categories Tab ─── */}
         <TabsContent value="categories" className="mt-4">
-          <div className="rounded-[var(--radius-lg)] border border-border bg-card">
+          {/* The fixed columns need about 30rem. A phone scrolls the table
+              sideways inside the card instead of losing the right-hand columns. */}
+          <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-card">
+          <div role="table" aria-label="Monthly cost by category" className="min-w-[30rem]">
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_120px_120px_80px] items-center gap-2 border-b border-border px-4 py-3 text-[10px] sm:grid-cols-[1fr_140px_140px_100px_1fr]">
-              <span className="label-cap text-muted-foreground">Category</span>
-              <span className="label-cap text-right text-muted-foreground">{originName}</span>
-              <span className="label-cap text-right text-muted-foreground">{destName}</span>
-              <span className="label-cap text-right text-muted-foreground">Delta</span>
-              <span className="label-cap hidden text-muted-foreground sm:block">Bar</span>
+            <div role="row" className="grid grid-cols-[1fr_120px_120px_80px] items-center gap-2 border-b border-border px-4 py-3 text-[11px] sm:grid-cols-[1fr_140px_140px_100px_1fr]">
+              <span role="columnheader" className="label-cap text-muted-foreground">Category</span>
+              <span role="columnheader" className="label-cap text-right text-muted-foreground">{originName}</span>
+              <span role="columnheader" className="label-cap text-right text-muted-foreground">{destName}</span>
+              <span role="columnheader" className="label-cap text-right text-muted-foreground">Difference</span>
             </div>
 
             {/* Rows */}
@@ -157,11 +160,12 @@ export default async function CostOfLivingPage({
               const lbPct = (destVal / maxVal) * 100;
 
               return (
-                <div key={cat.category}>
+                <div key={cat.category} role="rowgroup">
                 <div
+                  role="row"
                   className="grid grid-cols-[1fr_120px_120px_80px] items-center gap-2 border-b border-border/50 px-4 py-3 transition-colors last:border-0 hover:bg-accent/30 sm:grid-cols-[1fr_140px_140px_100px_1fr]"
                 >
-                  <div className="flex items-center gap-2">
+                  <div role="rowheader" className="flex items-center gap-2">
                     <span className="text-sm font-medium text-foreground">
                       {CATEGORY_LABELS[cat.category] ?? cat.category}
                     </span>
@@ -182,19 +186,20 @@ export default async function CostOfLivingPage({
                       </Tooltip>
                     )}
                   </div>
-                  <span className="mono-num text-right text-sm text-foreground">
+                  <span role="cell" className="mono-num text-right text-sm text-foreground">
                     {usd(originVal)}
                   </span>
-                  <span className="mono-num text-right text-sm text-foreground">
+                  <span role="cell" className="mono-num text-right text-sm text-foreground">
                     {usd(destVal)}
                   </span>
                   <span
+                    role="cell"
                     className={`mono-num text-right text-sm font-medium ${delta.tone === "ok" ? "text-[var(--ok)]" : delta.tone === "danger" ? "text-[var(--danger)]" : "text-muted-foreground"}`}
                   >
                     {delta.text}
                   </span>
                   {/* Comparison bar */}
-                  <div className="hidden items-center gap-1 sm:flex">
+                  <div aria-hidden="true" className="hidden items-center gap-1 sm:flex">
                     <div className="relative h-3 flex-1 overflow-hidden rounded-[2px] bg-border/40">
                       <div
                         className="absolute inset-y-0 left-0 rounded-[2px] bg-[var(--brand)]"
@@ -209,21 +214,28 @@ export default async function CostOfLivingPage({
                 </div>
                 {/* Month-to-month surcharge sub-row — renders only when the user has chosen month-to-month */}
                 {cat.category === "housing" && showM2mPremium && lease && (
-                  <div className="grid grid-cols-[1fr_120px_120px_80px] items-center gap-2 border-b border-border/50 bg-[var(--warn)]/5 px-4 py-2 sm:grid-cols-[1fr_140px_140px_100px_1fr]">
-                    <div className="flex items-center gap-2 pl-4">
-                      <span className="label-cap text-[10px] text-muted-foreground">
+                  <div role="row" className="grid grid-cols-[1fr_120px_120px_80px] items-center gap-2 border-b border-border/50 bg-[var(--warn)]/5 px-4 py-2 sm:grid-cols-[1fr_140px_140px_100px_1fr]">
+                    <div role="rowheader" className="flex items-center gap-2 pl-4">
+                      <span className="label-cap text-[11px] text-muted-foreground">
                         Housing (month-to-month surcharge)
                       </span>
                     </div>
                     <span
+                      role="cell"
                       className="mono-num text-right text-sm font-medium text-[var(--warn)]"
                       title="Added because you chose month-to-month on the Lease page."
                     >
                       {`+${usd(lease.m2m_premium)}`}/mo
                     </span>
-                    <span className="mono-num text-right text-sm text-muted-foreground">—</span>
-                    <span className="mono-num text-right text-sm text-muted-foreground">—</span>
-                    <span className="hidden text-[10px] text-muted-foreground sm:block">
+                    <span role="cell" className="mono-num text-right text-sm text-muted-foreground">
+                      <span aria-hidden="true">—</span>
+                      <span className="sr-only">Does not apply</span>
+                    </span>
+                    <span role="cell" className="mono-num text-right text-sm text-muted-foreground">
+                      <span aria-hidden="true">—</span>
+                      <span className="sr-only">Does not apply</span>
+                    </span>
+                    <span role="cell" className="hidden text-[11px] text-muted-foreground sm:block">
                       Per your lease renewal letter
                     </span>
                   </div>
@@ -233,21 +245,23 @@ export default async function CostOfLivingPage({
             })}
 
             {/* Totals row */}
-            <div className="grid grid-cols-[1fr_120px_120px_80px] items-center gap-2 border-t border-border bg-accent/20 px-4 py-3 sm:grid-cols-[1fr_140px_140px_100px_1fr]">
-              <span className="text-sm font-semibold text-foreground">Total Monthly</span>
-              <span className="mono-num text-right text-sm font-semibold text-foreground">
+            <div role="row" className="grid grid-cols-[1fr_120px_120px_80px] items-center gap-2 border-t border-border bg-accent/20 px-4 py-3 sm:grid-cols-[1fr_140px_140px_100px_1fr]">
+              <span role="rowheader" className="text-sm font-semibold text-foreground">Total Monthly</span>
+              <span role="cell" className="mono-num text-right text-sm font-semibold text-foreground">
                 {usd(originTotal)}
               </span>
-              <span className="mono-num text-right text-sm font-semibold text-foreground">
+              <span role="cell" className="mono-num text-right text-sm font-semibold text-foreground">
                 {usd(destTotal)}
               </span>
               <span
+                role="cell"
                 className={`mono-num text-right text-sm font-bold ${totalDelta.tone === "ok" ? "text-[var(--ok)]" : totalDelta.tone === "danger" ? "text-[var(--danger)]" : "text-muted-foreground"}`}
               >
                 {totalDelta.text}
               </span>
               <span className="hidden sm:block" />
             </div>
+          </div>
           </div>
         </TabsContent>
 
@@ -265,7 +279,7 @@ export default async function CostOfLivingPage({
                   className="rounded-[var(--radius-lg)] border border-border bg-card p-6"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="label-cap text-[10px] text-muted-foreground">
+                    <span className="label-cap text-[11px] text-muted-foreground">
                       {code}
                     </span>
                     <span className="text-sm font-semibold text-foreground">{name}</span>
@@ -287,7 +301,7 @@ export default async function CostOfLivingPage({
                           <p className="mono-num text-sm font-medium text-foreground">
                             {c.avgMinutesOneWay} min
                           </p>
-                          <p className="mono-num text-[10px] text-muted-foreground">
+                          <p className="mono-num text-[11px] text-muted-foreground">
                             {usd(c.monthlyCost)}/mo
                           </p>
                         </div>

@@ -74,7 +74,7 @@ function ScenarioCard({
     >
       <header className="flex items-start justify-between gap-2">
         <div>
-          <p className="label-cap text-[10px] tracking-wider text-muted-foreground">
+          <p className="label-cap text-[11px] tracking-wider text-muted-foreground">
             OPTION
           </p>
           <h3 className="mt-0.5 text-sm font-semibold text-foreground">
@@ -83,7 +83,7 @@ function ScenarioCard({
         </div>
         {chosen ? (
           <span
-            className="label-cap inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-[oklch(var(--brand-secondary-raw)/0.3)] bg-[oklch(var(--brand-secondary-raw)/0.12)] px-1.5 py-0.5 text-[10px] tracking-wider text-[var(--brand-secondary)]"
+            className="label-cap inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-[oklch(var(--brand-secondary-raw)/0.3)] bg-[oklch(var(--brand-secondary-raw)/0.12)] px-1.5 py-0.5 text-[11px] tracking-wider text-[var(--brand-secondary)]"
           >
             <Check className="size-3" strokeWidth={2} />
             CHOSEN
@@ -94,7 +94,7 @@ function ScenarioCard({
       <p className="mono-num mt-3 text-2xl font-semibold leading-none text-foreground">
         {formatCurrency(scenario.total)}
       </p>
-      <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+      <p className="mt-1 text-[11px] uppercase tracking-wider text-muted-foreground">
         {scenario.line_items.length} cost
         {scenario.line_items.length === 1 ? "" : "s"} listed
       </p>

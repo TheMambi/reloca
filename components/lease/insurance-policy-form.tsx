@@ -33,7 +33,7 @@ import {
 import { settle } from "@/lib/settle-action";
 import type { InsurancePolicy, InsuranceScopeEnum } from "@/schemas/lease";
 import type { z } from "zod";
-import { isoToPickerDate, pickerDateToIso, todayInZoneIso } from "@/lib/dates";
+import { formatDate, isoToPickerDate, pickerDateToIso, todayInZoneIso } from "@/lib/dates";
 
 type Scope = z.infer<typeof InsuranceScopeEnum>;
 
@@ -302,7 +302,7 @@ export function InsurancePolicyForm({
                       size="sm"
                       className="mono-num h-8 w-full justify-between text-xs"
                     >
-                      <span>{effectiveFrom}</span>
+                      <span>{formatDate(effectiveFrom)}</span>
                       <CalendarIcon className="size-3" strokeWidth={1.75} />
                     </Button>
                   </PopoverTrigger>
@@ -329,7 +329,7 @@ export function InsurancePolicyForm({
                       size="sm"
                       className="mono-num h-8 w-full justify-between text-xs"
                     >
-                      <span>{effectiveTo ?? "— ongoing"}</span>
+                      <span>{effectiveTo ? formatDate(effectiveTo) : "Ongoing"}</span>
                       <CalendarIcon className="size-3" strokeWidth={1.75} />
                     </Button>
                   </PopoverTrigger>
@@ -497,7 +497,7 @@ function Field({
   // on focus without manual htmlFor / id wiring.
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="label-cap text-[10px] text-muted-foreground">
+      <span className="label-cap text-[11px] text-muted-foreground">
         {label}
       </span>
       {children}
@@ -536,8 +536,8 @@ export function InsurancePolicyDialogTrigger({
 
   const buttonClass =
     variant === "primary"
-      ? "label-cap inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-border bg-card px-3 py-1.5 text-[10px] tracking-wider text-muted-foreground transition-colors hover:bg-popover hover:text-foreground"
-      : "label-cap inline-flex items-center gap-1 rounded-[var(--radius-sm)] px-2 py-0.5 text-[10px] tracking-wider text-muted-foreground transition-colors hover:bg-popover hover:text-foreground";
+      ? "label-cap inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-border bg-card px-3 py-1.5 text-[11px] tracking-wider text-muted-foreground transition-colors hover:bg-popover hover:text-foreground"
+      : "label-cap inline-flex items-center gap-1 rounded-[var(--radius-sm)] px-2 py-0.5 text-[11px] tracking-wider text-muted-foreground transition-colors hover:bg-popover hover:text-foreground";
 
   return (
     <>

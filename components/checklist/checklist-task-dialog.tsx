@@ -25,7 +25,7 @@ import {
 import { settle } from "@/lib/settle-action";
 import type { ChecklistCategory, ChecklistItem, ChecklistPhase } from "@/schemas";
 import { cn } from "@/lib/utils";
-import { isoToPickerDate, pickerDateToIso } from "@/lib/dates";
+import { formatDate, isoToPickerDate, pickerDateToIso } from "@/lib/dates";
 
 function formatTriggerDate(iso: string): string {
   const d = isoToPickerDate(iso);
@@ -153,7 +153,7 @@ export function ChecklistTaskDialog({
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor={mode === "edit" ? "checklist-task-category" : undefined}
-              className="label-cap text-[10px] text-muted-foreground"
+              className="label-cap text-[11px] text-muted-foreground"
             >
               CATEGORY
             </label>
@@ -173,7 +173,7 @@ export function ChecklistTaskDialog({
                 ))}
               </select>
             ) : (
-              <span className="label-cap inline-flex w-fit items-center rounded-[var(--radius-sm)] border border-border bg-background/40 px-2.5 py-1 text-[10px] tracking-wider text-foreground">
+              <span className="label-cap inline-flex w-fit items-center rounded-[var(--radius-sm)] border border-border bg-background/40 px-2.5 py-1 text-[11px] tracking-wider text-foreground">
                 {CATEGORY_LABELS[category]}
               </span>
             )}
@@ -183,7 +183,7 @@ export function ChecklistTaskDialog({
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="checklist-task-title"
-              className="label-cap text-[10px] text-muted-foreground"
+              className="label-cap text-[11px] text-muted-foreground"
             >
               TITLE
             </label>
@@ -201,7 +201,7 @@ export function ChecklistTaskDialog({
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="checklist-task-description"
-              className="label-cap text-[10px] text-muted-foreground"
+              className="label-cap text-[11px] text-muted-foreground"
             >
               DESCRIPTION (OPTIONAL)
             </label>
@@ -217,7 +217,7 @@ export function ChecklistTaskDialog({
 
           {/* Due date */}
           <div className="flex flex-col gap-1.5">
-            <span className="label-cap text-[10px] text-muted-foreground">
+            <span className="label-cap text-[11px] text-muted-foreground">
               DUE DATE (OPTIONAL)
             </span>
             <Popover open={calOpen} onOpenChange={setCalOpen}>
@@ -231,8 +231,8 @@ export function ChecklistTaskDialog({
                     !dueDate && "text-muted-foreground",
                   )}
                 >
-                  <span>{dueDate ?? "— no due date"}</span>
-                  <span className="label-cap inline-flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                  <span>{dueDate ? formatDate(dueDate) : "No due date"}</span>
+                  <span className="label-cap inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
                     {dueDate ? formatTriggerDate(dueDate) : ""}
                     <CalendarIcon className="size-3" strokeWidth={1.75} />
                   </span>

@@ -149,11 +149,11 @@ function ColumnHeader({ column }: { column: RelocationCompareColumn }) {
       <span className="text-xs font-semibold text-foreground">
         {column.label}
       </span>
-      <span className="mono-num text-[10px] text-muted-foreground">
+      <span className="mono-num text-[11px] text-muted-foreground">
         {column.originCode} → {column.destinationCode}
       </span>
       {column.isActive && (
-        <span className="label-cap mt-0.5 inline-flex w-fit items-center rounded-[var(--radius-sm)] border border-[var(--ok)]/40 px-1.5 py-0.5 text-[8px] text-[var(--ok)]">
+        <span className="label-cap mt-0.5 inline-flex w-fit items-center rounded-[var(--radius-sm)] border border-[var(--ok)]/40 px-1.5 py-0.5 text-[11px] text-[var(--ok)]">
           Active move
         </span>
       )}
@@ -214,7 +214,7 @@ function DesktopGrid({ columns }: { columns: RelocationCompareColumn[] }) {
             <div role="row" className="grid gap-x-px" style={gridStyle}>
               <div
                 role="rowheader"
-                className="label-cap px-3 py-2 text-[9px] tracking-wider text-muted-foreground"
+                className="label-cap px-3 py-2 text-[11px] tracking-wider text-muted-foreground"
               >
                 {GROUP_LABELS[g]}
               </div>
@@ -278,7 +278,7 @@ function RelocationCard({ column }: { column: RelocationCompareColumn }) {
           const rows = ROWS.filter((r) => r.group === g);
           return (
             <section key={g} className="px-4 py-3">
-              <div className="label-cap mb-2 text-[9px] tracking-wider text-muted-foreground">
+              <div className="label-cap mb-2 text-[11px] tracking-wider text-muted-foreground">
                 {GROUP_LABELS[g]}
               </div>
               <dl className="grid grid-cols-[1fr_1fr] gap-x-3 gap-y-1.5 text-xs">

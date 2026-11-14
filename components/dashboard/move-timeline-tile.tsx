@@ -148,7 +148,7 @@ export async function MoveTimelineTile({ at }: { at?: string }) {
       aria-label="Move timeline"
       className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-card"
     >
-      <div className="flex items-center justify-between border-b border-border px-4 py-2 text-[10px]">
+      <div className="flex items-center justify-between border-b border-border px-4 py-2 text-[11px]">
         <span className="label-cap text-muted-foreground">Move timeline</span>
         <span className="label-cap text-muted-foreground">
           {isEmpty
@@ -158,7 +158,7 @@ export async function MoveTimelineTile({ at }: { at?: string }) {
       </div>
 
       <div className="px-4 py-4">
-        <div className="mono-num grid grid-cols-4 text-[10px] text-muted-foreground">
+        <div className="mono-num grid grid-cols-4 text-[11px] text-muted-foreground">
           <span className="text-left">{quartileLabels[0]}</span>
           <span className="text-center">{quartileLabels[1]}</span>
           <span className="text-center">{quartileLabels[2]}</span>
@@ -234,7 +234,7 @@ export async function MoveTimelineTile({ at }: { at?: string }) {
                     className="size-2 shrink-0 rounded-full"
                     style={{ backgroundColor: TONE_COLOR[tone] }}
                   />
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground">
                     {TONE_LEGEND[tone]}
                   </span>
                 </li>
@@ -246,7 +246,7 @@ export async function MoveTimelineTile({ at }: { at?: string }) {
                   aria-hidden="true"
                   className="inline-block h-3 w-px shrink-0 bg-[var(--brand)]"
                 />
-                <span className="mono-num text-[10px] text-muted-foreground">
+                <span className="mono-num text-[11px] text-muted-foreground">
                   {cursorCaption}
                 </span>
               </span>

@@ -61,7 +61,7 @@ export function DecisionDeadlineTracker({
       <header className="border-b border-border px-6 py-4">
         <span
           id="lease-decision-heading"
-          className="label-cap text-[10px] text-muted-foreground"
+          className="label-cap text-[11px] text-muted-foreground"
         >
           LEASE DECISION
         </span>
@@ -74,21 +74,21 @@ export function DecisionDeadlineTracker({
       </header>
 
       <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-4 md:divide-x md:divide-y-0">
-        {/* Cell 1: T-MINUS + status pill */}
+        {/* Cell 1: countdown to the notice deadline + status pill */}
         <div className={`flex flex-col gap-2 px-6 py-4 ${frozen ? "opacity-60" : ""}`}>
-          <span className="label-cap text-[10px] text-muted-foreground">
-            T-MINUS
+          <span className="label-cap text-[11px] text-muted-foreground">
+            NOTICE DEADLINE
           </span>
           <p className="mono-num text-2xl font-medium leading-none text-foreground">
             {tMinusHeadline}
           </p>
           {tMinusSub && (
-            <p className="label-cap text-[9px] text-muted-foreground">
+            <p className="label-cap text-[11px] text-muted-foreground">
               {tMinusSub}
             </p>
           )}
           <span
-            className={`label-cap mt-1 inline-flex w-full items-center justify-center rounded-[var(--radius-sm)] border px-2 py-0.5 text-[10px] tracking-wider md:w-fit md:justify-start ${PILL_TONE_CLASSES[pill.tone]}`}
+            className={`label-cap mt-1 inline-flex w-full items-center justify-center rounded-[var(--radius-sm)] border px-2 py-0.5 text-[11px] tracking-wider md:w-fit md:justify-start ${PILL_TONE_CLASSES[pill.tone]}`}
           >
             {pill.label}
           </span>
@@ -96,7 +96,7 @@ export function DecisionDeadlineTracker({
 
         {/* Cell 2: Decision dropdown */}
         <div className={`flex flex-col gap-2 px-6 py-4 ${frozen ? "opacity-60" : ""}`}>
-          <span className="label-cap text-[10px] text-muted-foreground">
+          <span className="label-cap text-[11px] text-muted-foreground">
             DECISION
           </span>
           <p className="mono-num text-2xl font-medium leading-none text-foreground">
@@ -111,26 +111,26 @@ export function DecisionDeadlineTracker({
 
         {/* Cell 3: Notice send-by */}
         <div className={`flex flex-col gap-2 px-6 py-4 ${frozen ? "opacity-60" : ""}`}>
-          <span className="label-cap text-[10px] text-muted-foreground">
+          <span className="label-cap text-[11px] text-muted-foreground">
             SEND NOTICE BY
           </span>
           <p className="mono-num text-2xl font-medium leading-none text-foreground">
             {sendByIso ? formatCellDate(sendByIso) : "—"}
           </p>
-          <p className="label-cap text-[9px] text-muted-foreground">
+          <p className="label-cap text-[11px] text-muted-foreground">
             {sendByIso ? sendByIso.slice(0, 4) : "NOT SET"}
           </p>
         </div>
 
         {/* Cell 4: Lease end */}
         <div className={`flex flex-col gap-2 px-6 py-4 ${frozen ? "opacity-60" : ""}`}>
-          <span className="label-cap text-[10px] text-muted-foreground">
+          <span className="label-cap text-[11px] text-muted-foreground">
             LEASE END
           </span>
           <p className="mono-num text-2xl font-medium leading-none text-foreground">
             {formatCellDate(leaseEndIso)}
           </p>
-          <p className="label-cap text-[9px] text-muted-foreground">
+          <p className="label-cap text-[11px] text-muted-foreground">
             {leaseEndIso.slice(0, 4)}
           </p>
         </div>

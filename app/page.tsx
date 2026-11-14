@@ -104,7 +104,7 @@ async function computeDashboardData(ctx: MoveContext) {
   const avgTemp = destClimate.avgHighF;
   const vibeCount = destComm.vibeTags.length;
   const testimonialCount = destComm.testimonials.length;
-  const topNeighborhood = destComm.testimonials[0]?.neighborhood ?? "—";
+  const topNeighborhood = destComm.testimonials[0]?.neighborhood ?? "None yet";
 
   // ── Checklist (live from Supabase) ──
   const totalTasks = items.length;

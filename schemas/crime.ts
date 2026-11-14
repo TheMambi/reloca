@@ -45,3 +45,25 @@ export type CrimeCategory = z.infer<typeof CrimeCategorySchema>;
 export type HourBucket = z.infer<typeof HourBucketSchema>;
 export type MonthBucket = z.infer<typeof MonthBucketSchema>;
 export type CrimeRecord = z.infer<typeof CrimeRecordSchema>;
+
+// What each subcategory is called on screen. The data files key them by slug.
+const CRIME_SUBCATEGORY_LABELS: Record<string, string> = {
+  "aggravated-assault": "Aggravated assault",
+  burglary: "Burglary",
+  "disorderly-conduct": "Disorderly conduct",
+  "drug-violation": "Drug offenses",
+  homicide: "Homicide",
+  "larceny-theft": "Theft",
+  "motor-vehicle-theft": "Vehicle theft",
+  robbery: "Robbery",
+  "sexual-assault": "Sexual assault",
+  vandalism: "Vandalism",
+};
+
+/** A slug the map does not know still reads as words, never with hyphens. */
+export function crimeSubcategoryLabel(subcategory: string): string {
+  const known = CRIME_SUBCATEGORY_LABELS[subcategory];
+  if (known) return known;
+  const words = subcategory.replace(/[-_]+/g, " ").trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}

@@ -28,7 +28,7 @@ import type {
   AddressChangeTarget,
 } from "@/schemas/transitions";
 import { cn } from "@/lib/utils";
-import { isoToPickerDate, pickerDateToIso } from "@/lib/dates";
+import { formatDate, isoToPickerDate, pickerDateToIso } from "@/lib/dates";
 
 function strOrNull(s: string): string | null {
   const t = s.trim();
@@ -385,11 +385,11 @@ function FormField({
   return (
     <div className="flex flex-col gap-1.5">
       {htmlId ? (
-        <label htmlFor={htmlId} className="label-cap text-[10px] text-muted-foreground">
+        <label htmlFor={htmlId} className="label-cap text-[11px] text-muted-foreground">
           {label.toUpperCase()}
         </label>
       ) : (
-        <span className="label-cap text-[10px] text-muted-foreground">
+        <span className="label-cap text-[11px] text-muted-foreground">
           {label.toUpperCase()}
         </span>
       )}
@@ -465,7 +465,7 @@ function DateField({
               !value && "text-muted-foreground",
             )}
           >
-            <span>{value ?? "— no date"}</span>
+            <span>{value ? formatDate(value) : "No date"}</span>
             <CalendarIcon className="size-3.5" strokeWidth={1.75} />
           </Button>
         </PopoverTrigger>

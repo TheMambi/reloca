@@ -134,14 +134,45 @@ export function countdownPhrase(
   return { lead: "Moving in", count: days, trail: days === 1 ? "day" : "days" };
 }
 
+/** "1 day" or "12 days": a day count that reads as words. */
+export function dayCount(days: number): string {
+  const n = Math.abs(days);
+  return `${n} ${n === 1 ? "day" : "days"}`;
+}
+
 /**
- * Compact mono-cell variant of the same vocabulary, for tiles where the
- * countdown is a small instrument value rather than a sentence.
- * "T-12" · "Today" · "3d ago" · "—".
+ * Short form of the same vocabulary for small tiles, where the label beside
+ * the value already says what is counted: "12 days", "Today", "3 days ago".
  */
 export function countdownCell(days: number | null): string {
-  if (days === null) return "—";
+  if (days === null) return "Not set";
   if (days === 0) return "Today";
-  if (days < 0) return `${Math.abs(days)}d ago`;
-  return `T-${days}`;
+  if (days < 0) return `${dayCount(days)} ago`;
+  return dayCount(days);
+}
+
+const SCREEN_DATE = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "UTC",
+});
+const SCREEN_MONTH = new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" });
+
+/**
+ * How a stored date reaches the screen: "Sep 28, 2026". Takes a date-only
+ * string or a timestamp that starts with one, and reads it as that calendar
+ * day whatever zone the code runs in. Anything else is returned unchanged.
+ */
+export function formatDate(value: string): string {
+  const iso = value.slice(0, 10);
+  if (!isValidIsoDate(iso)) return value;
+  return SCREEN_DATE.format(new Date(`${iso}T00:00:00.000Z`));
+}
+
+/** "Apr" for a year-month key such as "2026-04". */
+export function formatMonth(yearMonth: string): string {
+  const iso = `${yearMonth}-01`;
+  if (!isValidIsoDate(iso)) return yearMonth;
+  return SCREEN_MONTH.format(new Date(`${iso}T00:00:00.000Z`));
 }

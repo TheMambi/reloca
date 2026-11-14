@@ -19,7 +19,7 @@ export function DestinationsCompareBlock({
         <div className="flex items-baseline gap-3">
           <span
             id="destinations-compare-heading"
-            className="label-cap text-[10px] text-muted-foreground"
+            className="label-cap text-[11px] text-muted-foreground"
           >
             PROPERTIES · COMPARE
           </span>

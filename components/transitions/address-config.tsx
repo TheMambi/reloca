@@ -9,6 +9,7 @@ import {
   Repeat,
   Plus,
 } from "lucide-react";
+import { formatDate } from "@/lib/dates";
 import type { LifecycleConfig } from "@/lib/lifecycle/types";
 import type { AddressChangeTarget } from "@/schemas/transitions";
 
@@ -73,7 +74,7 @@ export const addressConfig: LifecycleConfig<
     if (r.reference_number) parts.push(`Reference ${r.reference_number}`);
     return parts.join(" · ");
   },
-  dateLabel: (r) => (r.due_date ? `Due ${r.due_date}` : null),
+  dateLabel: (r) => (r.due_date ? `Due ${formatDate(r.due_date)}` : null),
   status: (r) => r.status,
 };
 

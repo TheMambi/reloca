@@ -346,7 +346,7 @@ export function AddDestinationDialog({ destination, trigger }: Props) {
         {trigger ?? (
           <button
             type="button"
-            className="label-cap inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-border bg-background/40 px-2 py-1 text-[10px] text-foreground tracking-wider transition-colors hover:bg-background/70"
+            className="label-cap inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-border bg-background/40 px-2 py-1 text-[11px] text-foreground tracking-wider transition-colors hover:bg-background/70"
           >
             <Plus className="h-3 w-3" aria-hidden="true" />
             ADD A PROPERTY
@@ -383,7 +383,7 @@ export function AddDestinationDialog({ destination, trigger }: Props) {
                 We couldn&apos;t read this website. Please fill in the fields
                 below by hand.
                 {fetchError ? (
-                  <span className="mt-1 block text-[10px] opacity-80">
+                  <span className="mt-1 block text-[11px] opacity-80">
                     {fetchError}
                   </span>
                 ) : null}
@@ -734,7 +734,7 @@ function AmenityGrid({
     <div className="space-y-4">
       {AMENITY_CATALOG.map((cat) => (
         <fieldset key={cat.id} className="space-y-2">
-          <legend className="label-cap text-[9px] tracking-wider text-muted-foreground">
+          <legend className="label-cap text-[11px] tracking-wider text-muted-foreground">
             {cat.label}
           </legend>
           <div className="grid grid-cols-1 gap-x-3 gap-y-1.5 sm:grid-cols-2">
@@ -758,7 +758,7 @@ function AmenityGrid({
 
       {customAmenities.length > 0 ? (
         <fieldset className="space-y-2">
-          <legend className="label-cap text-[9px] tracking-wider text-muted-foreground">
+          <legend className="label-cap text-[11px] tracking-wider text-muted-foreground">
             CUSTOM
           </legend>
           <ul className="flex flex-wrap gap-1.5">
@@ -820,7 +820,7 @@ function Section({
 }) {
   return (
     <fieldset className="space-y-3">
-      <legend className="label-cap text-[9px] tracking-wider text-muted-foreground">
+      <legend className="label-cap text-[11px] tracking-wider text-muted-foreground">
         {title}
       </legend>
       {children}
@@ -842,7 +842,7 @@ function Field({
   // Screen readers announce the label text when focus lands on the input.
   return (
     <Label className="flex flex-col items-start gap-1 font-normal">
-      <span className="label-cap text-[9px] tracking-wider text-muted-foreground">
+      <span className="label-cap text-[11px] tracking-wider text-muted-foreground">
         {label}
         {required ? (
           <span className="ml-1 text-[var(--brand-secondary)]">*</span>

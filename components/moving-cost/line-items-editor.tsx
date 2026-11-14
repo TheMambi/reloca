@@ -146,7 +146,7 @@ export function LineItemsEditor({ open, onOpenChange, scenario }: Props) {
           </Button>
 
           <div className="flex items-center justify-between border-t border-border pt-3">
-            <span className="label-cap text-[10px] tracking-wider text-muted-foreground">
+            <span className="label-cap text-[11px] tracking-wider text-muted-foreground">
               TOTAL
             </span>
             <span className="mono-num text-base font-semibold text-foreground">

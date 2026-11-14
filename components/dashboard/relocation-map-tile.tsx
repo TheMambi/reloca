@@ -197,7 +197,8 @@ export function RelocationMapTile({
     <>
       <div
         ref={containerRef}
-        role="img"
+        // A region, not an image: the map canvas and its pins take keyboard focus.
+        role="region"
         aria-label={ariaLabel}
         className="h-72 w-full overflow-hidden rounded-md border border-border"
       />

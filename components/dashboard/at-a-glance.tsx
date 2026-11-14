@@ -1,9 +1,16 @@
 import { ListChecks, Wallet, ShieldAlert, Flag, FileText, Wallet2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 import { computeDeadlinePill, type PillTone } from "@/lib/lease/pill";
 import type { MoveReadiness } from "@/lib/data/move-readiness";
 import { getActiveMoveContext } from "@/lib/data/relocation-db";
-import { countdownPhrase, countdownTone, daysUntilIso } from "@/lib/dates";
+import {
+  countdownPhrase,
+  countdownTone,
+  dayCount,
+  daysUntilIso,
+  formatDate,
+} from "@/lib/dates";
 
 export type AtAGlanceProps = {
   /** Multi-source roll-up of readiness across checklist + lease + utility +
@@ -105,7 +112,7 @@ export async function AtAGlance({
     sub?: string;
     tone: keyof typeof TONE_CLASS;
     valueClassOverride?: string; // pill-tone override for the day-count cell
-    href?: string; // when set, the row wraps in an <a>
+    href?: string; // when set, the row is a link
   };
 
   const ROWS: Row[] = [
@@ -132,12 +139,8 @@ export async function AtAGlance({
       icon: Flag,
       label: "Move day",
       value: moveDateIso
-        ? new Date(`${moveDateIso}T00:00:00`).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })
-        : "Set in status row",
+        ? formatDate(moveDateIso)
+        : "Set it in the top bar",
       sub: moveDaySub,
       tone: moveDayTone,
     },
@@ -146,7 +149,7 @@ export async function AtAGlance({
   return (
     <section className="rounded-[var(--radius-lg)] border border-border bg-card p-4">
       <header className="flex items-baseline justify-between">
-        <h2 className="label-cap text-[10px] text-muted-foreground">
+        <h2 className="label-cap text-[11px] text-muted-foreground">
           At a Glance
         </h2>
       </header>
@@ -185,7 +188,7 @@ export async function AtAGlance({
                   {row.value}
                 </span>
                 {row.sub && (
-                  <span className="label-cap mt-0.5 block text-[9px] text-muted-foreground">
+                  <span className="label-cap mt-0.5 block text-[11px] text-muted-foreground">
                     {row.sub}
                   </span>
                 )}
@@ -195,12 +198,12 @@ export async function AtAGlance({
           return (
             <li key={row.label}>
               {row.href ? (
-                <a
+                <Link
                   href={row.href}
                   className="block transition-colors hover:bg-[oklch(var(--muted-raw)/0.3)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--ring)]"
                 >
                   {inner}
-                </a>
+                </Link>
               ) : (
                 inner
               )}
@@ -324,9 +327,9 @@ function buildLeaseRow(
   const days = lease.daysUntil;
   let valueText = "—";
   if (days !== null) {
-    if (days > 0) valueText = `T-${days} days`;
-    else if (days === 0) valueText = "TODAY";
-    else valueText = `+${Math.abs(days)}d`;
+    if (days > 0) valueText = `${dayCount(days)} left`;
+    else if (days === 0) valueText = "Today";
+    else valueText = `${dayCount(days)} late`;
   }
 
   // Day-count tone: reuse the deadline-pill calculator. In deposit-window mode

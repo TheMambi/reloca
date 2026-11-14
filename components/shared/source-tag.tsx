@@ -37,7 +37,7 @@ export function SourceTag({
   const tier = TIER_LABELS[src.tier] ?? src.tier;
   return (
     <p
-      className={`text-[10px] leading-snug text-muted-foreground ${className}`}
+      className={`text-[11px] leading-snug text-muted-foreground ${className}`}
       title={src.notes ? `${src.provider} — ${src.notes}` : src.provider}
     >
       Source: {src.label} · {tier} · fetched {formatFetched(src.fetchedAt)}

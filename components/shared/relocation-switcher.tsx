@@ -100,7 +100,7 @@ export function RelocationSwitcher({
         <button
           type="button"
           onClick={() => setManage({ kind: "create" })}
-          className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+          className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground"
         >
           <Plus className="size-3" />
           <span className="label-cap">Add relocation</span>
@@ -125,7 +125,7 @@ export function RelocationSwitcher({
             type="button"
             className="flex items-center gap-2 rounded-[var(--radius-sm)] px-1.5 py-1 hover:bg-accent"
           >
-            <span className="label-cap hidden text-[10px] text-muted-foreground sm:inline">
+            <span className="label-cap hidden text-[11px] text-muted-foreground sm:inline">
               ROUTE
             </span>
             <span className="mono-num text-foreground">
@@ -136,7 +136,7 @@ export function RelocationSwitcher({
               {viewing.destinationCode}
             </span>
             {!viewingIsActive && (
-              <span className="label-cap rounded-[var(--radius-sm)] border border-border px-1 py-0.5 text-[8px] text-muted-foreground">
+              <span className="label-cap rounded-[var(--radius-sm)] border border-border px-1 py-0.5 text-[11px] text-muted-foreground">
                 Comparing
               </span>
             )}
@@ -152,7 +152,7 @@ export function RelocationSwitcher({
           className="w-72 rounded-[var(--radius-md)] border-border bg-popover p-0"
         >
           <div className="border-b border-border px-3 py-2">
-            <p className="label-cap text-[10px] text-muted-foreground">
+            <p className="label-cap text-[11px] text-muted-foreground">
               Relocations
             </p>
           </div>
@@ -177,12 +177,12 @@ export function RelocationSwitcher({
                       <span className="block truncate text-xs text-foreground">
                         {o.label}
                       </span>
-                      <span className="mono-num block text-[10px] text-muted-foreground">
+                      <span className="mono-num block text-[11px] text-muted-foreground">
                         {o.originCode} → {o.destinationCode}
                       </span>
                     </span>
                     {isActive && (
-                      <span className="label-cap shrink-0 rounded-[var(--radius-sm)] border border-[var(--ok)]/40 px-1.5 py-0.5 text-[8px] text-[var(--ok)]">
+                      <span className="label-cap shrink-0 rounded-[var(--radius-sm)] border border-[var(--ok)]/40 px-1.5 py-0.5 text-[11px] text-[var(--ok)]">
                         Active move
                       </span>
                     )}
@@ -214,11 +214,11 @@ export function RelocationSwitcher({
                 {pending ? "Setting…" : "Set as active move"}
               </button>
               {promoteError && (
-                <p role="alert" className="mt-1.5 text-[10px] leading-snug text-[var(--danger)]">
+                <p role="alert" className="mt-1.5 text-[11px] leading-snug text-[var(--danger)]">
                   {promoteError}
                 </p>
               )}
-              <p className="mt-1.5 text-[10px] leading-snug text-muted-foreground">
+              <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
                 Your checklist, lease, and move tasks track the active move.
               </p>
             </div>

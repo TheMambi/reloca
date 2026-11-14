@@ -6,11 +6,12 @@ import {
 } from "lucide-react";
 import { getChecklistItems } from "@/lib/data/checklist-db";
 import { ChecklistList } from "@/components/checklist/checklist-list";
+import { pluralize } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Checklist",
   description:
-    "Relocation checklist grouped by time phase — from pre-move planning to post-move — including statutory deadlines.",
+    "Your moving tasks by phase, from early planning to settling in, with legal deadlines marked.",
 };
 
 export const dynamic = "force-dynamic";
@@ -36,7 +37,7 @@ export default async function ChecklistPage() {
             Checklist
           </h1>
           <p className="text-xs text-muted-foreground">
-            Phase-bucketed relocation tasks with statutory deadlines
+            Your moving tasks by phase, with legal deadlines marked
           </p>
         </div>
       </div>
@@ -45,15 +46,15 @@ export default async function ChecklistPage() {
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
         <span className="flex items-center gap-2">
           <ListChecks className="size-3.5" strokeWidth={1.75} />
-          <span className="label-cap text-[10px]">{totalItems} ITEMS</span>
+          <span className="label-cap text-[11px]">{pluralize(totalItems, "task", "tasks")}</span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="label-cap text-[10px]">{phases.size} PHASES</span>
+          <span className="label-cap text-[11px]">{pluralize(phases.size, "phase", "phases")}</span>
         </span>
         <span className="flex items-center gap-2">
           <AlertTriangle className="size-3.5 text-[var(--danger)]" strokeWidth={1.75} />
-          <span className="label-cap text-[10px] text-[var(--danger)]">
-            {statutoryCount} STATUTORY
+          <span className="label-cap text-[11px] text-[var(--danger)]">
+            {pluralize(statutoryCount, "legal deadline", "legal deadlines")}
           </span>
         </span>
       </div>

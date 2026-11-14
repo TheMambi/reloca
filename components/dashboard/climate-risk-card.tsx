@@ -117,7 +117,7 @@ function CityClimatePanel({
   const rows = metricsFor(city.profile, includeSea);
   return (
     <div className="rounded-[var(--radius-md)] border border-border/70 bg-background/40 p-3">
-      <p className="label-cap text-[10px] text-muted-foreground">
+      <p className="label-cap text-[11px] text-muted-foreground">
         {city.code} · {city.name}
       </p>
       <dl className="mt-2 space-y-1.5">

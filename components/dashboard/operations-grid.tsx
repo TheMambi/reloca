@@ -134,7 +134,7 @@ export function ModuleCard({
             <span className={iconClass}>{icon}</span>
           </span>
           <div>
-            <p className={`label-cap text-[10px] tracking-[0.14em] ${iconClass}`}>{code}</p>
+            <p className={`label-cap text-[11px] tracking-[0.14em] ${iconClass}`}>{code}</p>
             <h2 className="mt-1.5 text-lg font-medium tracking-[var(--tracking-headline)] text-foreground">{title}</h2>
             <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{description}</p>
           </div>
@@ -184,7 +184,7 @@ export function MetaCell({
   return (
     <div>
       <p className={`mono-num text-lg font-medium ${toneClass}`}>{value}</p>
-      <p className="label-cap mt-0.5 text-[9px] text-muted-foreground">{label}</p>
+      <p className="label-cap mt-0.5 text-[11px] text-muted-foreground">{label}</p>
     </div>
   );
 }
@@ -248,7 +248,7 @@ function PropertyCard({ property }: { property: OperationsGridProps["property"] 
       description="Neighborhoods & buildings."
       metaRow={
         <div className="grid flex-1 grid-cols-3 gap-3">
-          <MetaCell value={String(property.neighborhoodCount)} label="Neighborhoods" />
+          <MetaCell value={String(property.neighborhoodCount)} label="Areas" />
           <MetaCell value={String(property.savedCount)} label="Saved" />
           <MetaCell value={property.riskPosture} label="Risk posture" tone={property.riskTone} />
         </div>
@@ -278,7 +278,7 @@ function CommunityCard({ community }: { community: OperationsGridProps["communit
         <div className="grid flex-1 grid-cols-3 gap-3">
           <MetaCell value={String(community.vibeCount)} label="Vibes" />
           <MetaCell value={`${community.avgTemp}°F`} label="Avg. high" />
-          <MetaCell value={community.topNeighborhood} label="Top match" tone="ok" />
+          <MetaCell value={community.topNeighborhood} label="Featured" />
         </div>
       }
       ctaLabel="Open"
@@ -306,7 +306,7 @@ function ChecklistCard({ checklist }: { checklist: OperationsGridProps["checklis
       rightSlot={
         <div className="flex flex-col items-center gap-1">
           <Donut percent={completePct} className="h-12 w-12" />
-          <p className="label-cap text-[9px] text-muted-foreground">Complete</p>
+          <p className="label-cap text-[11px] text-muted-foreground">Complete</p>
         </div>
       }
       metaRow={
@@ -316,7 +316,7 @@ function ChecklistCard({ checklist }: { checklist: OperationsGridProps["checklis
             label="Done"
             tone={completePct > 0 ? "ok" : "default"}
           />
-          <MetaCell value={String(checklist.statutoryCount)} label="Statutory" tone="danger" />
+          <MetaCell value={String(checklist.statutoryCount)} label="Legal" tone="danger" />
           <MetaCell value={String(checklist.phaseCount)} label="Phases" tone="muted" />
         </div>
       }

@@ -30,7 +30,7 @@ export function JourneyPanel({ activePhase }: { activePhase: JourneyPhaseId }) {
         <h2 className="text-sm font-semibold tracking-tight text-foreground">
           Your Journey
         </h2>
-        <span className="label-cap text-[9px] text-muted-foreground">04 · PHASES</span>
+        <span className="label-cap text-[11px] text-muted-foreground">{JOURNEY_PHASES.length} PHASES</span>
       </header>
 
       <ol className="relative mt-4 space-y-4">
@@ -46,7 +46,7 @@ export function JourneyPanel({ activePhase }: { activePhase: JourneyPhaseId }) {
             <PhaseRow
               key={phase.id}
               id={phase.id}
-              num={idx}
+              num={idx + 1}
               name={phase.name}
               status={status}
             />
@@ -106,7 +106,7 @@ function PhaseRow({
         >
           {name}
         </p>
-        <p className="label-cap text-[9px] text-muted-foreground">
+        <p className="label-cap text-[11px] text-muted-foreground">
           Phase {num} · {STATUS_HINT[status]}
         </p>
       </div>

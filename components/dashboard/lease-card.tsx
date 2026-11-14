@@ -1,7 +1,7 @@
 import { KeyRound } from "lucide-react";
 import { ModuleCard, MetaCell } from "./operations-grid";
 import { getActiveLease, getLeaseEvents } from "@/lib/data/lease-db";
-import { daysUntilIso, todayInZoneIso } from "@/lib/dates";
+import { dayCount, daysUntilIso, todayInZoneIso } from "@/lib/dates";
 
 // Friendly labels for the lease decision enum. Matches AtAGlance's voice —
 // no schema-leak words ("vacate" / "m2m") in user-facing copy.
@@ -64,7 +64,7 @@ export async function LeaseCard() {
   // Three modes:
   //   past move-out  → "Deposit" + days remaining to deposit_claim_window_end
   //   notice sent    → "Sent" (ok)
-  //   otherwise      → T-NN to notice_send_by (warn ≤14 days, else info)
+  //   otherwise      → days left to notice_send_by (warn ≤14 days, else info)
   let noticeValue: string;
   let noticeLabel: string;
   let noticeTone: "ok" | "warn" | "danger" | "muted" | "default";
@@ -84,8 +84,8 @@ export async function LeaseCard() {
       noticeLabel = "Deposit window";
       noticeTone = "default";
     } else {
-      noticeValue = `T-${daysToDeposit}`;
-      noticeLabel = "Deposit window";
+      noticeValue = daysToDeposit === 0 ? "Today" : dayCount(daysToDeposit);
+      noticeLabel = "Deposit due in";
       noticeTone = "default";
     }
   } else if (noticeSent) {
@@ -108,8 +108,8 @@ export async function LeaseCard() {
       noticeLabel = "Notice";
       noticeTone = "danger";
     } else {
-      noticeValue = `T-${days}`;
-      noticeLabel = "Notice";
+      noticeValue = days === 0 ? "Today" : dayCount(days);
+      noticeLabel = "Notice due in";
       noticeTone = days <= 14 ? "warn" : "default";
     }
   }

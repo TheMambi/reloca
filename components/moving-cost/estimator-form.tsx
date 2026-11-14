@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/popover";
 import { upsertMoveEstimate } from "@/app/moving-cost/actions";
 import { cn } from "@/lib/utils";
-import { isoToPickerDate, pickerDateToIso } from "@/lib/dates";
+import { formatDate, isoToPickerDate, pickerDateToIso } from "@/lib/dates";
 
 function numOrNull(s: string): number | null {
   if (s.trim() === "") return null;
@@ -66,7 +66,7 @@ export function EstimatorForm({ initial, onSaved, variant = "first-run" }: Props
     >
       {variant === "first-run" ? (
         <div className="mb-4">
-          <p className="label-cap text-[10px] tracking-wider text-muted-foreground">
+          <p className="label-cap text-[11px] tracking-wider text-muted-foreground">
             GET STARTED
           </p>
           <h3 className="mt-1 text-base font-semibold text-foreground">
@@ -80,7 +80,7 @@ export function EstimatorForm({ initial, onSaved, variant = "first-run" }: Props
         </div>
       ) : (
         <div className="mb-4">
-          <p className="label-cap text-[10px] tracking-wider text-muted-foreground">
+          <p className="label-cap text-[11px] tracking-wider text-muted-foreground">
             BASICS
           </p>
         </div>
@@ -90,7 +90,7 @@ export function EstimatorForm({ initial, onSaved, variant = "first-run" }: Props
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="mc-distance"
-            className="label-cap text-[10px] text-muted-foreground"
+            className="label-cap text-[11px] text-muted-foreground"
           >
             DISTANCE (MILES)
           </label>
@@ -106,7 +106,7 @@ export function EstimatorForm({ initial, onSaved, variant = "first-run" }: Props
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="mc-volume"
-            className="label-cap text-[10px] text-muted-foreground"
+            className="label-cap text-[11px] text-muted-foreground"
           >
             VOLUME (CU FT)
           </label>
@@ -118,12 +118,12 @@ export function EstimatorForm({ initial, onSaved, variant = "first-run" }: Props
             placeholder="800"
             className="h-9 text-sm mono-num"
           />
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-[11px] text-muted-foreground">
             1-bedroom ~400–600 · 2-bedroom ~600–1,000
           </span>
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="label-cap text-[10px] text-muted-foreground">
+          <span className="label-cap text-[11px] text-muted-foreground">
             MOVE DATE
           </span>
           <Popover open={calOpen} onOpenChange={setCalOpen}>
@@ -137,7 +137,7 @@ export function EstimatorForm({ initial, onSaved, variant = "first-run" }: Props
                   !moveDate && "text-muted-foreground",
                 )}
               >
-                <span>{moveDate ?? "— pick a date"}</span>
+                <span>{moveDate ? formatDate(moveDate) : "Pick a date"}</span>
                 <CalendarIcon className="size-3.5" strokeWidth={1.75} />
               </Button>
             </PopoverTrigger>

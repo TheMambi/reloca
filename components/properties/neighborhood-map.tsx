@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CARTO_DARK_SOURCE, maplibregl } from "@/lib/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { NeighborhoodSummary } from "@/lib/data/neighborhoods";
+import { pluralize } from "@/lib/utils";
 import { SaveNeighborhoodButton } from "./save-neighborhood-button";
 
 const fmt = new Intl.NumberFormat("en-US", {
@@ -169,8 +170,8 @@ export function NeighborhoodMap({
   }, [mapKey]);
 
   const ariaLabel = activeLabel
-    ? `Map of ${summaries.length} neighborhoods around ${activeLabel}.`
-    : `Map of ${summaries.length} neighborhoods.`;
+    ? `Map of ${pluralize(summaries.length, "neighborhood", "neighborhoods")} around ${activeLabel}.`
+    : `Map of ${pluralize(summaries.length, "neighborhood", "neighborhoods")}.`;
 
   // The portal target only exists while maplibre has the popup open. Rendering
   // the portal contingent on `openKey` keeps React's tree honest.
@@ -185,7 +186,8 @@ export function NeighborhoodMap({
     <>
       <div
         ref={containerRef}
-        role="img"
+        // A region, not an image: the map canvas and its pins take keyboard focus.
+        role="region"
         aria-label={ariaLabel}
         className="h-80 w-full overflow-hidden rounded-[var(--radius-lg)] border border-border"
       />
@@ -230,7 +232,7 @@ function NeighborhoodPopup({
           <span className="text-sm font-semibold text-foreground">
             {summary.name}
           </span>
-          <span className="mono-num text-[10px] tracking-wider text-muted-foreground">
+          <span className="mono-num text-[11px] tracking-wider text-muted-foreground">
             {cityCode}
           </span>
         </div>

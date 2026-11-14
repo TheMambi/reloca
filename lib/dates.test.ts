@@ -5,6 +5,9 @@ import assert from "node:assert/strict";
 import {
   addDaysIso,
   countdownCell,
+  dayCount,
+  formatDate,
+  formatMonth,
   countdownPhrase,
   countdownTone,
   daysBetweenIso,
@@ -71,10 +74,24 @@ assert.deepEqual(countdownPhrase(null), {
 
 // ---- countdownCell (compact tile variant) -----------------------------------
 
-assert.equal(countdownCell(12), "T-12");
+assert.equal(countdownCell(12), "12 days");
+assert.equal(countdownCell(1), "1 day");
 assert.equal(countdownCell(0), "Today");
-assert.equal(countdownCell(-3), "3d ago");
-assert.equal(countdownCell(null), "—");
+assert.equal(countdownCell(-3), "3 days ago");
+assert.equal(countdownCell(-1), "1 day ago");
+assert.equal(countdownCell(null), "Not set");
+assert.equal(dayCount(1), "1 day");
+assert.equal(dayCount(-45), "45 days");
+
+// ---- dates on screen -----------------------------------------------------------
+// The same words in every zone the tests run in, and never the stored form.
+
+assert.equal(formatDate("2026-09-28"), "Sep 28, 2026");
+assert.equal(formatDate("2026-01-01"), "Jan 1, 2026");
+assert.equal(formatDate("2026-12-31T23:30:00.000Z"), "Dec 31, 2026");
+assert.equal(formatDate("soon"), "soon");
+assert.equal(formatMonth("2026-04"), "Apr");
+assert.equal(formatMonth("2026-12"), "Dec");
 
 // ---- the date picker bridge ----------------------------------------------------
 // react-day-picker highlights and returns local-midnight dates. Whatever zone

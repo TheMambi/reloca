@@ -72,7 +72,7 @@ function CityAirPanel({ city }: { city: CityAir }) {
 
   return (
     <div className="rounded-[var(--radius-md)] border border-border/70 bg-background/40 p-3">
-      <p className="label-cap text-[10px] text-muted-foreground">
+      <p className="label-cap text-[11px] text-muted-foreground">
         {code} · {name}
       </p>
       {profile ? (
@@ -81,20 +81,20 @@ function CityAirPanel({ city }: { city: CityAir }) {
             <span className={`mono-num text-2xl font-semibold ${TONE_TEXT[tone]}`}>
               {profile.aqi}
             </span>
-            <span className="label-cap text-[9px] text-muted-foreground">AQI</span>
+            <span className="label-cap text-[11px] text-muted-foreground">AQI</span>
             <span className={`ml-auto text-xs font-medium ${TONE_TEXT[tone]}`}>
               {profile.category}
             </span>
           </div>
-          <p className="mt-1.5 text-[10px] leading-snug text-muted-foreground">
+          <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
             Main pollutant: {dominant}
           </p>
           {isStale(profile.observedAt, STALE_AFTER_DAYS.airQuality) ? (
-            <p className="text-[10px] leading-snug text-[var(--warn)]">
+            <p className="text-[11px] leading-snug text-[var(--warn)]">
               Older snapshot · {formatObserved(profile.observedAt)}
             </p>
           ) : (
-            <p className="text-[10px] leading-snug text-muted-foreground">
+            <p className="text-[11px] leading-snug text-muted-foreground">
               {formatObserved(profile.observedAt)}
             </p>
           )}

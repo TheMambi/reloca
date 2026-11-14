@@ -7,6 +7,7 @@ import { EstimatorForm } from "./estimator-form";
 import { ScenariosCompare } from "./scenarios-compare";
 import type { MoveEstimate } from "@/schemas/move-cost";
 import { formatCurrency } from "@/lib/moving-cost/format";
+import { formatDate } from "@/lib/dates";
 
 interface Props {
   estimate: MoveEstimate;
@@ -33,7 +34,7 @@ export function MoveCostView({ estimate }: Props) {
       <section className="rounded-[var(--radius-md)] border border-border bg-card/80 p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="label-cap text-[10px] tracking-wider text-muted-foreground">
+            <p className="label-cap text-[11px] tracking-wider text-muted-foreground">
               WHAT IT&rsquo;LL COST
             </p>
             <p className="mono-num mt-1 text-3xl font-semibold leading-none text-foreground">
@@ -50,7 +51,7 @@ export function MoveCostView({ estimate }: Props) {
             <p className="mono-num">
               {estimate.volume_cuft == null ? "—" : `${estimate.volume_cuft} cu ft`}
             </p>
-            <p className="mono-num">{estimate.move_date ?? "—"}</p>
+            <p className="mono-num">{estimate.move_date ? formatDate(estimate.move_date) : "No move date"}</p>
           </div>
         </div>
 

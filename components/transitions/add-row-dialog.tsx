@@ -61,7 +61,7 @@ function UtilityCatalog({ rows }: { rows: UtilityTransition[] }) {
 
   return (
     <div>
-      <p className="label-cap mb-2 text-[10px] tracking-wider text-muted-foreground">
+      <p className="label-cap mb-2 text-[11px] tracking-wider text-muted-foreground">
         Add a utility
       </p>
       <div className="flex flex-wrap gap-1.5">
@@ -141,7 +141,7 @@ function CustomUtilityDialog({
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="custom-utility-label"
-              className="label-cap text-[10px] text-muted-foreground"
+              className="label-cap text-[11px] text-muted-foreground"
             >
               LABEL
             </label>
@@ -155,7 +155,7 @@ function CustomUtilityDialog({
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <span className="label-cap text-[10px] text-muted-foreground">
+            <span className="label-cap text-[11px] text-muted-foreground">
               SIDE
             </span>
             <div className="flex gap-2">
@@ -203,7 +203,7 @@ function AddressCatalog() {
 
   return (
     <div>
-      <p className="label-cap mb-2 text-[10px] tracking-wider text-muted-foreground">
+      <p className="label-cap mb-2 text-[11px] tracking-wider text-muted-foreground">
         Add an address update
       </p>
       <div className="flex flex-wrap gap-1.5">
@@ -286,7 +286,7 @@ function AddressNameDialog({
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="address-target-name"
-              className="label-cap text-[10px] text-muted-foreground"
+              className="label-cap text-[11px] text-muted-foreground"
             >
               NAME
             </label>

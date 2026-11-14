@@ -317,20 +317,17 @@
     letter-spacing: var(--tracking-label);
     font-weight: 500;
     font-family: var(--font-mono);
-    /* Floor: even when paired with text-[10px]/text-xs, never render below
-       11px — uppercase tracked mono is the hardest-to-read text in the UI. */
-    font-size: max(0.6875rem, 1em);
+    /* 11px unless a text utility on the same element says otherwise.
+       Utilities sit in a later layer and win, so the floor is kept by not
+       using a text size below text-[11px] anywhere: uppercase tracked mono
+       is the hardest text in the UI to read. */
+    font-size: 0.6875rem;
   }
 
   /* Mono utility for numerics / route codes / status pills / tabular cells */
   .mono-num {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
-  }
-
-  /* Tabular numerics opt-out for proportional headlines */
-  .proportional-nums {
-    font-variant-numeric: proportional-nums;
   }
 
   /* Selection — violet brand tint, low alpha */
@@ -380,36 +377,24 @@
       transparent 75%
     );
   }
-  .atmosphere-amber {
-    background: radial-gradient(
-      ellipse at 50% 60%,
-      oklch(0.78 0.16 70 / 0.18) 0%,
-      oklch(0.78 0.16 70 / 0.06) 40%,
-      transparent 75%
-    );
-  }
 
-  /* Sparkle twinkle — subtle blinking star animation for sidebar promo (Phase 4.2, AD-008) */
-  @keyframes sparkle-twinkle {
-    0%, 100% { opacity: 0.3; transform: scale(0.8); }
-    50% { opacity: 1; transform: scale(1.1); }
+  /* Dashboard hero: the plane travels the arc and the dashes drift along it.
+     Both are CSS animations so the reduced-motion rule in the base layer
+     stops them. An animation element inside the SVG would keep running. */
+  @keyframes reloca-flight {
+    to { offset-distance: 100%; }
   }
-  .animate-sparkle {
-    animation: sparkle-twinkle 3s ease-in-out infinite;
+  @keyframes reloca-arc-dash {
+    to { stroke-dashoffset: -90; }
   }
-  .animate-sparkle-delayed {
-    animation: sparkle-twinkle 3s ease-in-out 1.5s infinite;
+  .flight-plane {
+    offset-path: path("M 95 215 Q 320 30 525 145");
+    offset-rotate: auto;
+    animation: reloca-flight 9s linear infinite;
   }
-
-  /* Card hover micro-interaction — lift on hover (Phase 4.2) */
-  .card-hover {
-    transition: border-color 200ms ease, background-color 200ms ease;
+  .flight-arc {
+    animation: reloca-arc-dash 6s linear infinite;
   }
-  .card-hover:hover {
-    border-color: oklch(0.40 0.03 285);
-    background-color: oklch(0.20 0.028 285);
-  }
-
 }
 
 /* ─── MapLibre dark-theme overrides ────────────────────────────────────────
@@ -433,7 +418,7 @@
 .maplibregl-ctrl-attrib-inner {
   background: var(--card) !important;
   color: var(--foreground) !important;
-  font-size: 10px;
+  font-size: 11px;
 }
 .maplibregl-ctrl-attrib a,
 .maplibregl-ctrl-attrib a:hover {

@@ -7,6 +7,7 @@ import type {
 } from "@/schemas/lease";
 import type { ChecklistItem } from "@/schemas";
 import { safeHref } from "@/schemas/web-link";
+import { formatDate } from "@/lib/dates";
 import { InsuranceCoverageTimeline } from "./insurance-coverage-timeline";
 import { InsurancePolicyDialogTrigger } from "./insurance-policy-form";
 
@@ -82,7 +83,7 @@ export function InsuranceTransitionPanel({
       <header className="border-b border-border px-6 py-4">
         <span
           id="insurance-transition-heading"
-          className="label-cap text-[10px] text-muted-foreground"
+          className="label-cap text-[11px] text-muted-foreground"
         >
           RENTERS INSURANCE
         </span>
@@ -98,11 +99,11 @@ export function InsuranceTransitionPanel({
       {/* ── Region 1: Timeline ─────────────────────────────────────────── */}
       <div className="border-b border-border px-6 py-5">
         <div className="mb-3 flex items-baseline justify-between gap-2">
-          <span className="label-cap text-[10px] text-muted-foreground">
+          <span className="label-cap text-[11px] text-muted-foreground">
             COVERAGE TIMELINE
           </span>
           {policies.length > 0 && (
-            <span className="label-cap text-[9px] text-muted-foreground">
+            <span className="label-cap text-[11px] text-muted-foreground">
               {policies.length}{" "}
               {policies.length === 1 ? "POLICY" : "POLICIES"}
             </span>
@@ -120,7 +121,7 @@ export function InsuranceTransitionPanel({
 
       {/* ── Region 2: Coverage check grid ──────────────────────────────── */}
       <div className="border-b border-border px-6 py-5">
-        <span className="label-cap text-[10px] text-muted-foreground">
+        <span className="label-cap text-[11px] text-muted-foreground">
           COVERAGE CHECK
         </span>
 
@@ -171,7 +172,7 @@ export function InsuranceTransitionPanel({
 
         {showLandlordInsuranceHint && (
           <div className="mt-4 rounded-[var(--radius-sm)] border border-[oklch(var(--warn-raw)/0.3)] bg-[oklch(var(--warn-raw)/0.08)] px-3 py-2.5 text-xs leading-relaxed text-foreground">
-            <span className="label-cap mr-1 text-[10px] text-[var(--warn)]">
+            <span className="label-cap mr-1 text-[11px] text-[var(--warn)]">
               LANDLORD REQUIREMENTS
             </span>
             <span>
@@ -187,12 +188,12 @@ export function InsuranceTransitionPanel({
       {/* ── Region 3: Related checklist tasks ──────────────────────────── */}
       <div className="px-6 py-5">
         <div className="mb-3 flex items-baseline justify-between gap-2">
-          <span className="label-cap text-[10px] text-muted-foreground">
+          <span className="label-cap text-[11px] text-muted-foreground">
             RELATED CHECKLIST TASKS
           </span>
           <Link
             href="/checklist#lease"
-            className="label-cap text-[9px] tracking-wider text-muted-foreground hover:text-foreground"
+            className="label-cap text-[11px] tracking-wider text-muted-foreground hover:text-foreground"
           >
             OPEN CHECKLIST →
           </Link>
@@ -233,8 +234,8 @@ export function InsuranceTransitionPanel({
                     </p>
                   </div>
                   {t.due_date && (
-                    <span className="mono-num shrink-0 text-[10px] text-muted-foreground">
-                      {t.due_date}
+                    <span className="mono-num shrink-0 text-[11px] text-muted-foreground">
+                      {formatDate(t.due_date)}
                     </span>
                   )}
                 </Link>
@@ -270,7 +271,7 @@ function Th({
   return (
     <th
       scope="col"
-      className={`label-cap py-2 text-[9px] font-medium text-muted-foreground ${
+      className={`label-cap py-2 text-[11px] font-medium text-muted-foreground ${
         align === "right" ? "text-right" : "text-left"
       }`}
     >
@@ -318,7 +319,7 @@ function ComplianceTableRow({
       <td className="py-3 align-top">
         <p className="text-xs text-foreground">{policy.carrier ?? "—"}</p>
         {policy.policy_number && (
-          <p className="mono-num text-[10px] text-muted-foreground">
+          <p className="mono-num text-[11px] text-muted-foreground">
             {policy.policy_number}
           </p>
         )}
@@ -360,7 +361,7 @@ function ComplianceMobileBlock({
       <div className="rounded-[var(--radius-sm)] border border-border/60 bg-background/40 px-3 py-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-foreground">{scopeLabel}</p>
-          <span className="label-cap text-[9px] text-muted-foreground">
+          <span className="label-cap text-[11px] text-muted-foreground">
             NOT YET ADDED
           </span>
         </div>
@@ -420,7 +421,7 @@ function ComplianceMobileBlock({
 
 function KvKey({ children }: { children: React.ReactNode }) {
   return (
-    <dt className="label-cap text-[9px] text-muted-foreground">{children}</dt>
+    <dt className="label-cap text-[11px] text-muted-foreground">{children}</dt>
   );
 }
 
@@ -444,7 +445,7 @@ function LiabilityCell({ amount }: { amount: number }) {
             strokeWidth={2}
             aria-label="Below minimum"
           />
-          <span className="label-cap text-[9px] text-[var(--danger)]">
+          <span className="label-cap text-[11px] text-[var(--danger)]">
             MIN {fmtCurrency.format(MIN_LIABILITY)}
           </span>
         </span>
@@ -471,7 +472,7 @@ function PropertyCell({ amount }: { amount: number }) {
             strokeWidth={2}
             aria-label="Below minimum"
           />
-          <span className="label-cap text-[9px] text-[var(--danger)]">
+          <span className="label-cap text-[11px] text-[var(--danger)]">
             MIN {fmtCurrency.format(MIN_PROPERTY)}
           </span>
         </span>
@@ -532,7 +533,7 @@ function DocCell({ url }: { url: string | null }) {
 function EmptyTimelineState() {
   return (
     <div className="flex flex-col items-center gap-2 rounded-[var(--radius-sm)] border border-dashed border-border/70 bg-background/40 px-4 py-6 text-center">
-      <p className="label-cap text-[10px] text-muted-foreground">
+      <p className="label-cap text-[11px] text-muted-foreground">
         NO POLICIES YET
       </p>
       <p className="text-xs text-muted-foreground">

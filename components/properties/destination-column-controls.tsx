@@ -37,7 +37,7 @@ export function DestinationColumnControls({ destination }: Props) {
           {destination.building_name}
         </h3>
         {destination.is_active_target ? (
-          <div className="label-cap mt-1 text-[9px] text-[var(--brand-secondary)] tracking-wider">
+          <div className="label-cap mt-1 text-[11px] text-[var(--brand-secondary)] tracking-wider">
             ACTIVE TARGET
           </div>
         ) : null}

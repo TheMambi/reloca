@@ -82,7 +82,7 @@ export function DataSourcesPanel() {
             </p>
           </div>
         </div>
-        <span className="mono-num shrink-0 text-[10px] text-muted-foreground">
+        <span className="mono-num shrink-0 text-[11px] text-muted-foreground">
           {summary}
         </span>
       </header>
@@ -108,19 +108,19 @@ export function DataSourcesPanel() {
                 <p className="truncate text-xs font-medium text-foreground">
                   {src.label}
                 </p>
-                <p className="truncate text-[10px] text-muted-foreground">
+                <p className="truncate text-[11px] text-muted-foreground">
                   {src.provider}
                 </p>
               </div>
               <div className="shrink-0 text-right">
                 <p
-                  className={`label-cap text-[9px] ${
+                  className={`label-cap text-[11px] ${
                     stale ? "text-[var(--warn)]" : TIER_TEXT[src.tier]
                   }`}
                 >
                   {stale ? "Needs refresh" : TIER_LABEL[src.tier]}
                 </p>
-                <p className="mono-num text-[10px] text-muted-foreground">
+                <p className="mono-num text-[11px] text-muted-foreground">
                   {formatFetched(src.fetchedAt)}
                 </p>
               </div>
@@ -128,7 +128,7 @@ export function DataSourcesPanel() {
           );
         })}
       </ul>
-      <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
+      <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
         Reloca is an independent project. It uses public data from HUD, NOAA,
         the EPA and the City of Sacramento, and none of them endorses or
         certifies it. AirNow air quality readings are preliminary.

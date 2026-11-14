@@ -56,7 +56,7 @@ export function TargetMoveOutEditor({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         disabled={disabled || pending}
-        className={`label-cap flex items-center gap-2 rounded-[var(--radius-sm)] border border-border bg-card px-3 py-1.5 text-[10px] tracking-wider text-muted-foreground transition-colors hover:bg-popover hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 ${
+        className={`label-cap flex items-center gap-2 rounded-[var(--radius-sm)] border border-border bg-card px-3 py-1.5 text-[11px] tracking-wider text-muted-foreground transition-colors hover:bg-popover hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 ${
           pending ? "opacity-60" : ""
         }`}
       >

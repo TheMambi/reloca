@@ -33,7 +33,7 @@ export function computeDeadlinePill(
 
 export type TMinus = { headline: string; sub: string };
 
-// Headline for the /lease T-MINUS cell. Once the notice is out the send-by
+// Headline for the countdown cell on the Lease page. Once the notice is out the send-by
 // countdown is moot, so it reports whether the notice beat the deadline
 // instead of reading "Overdue" beside a "Notice sent" pill.
 export function computeTMinus(
@@ -52,9 +52,9 @@ export function computeTMinus(
   }
   if (daysUntilSendBy === null) return { headline: "—", sub: "" };
   if (daysUntilSendBy > 0) {
-    return { headline: `${daysUntilSendBy}d`, sub: `${daysUntilSendBy} ${daysUntilSendBy === 1 ? "DAY" : "DAYS"}` };
+    return { headline: String(daysUntilSendBy), sub: daysUntilSendBy === 1 ? "DAY LEFT" : "DAYS LEFT" };
   }
-  if (daysUntilSendBy === 0) return { headline: "0d", sub: "TODAY" };
+  if (daysUntilSendBy === 0) return { headline: "Today", sub: "LAST DAY TO SEND" };
   const past = Math.abs(daysUntilSendBy);
   return { headline: "Overdue", sub: `${past} ${past === 1 ? "DAY" : "DAYS"} PAST` };
 }

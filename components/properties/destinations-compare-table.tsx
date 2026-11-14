@@ -116,7 +116,7 @@ function renderAmenities(d: Destination): React.ReactNode {
       {d.amenities.map((a) => (
         <li
           key={a}
-          className="rounded-[var(--radius-sm)] border border-border bg-background/40 px-1.5 py-0.5 text-[10px] text-foreground"
+          className="rounded-[var(--radius-sm)] border border-border bg-background/40 px-1.5 py-0.5 text-[11px] text-foreground"
         >
           {a}
         </li>
@@ -323,7 +323,7 @@ function DesktopGrid({ destinations }: { destinations: Destination[] }) {
             <div role="row" className="grid gap-x-px" style={gridStyle}>
               <div
                 role="rowheader"
-                className="label-cap px-3 py-2 text-[9px] tracking-wider text-muted-foreground"
+                className="label-cap px-3 py-2 text-[11px] tracking-wider text-muted-foreground"
               >
                 {GROUP_LABELS[g]}
               </div>
@@ -395,7 +395,7 @@ function DestinationCard({ destination }: { destination: Destination }) {
           if (rows.length === 0) return null;
           return (
             <section key={g} className="px-4 py-3">
-              <div className="label-cap mb-2 text-[9px] tracking-wider text-muted-foreground">
+              <div className="label-cap mb-2 text-[11px] tracking-wider text-muted-foreground">
                 {GROUP_LABELS[g]}
               </div>
               <dl className="grid grid-cols-[1fr_1fr] gap-x-3 gap-y-1.5 text-xs">

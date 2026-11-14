@@ -84,7 +84,7 @@ export function PenaltyForecaster({
       <header className="border-b border-border px-6 py-4">
         <span
           id="forecaster-heading"
-          className="label-cap text-[10px] text-muted-foreground"
+          className="label-cap text-[11px] text-muted-foreground"
         >
           COST OF EACH PATH
         </span>
@@ -106,7 +106,7 @@ export function PenaltyForecaster({
       {/* ── Bottom region: editable target + scenario table + nudge ─────── */}
       <div className="px-6 py-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <span className="label-cap text-[10px] text-muted-foreground">
+          <span className="label-cap text-[11px] text-muted-foreground">
             SCENARIOS
           </span>
           <TargetMoveOutEditor
@@ -170,7 +170,7 @@ function SettledSummary({
       <header className="border-b border-border px-6 py-4">
         <span
           id="forecaster-heading"
-          className="label-cap text-[10px] text-muted-foreground"
+          className="label-cap text-[11px] text-muted-foreground"
         >
           COST OF EACH PATH
         </span>
@@ -221,25 +221,25 @@ function ScenarioTable({ bars, activeKey }: ScenarioTableProps) {
           <tr className="border-b border-border">
             <th
               scope="col"
-              className="label-cap py-2 text-left text-[9px] font-medium text-muted-foreground"
+              className="label-cap py-2 text-left text-[11px] font-medium text-muted-foreground"
             >
               PATH
             </th>
             <th
               scope="col"
-              className="label-cap py-2 pr-4 text-right text-[9px] font-medium text-muted-foreground"
+              className="label-cap py-2 pr-4 text-right text-[11px] font-medium text-muted-foreground"
             >
               PER MONTH
             </th>
             <th
               scope="col"
-              className="label-cap py-2 pr-4 text-right text-[9px] font-medium text-muted-foreground"
+              className="label-cap py-2 pr-4 text-right text-[11px] font-medium text-muted-foreground"
             >
               TOTAL
             </th>
             <th
               scope="col"
-              className="label-cap py-2 text-right text-[9px] font-medium text-muted-foreground"
+              className="label-cap py-2 text-right text-[11px] font-medium text-muted-foreground"
             >
               VS YOUR PATH
             </th>
@@ -292,19 +292,19 @@ function ScenarioTable({ bars, activeKey }: ScenarioTableProps) {
             >
               <p className="text-sm font-medium text-foreground">{bar.label}</p>
               <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                <dt className="label-cap text-[9px] text-muted-foreground">
+                <dt className="label-cap text-[11px] text-muted-foreground">
                   Per month
                 </dt>
                 <dd className="mono-num text-right text-foreground">
                   {formatMonthly(bar)}
                 </dd>
-                <dt className="label-cap text-[9px] text-muted-foreground">
+                <dt className="label-cap text-[11px] text-muted-foreground">
                   Total
                 </dt>
                 <dd className="mono-num text-right text-foreground">
                   {formatTotal(bar)}
                 </dd>
-                <dt className="label-cap text-[9px] text-muted-foreground">
+                <dt className="label-cap text-[11px] text-muted-foreground">
                   Vs your path
                 </dt>
                 <dd className="mono-num text-right">

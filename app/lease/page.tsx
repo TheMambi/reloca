@@ -80,7 +80,7 @@ export default async function LeasePage({
   return (
     <div className="flex min-h-[calc(100svh-3rem)] flex-col gap-6 p-6">
       <header>
-        <p className="label-cap text-[10px] tracking-wider text-muted-foreground">
+        <p className="label-cap text-[11px] tracking-wider text-muted-foreground">
           LEASE & MOVE-OUT
         </p>
         <h2 className="mt-1 text-xl font-semibold tracking-[var(--tracking-headline)] text-foreground">

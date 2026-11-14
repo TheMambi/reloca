@@ -59,16 +59,16 @@ export function QuickInsights({ data }: QuickInsightsProps) {
       icon: Sparkles,
       iconClass: "text-[var(--ok)]",
       iconBg: "bg-[var(--ok)]/14",
-      label: "Top neighborhood",
+      label: "Featured neighborhood",
       value: data.topNeighborhood,
       compact: true,
-      sub: "Highest fit",
+      sub: "From community notes",
     },
   ];
 
   return (
     <section className="rounded-[var(--radius-lg)] border border-border bg-card p-4">
-      <p className="label-cap text-[10px] text-muted-foreground">Quick insights</p>
+      <p className="label-cap text-[11px] text-muted-foreground">Quick insights</p>
 
       <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {insights.map((tile) => {

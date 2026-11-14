@@ -25,7 +25,7 @@ import {
 import { settle } from "@/lib/settle-action";
 import { renderNoticeTemplate } from "./notice-template";
 import { noticeTerm } from "@/lib/lease/notice-term";
-import { addDaysIso, isoDateInZone, isoToPickerDate, pickerDateToIso, todayInZoneIso } from "@/lib/dates";
+import { addDaysIso, formatDate, isoDateInZone, isoToPickerDate, pickerDateToIso, todayInZoneIso } from "@/lib/dates";
 import type { LeaseTerms, NoticeDraft } from "@/schemas/lease";
 
 interface NoticeComposerProps {
@@ -42,11 +42,6 @@ function formatTriggerDate(iso: string): string {
     day: "numeric",
     timeZone: "UTC",
   });
-}
-
-// "2027-10-25" → "2027-10-25" (already ISO; keep as-is for the locked-state pill).
-function formatLockedDate(iso: string): string {
-  return iso.slice(0, 10);
 }
 
 // Build a `mailto:` URL with proper URL-encoding. Recipient is encoded per RFC.
@@ -100,7 +95,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
 
   const locked = Boolean(draft?.sent_at);
   const sentDate = draft?.sent_at
-    ? formatLockedDate(isoDateInZone(new Date(draft.sent_at)))
+    ? formatDate(isoDateInZone(new Date(draft.sent_at)))
     : null;
 
   // ── actions ──────────────────────────────────────────────────────────────
@@ -187,7 +182,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
         <header className="border-b border-border px-6 py-4">
           <span
             id="notice-composer-heading"
-            className="label-cap text-[10px] text-muted-foreground"
+            className="label-cap text-[11px] text-muted-foreground"
           >
             MOVE-OUT NOTICE
           </span>
@@ -200,7 +195,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
           </p>
         </header>
         <div className="flex flex-col items-center gap-3 px-6 py-12">
-          <p className="label-cap text-[10px] text-muted-foreground">
+          <p className="label-cap text-[11px] text-muted-foreground">
             NOT YET WRITTEN
           </p>
           <Button
@@ -212,7 +207,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
             {isCreatePending ? "Writing…" : "Write the notice"}
           </Button>
           {errorMsg && (
-            <p className="label-cap text-[10px] text-[var(--danger)]">
+            <p className="label-cap text-[11px] text-[var(--danger)]">
               {errorMsg}
             </p>
           )}
@@ -233,7 +228,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
       <header className="border-b border-border px-6 py-4">
         <span
           id="notice-composer-heading"
-          className="label-cap text-[10px] text-muted-foreground"
+          className="label-cap text-[11px] text-muted-foreground"
         >
           NOTICE COMPOSER
         </span>
@@ -252,7 +247,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
         <div className="flex flex-col gap-4 px-6 py-5">
           {/* Move-out date */}
           <div className="flex flex-col gap-1.5">
-            <label className="label-cap text-[10px] text-muted-foreground">
+            <label className="label-cap text-[11px] text-muted-foreground">
               MOVE-OUT DATE
             </label>
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
@@ -264,8 +259,8 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
                   disabled={locked}
                   className="mono-num h-8 w-full justify-between text-xs"
                 >
-                  <span>{moveOut}</span>
-                  <span className="label-cap text-[9px] text-muted-foreground">
+                  <span>{formatDate(moveOut)}</span>
+                  <span className="label-cap text-[11px] text-muted-foreground">
                     {formatTriggerDate(moveOut)}
                   </span>
                 </Button>
@@ -283,7 +278,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
                 />
               </PopoverContent>
             </Popover>
-            <p className="label-cap text-[9px] text-muted-foreground">
+            <p className="label-cap text-[11px] text-muted-foreground">
               EARLIEST: {pickerDateToIso(minMoveOutDate)} · TODAY +{" "}
               {lease.notice_days_required}D
             </p>
@@ -303,7 +298,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="notice-subject"
-              className="label-cap text-[10px] text-muted-foreground"
+              className="label-cap text-[11px] text-muted-foreground"
             >
               SUBJECT
             </label>
@@ -320,7 +315,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="notice-body"
-              className="label-cap text-[10px] text-muted-foreground"
+              className="label-cap text-[11px] text-muted-foreground"
             >
               BODY
             </label>
@@ -355,7 +350,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
                 {isSavePending ? "Saving…" : "Save changes"}
               </Button>
               {errorMsg && (
-                <span className="label-cap text-[10px] text-[var(--danger)]">
+                <span className="label-cap text-[11px] text-[var(--danger)]">
                   {errorMsg}
                 </span>
               )}
@@ -366,11 +361,11 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
         {/* ── RIGHT: preview + actions ───────────────────────────────── */}
         <div className="flex flex-col gap-4 px-6 py-5">
           <div className="flex items-start justify-between gap-2">
-            <span className="label-cap text-[10px] text-muted-foreground">
+            <span className="label-cap text-[11px] text-muted-foreground">
               PREVIEW & ACTIONS
             </span>
             {locked && sentDate && (
-              <span className="label-cap inline-flex items-center rounded-[var(--radius-sm)] border border-[oklch(var(--ok-raw)/0.3)] bg-[oklch(var(--ok-raw)/0.12)] px-2 py-0.5 text-[10px] tracking-wider text-[var(--ok)]">
+              <span className="label-cap inline-flex items-center rounded-[var(--radius-sm)] border border-[oklch(var(--ok-raw)/0.3)] bg-[oklch(var(--ok-raw)/0.12)] px-2 py-0.5 text-[11px] tracking-wider text-[var(--ok)]">
                 NOTICE SENT · {sentDate}
               </span>
             )}
@@ -390,7 +385,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
                 Copy notice text
               </Button>
               {copied && (
-                <p className="label-cap -mt-1 text-center text-[10px] text-[var(--ok)]">
+                <p className="label-cap -mt-1 text-center text-[11px] text-[var(--ok)]">
                   COPIED
                 </p>
               )}
@@ -409,7 +404,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
                   Open in mail client
                 </a>
               </Button>
-              <p className="text-center text-[10px] text-muted-foreground">
+              <p className="text-center text-[11px] text-muted-foreground">
                 Opens your default mail app pre-filled. Review, then send.
               </p>
 
@@ -470,7 +465,7 @@ export function NoticeComposer({ lease, draft }: NoticeComposerProps) {
 function SummaryRow({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-3">
-      <dt className="label-cap shrink-0 text-[10px] text-muted-foreground sm:w-24">
+      <dt className="label-cap shrink-0 text-[11px] text-muted-foreground sm:w-24">
         {k}
       </dt>
       <dd className="break-words text-xs text-foreground">{v}</dd>

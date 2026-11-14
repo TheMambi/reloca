@@ -65,7 +65,7 @@ export function LifecycleTracker<TRow, TStatus extends string>({
 
       {skipped.length > 0 ? (
         <details className="rounded-[var(--radius-md)] border border-border bg-card/40">
-          <summary className="label-cap cursor-pointer px-4 py-2.5 text-[10px] tracking-wider text-muted-foreground">
+          <summary className="label-cap cursor-pointer px-4 py-2.5 text-[11px] tracking-wider text-muted-foreground">
             Skipped · {skipped.length}
           </summary>
           <ul className="flex flex-col gap-2 border-t border-border p-3">
@@ -115,7 +115,7 @@ function RowCard<TRow, TStatus extends string>({
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-foreground">{primary}</span>
           <span
-            className={`label-cap inline-flex items-center rounded-[var(--radius-sm)] border px-1.5 py-0.5 text-[10px] tracking-wider ${LIFECYCLE_TONE_CLASSES[tone]}`}
+            className={`label-cap inline-flex items-center rounded-[var(--radius-sm)] border px-1.5 py-0.5 text-[11px] tracking-wider ${LIFECYCLE_TONE_CLASSES[tone]}`}
           >
             {label}
           </span>

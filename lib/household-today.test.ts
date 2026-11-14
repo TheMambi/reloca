@@ -120,7 +120,7 @@ async function main() {
   const status = await getLeaseStatus();
   assert.equal(status.noticeSendByDate, "2027-10-24");
   assert.equal(status.daysUntilSendBy, 0, "on the evening of the deadline day the deadline is today");
-  assert.deepEqual(computeTMinus(status.daysUntilSendBy, false, null, status.noticeSendByDate), { headline: "0d", sub: "TODAY" });
+  assert.deepEqual(computeTMinus(status.daysUntilSendBy, false, null, status.noticeSendByDate), { headline: "Today", sub: "LAST DAY TO SEND" });
 
   const { row: draft } = ok(await lease.createNoticeDraft(id, {
     body_markdown: "Notice",

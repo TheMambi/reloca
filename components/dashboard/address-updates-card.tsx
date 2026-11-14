@@ -1,6 +1,7 @@
 import { Mail } from "lucide-react";
 import { ModuleCard, MetaCell } from "./operations-grid";
 import { getAddressTargets } from "@/lib/data/transitions-db";
+import { formatDate } from "@/lib/dates";
 
 export async function AddressUpdatesCard() {
   const rows = await getAddressTargets();
@@ -55,7 +56,7 @@ export async function AddressUpdatesCard() {
             tone={done > 0 ? "ok" : "muted"}
           />
           <MetaCell
-            value={soonestDate ?? "—"}
+            value={soonestDate ? formatDate(soonestDate) : "None"}
             label="Next"
             tone={soonestDate ? "default" : "muted"}
           />

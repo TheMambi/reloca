@@ -1,4 +1,5 @@
 import { Zap, Flame, Droplet, Trash2, Wifi, Tv, Plus } from "lucide-react";
+import { formatDate } from "@/lib/dates";
 import type { LifecycleConfig } from "@/lib/lifecycle/types";
 import type { UtilityTransition } from "@/schemas/transitions";
 
@@ -50,6 +51,6 @@ export const utilityConfig: LifecycleConfig<UtilityTransition, UtilityTransition
     [r.provider, r.account_number ? `Account ${r.account_number}` : null]
       .filter(Boolean)
       .join(" · "),
-  dateLabel: (r) => (r.scheduled_date ? `Scheduled ${r.scheduled_date}` : null),
+  dateLabel: (r) => (r.scheduled_date ? `Scheduled ${formatDate(r.scheduled_date)}` : null),
   status: (r) => r.status,
 };

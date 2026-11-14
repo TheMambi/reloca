@@ -115,7 +115,7 @@ function CityView({
         <div className="rounded-[var(--radius-lg)] border border-border bg-card p-6">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Cloud className="size-4" strokeWidth={1.75} />
-            <span className="label-cap text-[10px]">WEATHER</span>
+            <span className="label-cap text-[11px]">WEATHER</span>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-foreground">
             {city.weatherSummary}
@@ -123,7 +123,7 @@ function CityView({
         </div>
 
         <div className="rounded-[var(--radius-lg)] border border-border bg-card p-6">
-          <span className="label-cap text-[10px] text-muted-foreground">
+          <span className="label-cap text-[11px] text-muted-foreground">
             NEIGHBORHOOD VIBES
           </span>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -144,7 +144,7 @@ function CityView({
       <div className="rounded-[var(--radius-lg)] border border-border bg-card p-6">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Home className="size-4" strokeWidth={1.75} />
-          <span className="label-cap text-[10px]">MEDIAN RENT</span>
+          <span className="label-cap text-[11px]">MEDIAN RENT</span>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {city.avgRent.map((r) => (
@@ -152,13 +152,13 @@ function CityView({
               key={r.unit}
               className="flex flex-col gap-1 rounded-[var(--radius-md)] border border-border/50 bg-background/30 p-3"
             >
-              <span className="label-cap text-[9px] text-muted-foreground">
+              <span className="label-cap text-[11px] text-muted-foreground">
                 {UNIT_LABELS[r.unit] ?? r.unit}
               </span>
               <span className="mono-num text-lg font-semibold text-foreground">
                 {usd(r.median)}
               </span>
-              <span className="text-[10px] text-muted-foreground">/month</span>
+              <span className="text-[11px] text-muted-foreground">/month</span>
             </div>
           ))}
         </div>
@@ -168,7 +168,7 @@ function CityView({
       <div className="rounded-[var(--radius-lg)] border border-border bg-card p-6">
         <div className="flex items-center gap-2 text-muted-foreground">
           <MessageCircle className="size-4" strokeWidth={1.75} />
-          <span className="label-cap text-[10px]">LOCAL VOICES</span>
+          <span className="label-cap text-[11px]">LOCAL VOICES</span>
         </div>
         <div className="mt-4 space-y-4">
           {city.testimonials.map((t) => (
@@ -186,7 +186,7 @@ function CityView({
                 </span>
                 <div>
                   <p className="text-xs font-medium text-foreground">{t.author}</p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     {t.role} · {t.neighborhood}
                   </p>
                 </div>
@@ -213,12 +213,13 @@ function CompareView({
   destName: string;
 }) {
   return (
-    <div className="rounded-[var(--radius-lg)] border border-border bg-card">
-      <div className="grid grid-cols-[1fr_100px_100px_80px] items-center gap-2 border-b border-border px-4 py-3 text-[10px]">
-        <span className="label-cap text-muted-foreground">Unit Type</span>
-        <span className="label-cap text-right text-muted-foreground">{originName}</span>
-        <span className="label-cap text-right text-muted-foreground">{destName}</span>
-        <span className="label-cap text-right text-muted-foreground">Delta</span>
+    <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-card">
+    <div role="table" aria-label="Median rent by unit type" className="min-w-[26rem]">
+      <div role="row" className="grid grid-cols-[1fr_100px_100px_80px] items-center gap-2 border-b border-border px-4 py-3 text-[11px]">
+        <span role="columnheader" className="label-cap text-muted-foreground">Unit Type</span>
+        <span role="columnheader" className="label-cap text-right text-muted-foreground">{originName}</span>
+        <span role="columnheader" className="label-cap text-right text-muted-foreground">{destName}</span>
+        <span role="columnheader" className="label-cap text-right text-muted-foreground">Difference</span>
       </div>
       {origin.avgRent.map((oUnit, i) => {
         const dUnit = dest.avgRent[i];
@@ -226,18 +227,20 @@ function CompareView({
         return (
           <div
             key={oUnit.unit}
+            role="row"
             className="grid grid-cols-[1fr_100px_100px_80px] items-center gap-2 border-b border-border/50 px-4 py-3 last:border-0"
           >
-            <span className="text-sm font-medium text-foreground">
+            <span role="rowheader" className="text-sm font-medium text-foreground">
               {UNIT_LABELS[oUnit.unit] ?? oUnit.unit}
             </span>
-            <span className="mono-num text-right text-sm text-foreground">
+            <span role="cell" className="mono-num text-right text-sm text-foreground">
               {usd(oUnit.median)}
             </span>
-            <span className="mono-num text-right text-sm text-foreground">
+            <span role="cell" className="mono-num text-right text-sm text-foreground">
               {usd(dUnit.median)}
             </span>
             <span
+              role="cell"
               className={`mono-num text-right text-sm font-medium ${pct > 0 ? "text-[var(--danger)]" : "text-[var(--ok)]"}`}
             >
               {pct > 0 ? "+" : ""}{pct.toFixed(1)}%
@@ -245,6 +248,7 @@ function CompareView({
           </div>
         );
       })}
+    </div>
     </div>
   );
 }

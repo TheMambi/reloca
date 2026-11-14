@@ -6,6 +6,7 @@
 // destinations do.
 
 import Link from "next/link";
+import { crimeSubcategoryLabel } from "@/schemas/crime";
 import type {
   ClimateConcern,
   NeighborhoodCompareColumn,
@@ -71,7 +72,7 @@ function renderTopCrime(
     <ul className="flex flex-col gap-1">
       {cats.map((c) => (
         <li key={c.subcategory} className="text-xs text-foreground">
-          {c.subcategory}{" "}
+          {crimeSubcategoryLabel(c.subcategory)}{" "}
           <span className="mono-num text-muted-foreground">
             ({c.per1k.toFixed(1)}/1k)
           </span>
@@ -120,7 +121,7 @@ const ROWS: Row[] = [
     render: (c) => (
       <span>
         <span className="text-foreground">{c.city}</span>{" "}
-        <span className="mono-num text-[10px] tracking-wider text-muted-foreground">
+        <span className="mono-num text-[11px] tracking-wider text-muted-foreground">
           {c.cityCode}
         </span>
       </span>
@@ -183,7 +184,7 @@ function ColumnHeader({ column }: { column: NeighborhoodCompareColumn }) {
       className="flex flex-col gap-0.5 text-foreground underline-offset-2 hover:underline"
     >
       <span className="text-xs font-semibold">{column.neighborhood}</span>
-      <span className="mono-num text-[10px] tracking-wider text-muted-foreground">
+      <span className="mono-num text-[11px] tracking-wider text-muted-foreground">
         {column.cityCode}
       </span>
     </Link>
@@ -217,11 +218,11 @@ function DesktopGrid({ columns }: { columns: NeighborhoodCompareColumn[] }) {
                 role="rowheader"
                 className="flex flex-col gap-0.5 px-3 py-2"
               >
-                <span className="label-cap text-[9px] tracking-wider text-muted-foreground">
+                <span className="label-cap text-[11px] tracking-wider text-muted-foreground">
                   {GROUP_LABELS[g]}
                 </span>
                 {GROUP_SUB_LABEL[g] && (
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground">
                     {GROUP_SUB_LABEL[g]}
                   </span>
                 )}
@@ -271,11 +272,11 @@ function NeighborhoodCard({ column }: { column: NeighborhoodCompareColumn }) {
           return (
             <section key={g} className="px-4 py-3">
               <div className="flex flex-col gap-0.5">
-                <span className="label-cap text-[9px] tracking-wider text-muted-foreground">
+                <span className="label-cap text-[11px] tracking-wider text-muted-foreground">
                   {GROUP_LABELS[g]}
                 </span>
                 {GROUP_SUB_LABEL[g] && (
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground">
                     {GROUP_SUB_LABEL[g]}
                   </span>
                 )}

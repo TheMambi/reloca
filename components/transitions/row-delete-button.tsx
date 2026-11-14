@@ -44,7 +44,7 @@ export function RowDeleteButton({ id, label, onDelete }: Props) {
       {error ? (
         <p
           role="alert"
-          className="absolute -bottom-6 right-0 whitespace-nowrap text-[10px] text-[var(--danger)]"
+          className="absolute -bottom-6 right-0 whitespace-nowrap text-[11px] text-[var(--danger)]"
         >
           {error}
         </p>

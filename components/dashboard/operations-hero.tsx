@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Calendar, Circle, Clock } from "lucide-react";
+import { Calendar, Circle } from "lucide-react";
 import type { MoveContext } from "@/lib/data/relocation-db";
 import { daysUntilIso } from "@/lib/dates";
 import { journeyPhaseName, type JourneyPhaseId } from "@/lib/journey";
@@ -32,7 +32,7 @@ export function OperationsHero({
   // Single countdown vocabulary (lib/dates) — the pill flips from a countdown
   // to arrival framing once the move day passes, never "T-MINUS +3d".
   let countdownLabel = "MOVE DAY";
-  let countdownValue = "— —";
+  let countdownValue = "NOT SET";
   if (days !== null) {
     if (days === 0) {
       countdownValue = "TODAY";
@@ -73,7 +73,7 @@ export function OperationsHero({
       <Sparkle className="absolute right-[10%] top-[62%] size-2 text-[var(--info)]" />
 
       <div className="relative flex min-h-[300px] flex-col p-6 lg:min-h-[340px] lg:p-8">
-        <p className="label-cap text-[10px] font-semibold tracking-[0.18em] text-[var(--brand-secondary)]">
+        <p className="label-cap text-[11px] font-semibold tracking-[0.18em] text-[var(--brand-secondary)]">
           Operations · Briefing
         </p>
 
@@ -98,18 +98,14 @@ export function OperationsHero({
 
         <div className="mt-auto flex flex-wrap items-center gap-2 pt-6">
           <Pill icon={<Calendar className="size-3" strokeWidth={1.75} />}>
-            <span className="label-cap text-[9px] text-muted-foreground">{countdownLabel}</span>
+            <span className="label-cap text-[11px] text-muted-foreground">{countdownLabel}</span>
             <span className="mono-num text-foreground">{countdownValue}</span>
           </Pill>
           <Pill icon={<Circle className="size-2 fill-[var(--ok)] text-[var(--ok)]" />}>
-            <span className="label-cap text-[9px] text-muted-foreground">JOURNEY</span>
+            <span className="label-cap text-[11px] text-muted-foreground">JOURNEY</span>
             <span className="mono-num text-foreground">
               {journeyPhaseName(journeyPhase).toUpperCase()}
             </span>
-          </Pill>
-          <Pill icon={<Clock className="size-3" strokeWidth={1.75} />}>
-            <span className="label-cap text-[9px] text-muted-foreground">LAST SYNC</span>
-            <span className="mono-num text-foreground">LIVE</span>
           </Pill>
         </div>
       </div>
@@ -155,15 +151,8 @@ function FlightArc({
         strokeDasharray="4 5"
         fill="none"
         opacity="0.85"
-      >
-        <animate
-          attributeName="stroke-dashoffset"
-          from="0"
-          to="-90"
-          dur="6s"
-          repeatCount="indefinite"
-        />
-      </path>
+        className="flight-arc"
+      />
 
       <g transform="translate(95 215)">
         <circle r="14" fill="var(--info)" opacity="0.18" />
@@ -201,13 +190,7 @@ function FlightArc({
         </text>
       </g>
 
-      <g
-        style={{
-          offsetPath: 'path("M 95 215 Q 320 30 525 145")',
-          offsetRotate: "auto",
-          animation: "reloca-flight 9s linear infinite",
-        }}
-      >
+      <g className="flight-plane">
         <path
           d="M -8 0 L 8 0 M 0 -3 L 4 0 L 0 3"
           stroke="var(--foreground)"
