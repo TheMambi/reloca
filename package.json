@@ -34,7 +34,7 @@
     "next": "15.5.29",
     "radix-ui": "^1.4.3",
     "react": "19.1.0",
-    "react-day-picker": "^9.14.0",
+    "react-day-picker": "^10.0.2",
     "react-dom": "19.1.0",
     "recharts": "3.8.0",
     "server-only": "^0.0.1",
